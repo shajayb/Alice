@@ -13,8 +13,7 @@ class newvec: public vec
 public:
 	string name;
 
-	newvec() 
-	{};
+	newvec() {};
 	newvec(string _name) { name = _name; }
 	~newvec() { cout << "destructor called " << name << endl; }
 
@@ -36,7 +35,7 @@ public:
 		cout << type << endl;
 		cout << decay << endl;
 	}
-
+	// change made at home
 };
 
 
