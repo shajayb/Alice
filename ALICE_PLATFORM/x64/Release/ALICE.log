@@ -1,0 +1,7 @@
+﻿  sketch_ur.cpp
+C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+  Generating code
+  All 185 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
+  ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)
