@@ -74,7 +74,7 @@ void setup()
 	newvec *ptr_to_a = new newvec(" testPointer ");
 	delete  ptr_to_a;
 	// destructor of  "test-pointer" is called here .. 
-	// if delete implemented here, *a will become a dangling pointer, because object of a (test pointer) will be deleted at the end of setup;
+	// if delete not implemented here, *a will become a dangling pointer, because object of a (test pointer) will be deleted at the end of setup;
 	
 	newvec c("c");//destructor of "c" is called called when setup() completes;
 	newvec("d"); // destructor called immediately as the object is created.. so useful, only if the ccontents are copied to LHS using = operator; g = newvec("d") ;
