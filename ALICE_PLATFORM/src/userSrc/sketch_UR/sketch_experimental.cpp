@@ -11,6 +11,9 @@ using namespace std::experimental;
 
 /*
 NOTE: all experimental features require that you add "/await" to the command line options in  ( properties -> c++ -> commandline options)
+
+https://blogs.msdn.microsoft.com/vcblog/2015/04/29/more-about-resumable-functions-in-c/
+https://blogs.msdn.microsoft.com/vcblog/2015/11/30/coroutines-in-visual-studio-2015-update-1/
 */
 
 
