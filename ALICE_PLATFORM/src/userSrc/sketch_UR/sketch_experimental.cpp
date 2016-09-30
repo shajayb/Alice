@@ -6,6 +6,7 @@ using namespace ROBOTICS;
 //#include<iostream>
 //#include <experimental\coroutine>
 #include<experimental/generator> 
+#include<time.h>
 using namespace std;
 using namespace std::experimental;
 
@@ -33,6 +34,7 @@ generator<int> anonymousList()
 
 
 
+//////
 
 void setup()
 {
@@ -43,6 +45,9 @@ void setup()
 	for (auto c : anonymousList() ) cout << c << ".";
 	cout << endl;
 	
+	
+
+
 }
 	
 void update(int value)
