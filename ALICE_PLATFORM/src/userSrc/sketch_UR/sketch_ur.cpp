@@ -83,6 +83,11 @@ void setup()
 	// shared pointers - requires memory.h
 	shared_ptr<newvec> f = make_shared<newvec>(" test shared ptr"); // arguments of constructor inside parenthesis
 	shared_ptr<newvec> g = make_shared<newvec>(" shared ptr reciever "); // arguments of constructor inside parenthesis
+	
+	g->print(); // accessing methods of the object of 'g';
+	g.get(); // accessing methods of the msart-pointer 'g' ;
+
+
 	g = move(f); 
 	// move ownership of the object owned by f, to g; 
 	// thus the object owned by g originally (shared ptr reciever) is deleted immeidately.
