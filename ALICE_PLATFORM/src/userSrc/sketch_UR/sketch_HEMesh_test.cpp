@@ -52,15 +52,53 @@ public:
 
 };
 
+void timeStats(long &strt, long& end, string str)
+{
+	elapsedTime = end - strt;
+	cout << elapsedTime / 1000.0f << " - " << str << endl;
+}
+
+const int sz = 200000;
+
+//array<vec, sz> A;
+//array<vec, sz> B;
+
+
 void setup()
 {
 
-	cout << sizeof(HalfVert) << endl;
-	cout << sizeof(HalfEdge) << endl;
-	cout << sizeof(HalfFace) << endl;
-	cout << float(sizeof(HEMesh)) / (1024.0 * 1024.0) << endl;
+	//cout << sizeof(HalfVert) << endl;
+	//cout << sizeof(HalfEdge) << endl;
+	//cout << sizeof(HalfFace) << endl;
+	//cout << float(sizeof(HEMesh)) / (1024.0 * 1024.0) << endl;
 
-	HEMesh M;
+	//HEMesh M;
+
+	vec *AA = new vec[sz];
+	vec *BB = new vec[sz];
+	cout << float(sizeof(vec)) * sz / (1024.0 * 1024.0) << endl;
+
+	long start, end;
+
+	//start = GetTickCount();;
+
+	//for( auto &a: A)
+	//	for (auto &b : B)
+	//		double d = a*(b);
+
+	//end = GetTickCount();
+	//timeStats(start, end, "  n-n distance check static array L1 , object field method : a.distanceTo(b) , store results ");
+
+	//// 
+
+	start = GetTickCount();;
+	for (int i = 0; i < sz; i++)
+		for (int j = 0; j < sz; j++)
+			double d = AA[i]*(BB[j]);
+
+	end = GetTickCount();
+	timeStats(start, end, "  n-n distance check dyn array, object field method : a.distanceTo(b) , store results ");
+
 
 }
 

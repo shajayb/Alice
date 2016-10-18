@@ -10,7 +10,7 @@ using namespace std::experimental;
 
 
 
-#define dim 1000
+#define dim 10000
 
 
 //////
