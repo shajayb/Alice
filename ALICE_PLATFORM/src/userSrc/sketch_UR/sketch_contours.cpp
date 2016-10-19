@@ -5,9 +5,13 @@ using namespace ROBOTICS;
 #include <memory>
 #include<time.h>
 #include<experimental/generator> 
+
 using namespace std;
 using namespace std::experimental;
 
+#include"graph.h"
+
+Graph G;
 
 struct E
 {
@@ -27,11 +31,18 @@ class metaMesh : public Mesh
 {
 public:
 
+	Graph G;
 	array<double, 1000> scalars;
-	metaMesh() {};
+	metaMesh()
+	{
+		
+	};
 	metaMesh( Mesh &in)
 	{
-
+		G = *new Graph();
+		
+		///
+		
 		for (int i = 0; i < in.n_v; i++) positions[i] = in.positions[i];
 		for (int i = 0; i < in.n_v; i++) createVertex(positions[i]);
 		Vertex *f_v[MAX_VALENCE];
@@ -44,7 +55,68 @@ public:
 
 		for (int i = 0; i < n_f; i++)faces[i].faceVertices();
 	}
+
+	void assignScalars(string component = "y")
+	{
+		for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag();
+		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
+
+	}
+
+	void createGraph( double threshold)
+	{
+		int a, b;
+		vec diff;
+		double interp;
+		Vertex v;
+		int *edge_vertex_ids = new int[n_e];
+		for (int i = 0; i < n_e; i++)edge_vertex_ids[i] = -1;
+		
+		
+		G.n_v = G.n_e = 0;
+
+		for (int i = 0; i < n_e; i++)
+		{
+			a = edges[i].vStr->id;
+			b = edges[i].vEnd->id;
+
+			diff = (positions[b] - positions[a]);// .normalise();
+			interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
+			if (interp >= 0.0 && interp <= 1.0)
+			{
+				v = * ( G.createVertex((positions[a] + diff * interp)) );
+				edge_vertex_ids[i] = v.id;
+			}
+
+		}
+
+		////
+
+		int e_id;
+		int e_v_ids[3];
+		for (int i = 0; i < n_f; i++)
+		{
+
+			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
+			{
+				e_id = faces[i].edgePtrs[j]->id;
+				e_v_ids[j] = edge_vertex_ids[e_id];
+			}
+
+
+			//if (e_v_ids[0] >= 0 && e_v_ids[1] >= 0)G.createEdge(vertices[e_v_ids[0]], vertices[e_v_ids[1]]);
+			if (e_v_ids[1] >= 0 && e_v_ids[2] >= 0)G.createEdge(vertices[e_v_ids[1]], vertices[e_v_ids[2]]);
+			//if (e_v_ids[2] >= 0 && e_v_ids[0] >= 0)G.createEdge(vertices[e_v_ids[2]], vertices[e_v_ids[0]]);
+			
+
+		}
+
+		delete[]edge_vertex_ids;
+	}
+
 };
+
+
 
 //
 generator<E> faceEdges( metaMesh &m , double threshold)
@@ -79,16 +151,14 @@ generator<E> faceEdges( metaMesh &m , double threshold)
 }
 
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
 
-void assignScalars(metaMesh &m , string component = "y")
-{
-	for (int i = 0; i < M.n_v; i++)m.scalars[i] = m.vertices[i].getMeanCurvatureGradient(m.positions).mag();
-		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
-
-}
 
 void setup()
 {
@@ -99,7 +169,8 @@ void setup()
 	MeshFactory fac;
 	Mesh tmp = fac.createFromOBJ("data/in.obj", 10, false, false);
 	M = metaMesh( tmp );
-	assignScalars(M);
+	M.assignScalars();
+	M.createGraph(threshold);
 
 }
 
@@ -117,16 +188,21 @@ void draw()
 	M.draw(true);
 
 	glPointSize(5);
-	
-	for (double i = 0; i < threshold; i+= threshold * 0.05)
-		for (auto &c : faceEdges(M, i))
+
+	glColor3f(1, 0, 0);
+	//for (double i = 0; i < threshold; i+= threshold * 0.05)
+		for (auto &c : faceEdges(M, threshold))
 		{
-			drawLine(c.t, c.f);
+			//drawLine(c.t, c.f);
 			//drawPoint((vec)c.t);
 			//drawPoint((vec)c.f);
 		
 		}
 
+		M.G.draw();
+
+	glColor3f(0, 0, 0);
+	
 
 	S.draw();
 
