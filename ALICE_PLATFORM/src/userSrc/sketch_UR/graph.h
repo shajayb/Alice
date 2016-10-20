@@ -260,9 +260,21 @@ public:
 	void draw()
 	{
 		glPointSize(5);
-		for (int i = 0; i < n_v; i++)drawPoint(positions[i]);
+		for (int i = 0; i < n_v; i++)
+		{
+			char s[200];
+			itoa(i, s, 10);
+			//drawString(s, positions[i]+ vec(0,0,.1));
+			drawPoint(positions[i]);
+		}
 		glPointSize(1);
-		for (int i = 0; i < n_e; i++)drawLine(positions[edges[i].vStr->id], positions[edges[i].vEnd->id]);
+		for (int i = 0; i < n_e; i++)
+		{
+			char s[200];
+			itoa(i, s, 10);
+			//drawString(s, (positions[edges[i].vStr->id] + positions[edges[i].vEnd->id]) * 0.5 + vec(0, 0, .1));
+			drawLine(positions[edges[i].vStr->id], positions[edges[i].vEnd->id]);
+		}
 	}
 
 

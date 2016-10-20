@@ -32,7 +32,7 @@ class metaMesh : public Mesh
 public:
 
 	Graph G;
-	array<double, 1000> scalars;
+	array<double, MAX_VERTS> scalars;
 	metaMesh()
 	{
 		
@@ -58,7 +58,7 @@ public:
 
 	void assignScalars(string component = "y")
 	{
-		for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag();
+		for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag(); // positions[i].z;// 
 		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
 
 	}
@@ -70,7 +70,6 @@ public:
 		double interp;
 		Vertex v;
 		int *edge_vertex_ids = new int[n_e];
-		for (int i = 0; i < n_e; i++)edge_vertex_ids[i] = -1;
 		
 		
 		G.n_v = G.n_e = 0;
@@ -85,17 +84,24 @@ public:
 			if (interp >= 0.0 && interp <= 1.0)
 			{
 				v = * ( G.createVertex((positions[a] + diff * interp)) );
+				//v.clr = getColour(interp,0,1);
 				edge_vertex_ids[i] = v.id;
 			}
+			else
+				edge_vertex_ids[i] = -1;
 
 		}
+
 
 		////
 
 		int e_id;
 		int e_v_ids[3];
+
 		for (int i = 0; i < n_f; i++)
 		{
+
+			e_v_ids[0] = e_v_ids[1] = e_v_ids[2] = -1;;
 
 			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
 			{
@@ -103,16 +109,57 @@ public:
 				e_v_ids[j] = edge_vertex_ids[e_id];
 			}
 
-
-			//if (e_v_ids[0] >= 0 && e_v_ids[1] >= 0)G.createEdge(vertices[e_v_ids[0]], vertices[e_v_ids[1]]);
-			if (e_v_ids[1] >= 0 && e_v_ids[2] >= 0)G.createEdge(vertices[e_v_ids[1]], vertices[e_v_ids[2]]);
-			//if (e_v_ids[2] >= 0 && e_v_ids[0] >= 0)G.createEdge(vertices[e_v_ids[2]], vertices[e_v_ids[0]]);
+			
+			if (e_v_ids[0] >= 0 && e_v_ids[1] >= 0)G.createEdge(G.vertices[e_v_ids[0]], G.vertices[e_v_ids[1]]);
+			if (e_v_ids[1] >= 0 && e_v_ids[2] >= 0)G.createEdge(G.vertices[e_v_ids[1]], G.vertices[e_v_ids[2]]);
+			if (e_v_ids[2] >= 0 && e_v_ids[0] >= 0)G.createEdge(G.vertices[e_v_ids[2]], G.vertices[e_v_ids[0]]);
 			
 
 		}
 
 		delete[]edge_vertex_ids;
 	}
+
+	generator<Edge> getNextEdge(Edge &e)
+	{
+		//cout << " getNextEdge called on " << e.id << endl;
+		for (int i = 0; i < e.vEnd->n_e; i++)
+			if (e.vEnd->edgePtrs[i] != &e)yield *(e.vEnd->edgePtrs[i]);
+	
+		for (int i = 0; i < e.vStr->n_e; i++)
+			if (e.vStr->edgePtrs[i] != &e)yield *(e.vStr->edgePtrs[i]);
+	
+	}
+
+
+	array<bool, MAX_EDGES> eChecked;
+	// generator<Edge>  !! IMP : co-routine functions cannot be recursive. !
+	void recurseEdges(Edge &startEdge , int &sum )
+	{
+
+		startEdge.draw(G.positions,6.0);
+		glLineWidth(1.0);
+		int cnt = 0;; 
+
+		vector<Edge> con_edges;
+		for (auto e : getNextEdge(startEdge))
+			if (!eChecked[e.id])
+			{
+				e.draw(G.positions,2.0);
+				con_edges.push_back(e);
+			}
+		
+		eChecked[startEdge.id] = true;
+		sum += con_edges.size();
+		//for (auto e : con_edges) cout << e.id << ",";
+		//cout << endl;
+			
+		for (auto e : con_edges)
+			if (!eChecked[e.id])recurseEdges(e,sum);
+		
+		
+	}
+
 
 };
 
@@ -159,6 +206,7 @@ SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
 
+array<vec4, 7>clrs;
 
 void setup()
 {
@@ -172,6 +220,15 @@ void setup()
 	M.assignScalars();
 	M.createGraph(threshold);
 
+	cout << " - E 85 ------------ " << endl;
+	int sum = 0;
+	//M.recurseEdges(M.G.edges[85],sum);
+	cout << endl;
+	cout << sum << endl;
+	cout << M.G.n_e << endl;
+
+	for (auto &c : clrs)c = vec4(ofRandom(0, 1), ofRandom(0, 1), ofRandom(0, 1), 1); ;
+	
 }
 
 void update(int value)
@@ -180,11 +237,19 @@ void update(int value)
 
 }
 
+void timeStats(long &strt, long& end, string str)
+{
+	elapsedTime = end - strt;
+	cout << elapsedTime / 1000.0f << " - " << str << endl;
+}
+
+
 void draw()
 {
 
 	backGround(0.75);
 
+	glLineWidth(1.0);
 	M.draw(true);
 
 	glPointSize(5);
@@ -200,6 +265,30 @@ void draw()
 		}
 
 		M.G.draw();
+		
+	
+		M.createGraph(threshold);
+		for (auto &c : M.eChecked)c = false;
+
+		long start, end;
+		
+		start = GetTickCount();
+
+		for (int i = 0; i < M.G.n_e; i++)
+			if (!M.eChecked[i])
+			{
+				int sum = 0;
+				vec4 clr = clrs[i];; 
+				glColor3f( clr.r,clr.g,clr.b);
+				M.recurseEdges(M.G.edges[i], sum);
+			}
+		
+
+		end = GetTickCount();
+		timeStats(start, end, " yield islands ");
+
+		cout << " -------------------------------------------- " << endl;
+		//
 
 	glColor3f(0, 0, 0);
 	
@@ -210,7 +299,7 @@ void draw()
 void keyPress(unsigned char k, int xm, int ym)
 {
 
-
+	for (auto &c : clrs)c = vec4(ofRandom(0, 1), ofRandom(0, 1), ofRandom(0, 1), 1); ;
 }
 
 
