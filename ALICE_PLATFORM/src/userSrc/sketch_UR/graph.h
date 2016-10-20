@@ -77,6 +77,58 @@ public:
 		return createEdge(str, end);
 	}
 
+	generator<Edge> getNextEdge(Edge &e)
+	{
+		//cout << " getNextEdge called on " << e.id << endl;
+		for (int i = 0; i < e.vEnd->n_e; i++)
+			if (e.vEnd->edgePtrs[i] != &e)yield *(e.vEnd->edgePtrs[i]);
+
+		for (int i = 0; i < e.vStr->n_e; i++)
+			if (e.vStr->edgePtrs[i] != &e)yield *(e.vStr->edgePtrs[i]);
+
+	}
+
+
+	array<bool, MAX_EDGES> eChecked;
+	// generator<Edge>  !! IMP : co-routine functions cannot be recursive. !
+	void recurseEdges(Edge &startEdge, int &sum)
+	{
+
+		startEdge.draw(positions, 6.0);
+		glLineWidth(1.0);
+		int cnt = 0;;
+
+		vector<Edge> con_edges;
+		for (auto e : getNextEdge(startEdge))
+			if (!eChecked[e.id])
+			{
+				e.draw(positions, 2.0);
+				con_edges.push_back(e);
+			}
+
+		eChecked[startEdge.id] = true;
+		sum += con_edges.size();
+		//for (auto e : con_edges) cout << e.id << ",";
+		//cout << endl;
+
+		for (auto e : con_edges)
+			if (!eChecked[e.id])recurseEdges(e, sum);
+	}
+
+	void drawIslands()
+	{
+		for (auto &c : eChecked)c = false;
+
+		for (int i = 0; i < n_e; i++)
+			if (!eChecked[i])
+			{
+				int sum = 0;
+				//vec4 clr = clrs[i];;
+				//glColor3f(clr.r, clr.g, clr.b);
+				recurseEdges(edges[i], sum);
+			}
+
+	}
 
 	// ------------- ------------- ------------- -------------------------- UTILITIES
 	void writeGraph(float scaleBack, string outFileName = "data/graph.txt")
@@ -121,141 +173,7 @@ public:
 
 	// ------------- ------------- ------------- -------------------------- DISPLAY
 
-	//int getVertexEdges(int id, vec &normal, int *v_vertIds)
-	//{
-	//	vec *pos = new vec[vertices[id].n_e];
-
-	//	vec eVecs[3];
-	//	vec eVals, mean;
-
-	//	// get vertices
-	//	int N = vertices[id].getVertices(v_v);
-	//	// get vertex positions
-	//	for (int i = 0; i < N; i++)pos[i] = positions[v_v[i]->id];
-
-	//	//get PCA plane
-	//	Matrix::PCA(pos, N, mean, eVals, eVecs);
-	//	eVecs[0].normalise();
-	//	vertices[id].norm = normal = eVecs[0];
-	//	// project points to PCA plane 
-	//	for (int i = 0; i < N; i++)
-	//	{
-	//		pos[i] -= eVecs[0] * ((pos[i] - positions[id])*eVecs[0]);
-	//		drawPoint(pos[i]);;
-	//	}
-	//	//
-
-	//	// ------------ sort vec
-	//	vec firstEdge = pos[0] - positions[id];
-	//	list<float> angles;
-	//	map< float, int > angle_E_Map;
-
-	//	// ---- calc angles
-	//	for (int i = 0; i < N; i++)
-	//	{
-	//		vec ed = (pos[i] - positions[id]);
-	//		float ang = vec::angle_2D(ed.x, ed.y, firstEdge.x, firstEdge.y);
-	//		angles.push_back(ang);
-	//		angle_E_Map[ang] = i;
-	//	}
-
-	//	// ---- sort angles , get corresponding edge / v_id 
-	//	list<float>::iterator it_f;
-	//	int cnt = 0;
-	//	angles.sort();
-
-
-	//	for (it_f = angles.begin(); it_f != angles.end(); it_f++)
-	//	{
-	//		int v_id = angle_E_Map[*it_f];
-	//		v_vertIds[cnt] = v_v[v_id]->id;
-	//		cnt++;
-	//	}
-
-
-	//	delete[]pos;
-	//	return N; // eVecs[0] ;
-
-	//}
-
-	//int cyclicSortPositions(vec*pos, int N, vec &normal, int *v_vertIds, vec cen = vec(0, 0, 0))
-	//{
-	//	vec eVecs[3];
-	//	vec eVals, mean;
-
-	//	Matrix::PCA(pos, N, mean, eVals, eVecs);
-	//	eVecs[0].normalise();
-	//	normal = eVecs[0];
-
-
-	//	// calc. centroid if not provided.
-	//	if (cen == vec(0, 0, 0))
-	//	{
-	//		for (int i = 0; i < N; i++)cen += pos[i];
-	//		cen /= N;
-	//	}
-	//	if (eVals.x > 0.2)
-	//	{
-	//		normal = vec(0, 0, 0);
-	//		for (int i = 0; i < N; i++)normal += pos[i] - cen;
-	//		normal /= N;
-	//	}
-
-	//	normal.normalise();
-
-	//	// project points to best fit plane 
-	//	for (int i = 0; i < N; i++)pos[i] -= normal*((pos[i] - cen)*normal);
-
-
-
-	//	// ------------ sort vec
-
-	//	vec firstEdge = pos[0] - cen;
-	//	firstEdge.normalise();
-	//	list<float> angles;
-	//	map< float, int > angle_E_Map;
-
-	//	// ---- calc angles
-	//	for (int i = 0; i < N; i++)
-	//	{
-	//		vec ed = (pos[i] - cen);
-	//		ed.normalise();
-	//		float ang = vec::angle_2D(ed.x, ed.y, firstEdge.x, firstEdge.y);
-	//		if ( /*fabs(fmod (double(ang),double(PI))*/fabs(ang) < 10e-02)ang = ofRandom(-0.01, 0.01);
-	//		angles.push_back(ang);
-	//		angle_E_Map[ang] = i;
-	//	}
-	//	// ---- sort angles , get corresponding edge / v_id 
-	//	list<float>::iterator it_f;
-	//	list<float>::reverse_iterator it_f_rev;
-	//	int cnt = 0;
-	//	angles.sort();
-
-
-	//	vec bi = firstEdge.cross(normal);
-	//	vec ed = (pos[1] - cen);
-	//	if (bi*ed > 0)
-	//	{
-	//		for (it_f_rev = angles.rbegin(); it_f_rev != angles.rend(); it_f_rev++)
-	//		{
-	//			int v_id = angle_E_Map[*it_f_rev];
-	//			v_vertIds[cnt] = v_id; //v_v[v_id]->id ;
-	//			cnt++;
-	//		}
-	//	}
-	//	else
-	//	{
-	//		for (it_f = angles.begin(); it_f != angles.end(); it_f++)
-	//		{
-	//			int v_id = angle_E_Map[*it_f];
-	//			v_vertIds[cnt] = v_id; //v_v[v_id]->id ;
-	//			cnt++;
-	//		}
-	//	}
-
-
-	//}
-
+	
 
 	void draw()
 	{

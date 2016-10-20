@@ -58,7 +58,7 @@ public:
 
 	void assignScalars(string component = "y")
 	{
-		for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag(); // positions[i].z;// 
+		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
 		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
 
 	}
@@ -120,47 +120,6 @@ public:
 		delete[]edge_vertex_ids;
 	}
 
-	generator<Edge> getNextEdge(Edge &e)
-	{
-		//cout << " getNextEdge called on " << e.id << endl;
-		for (int i = 0; i < e.vEnd->n_e; i++)
-			if (e.vEnd->edgePtrs[i] != &e)yield *(e.vEnd->edgePtrs[i]);
-	
-		for (int i = 0; i < e.vStr->n_e; i++)
-			if (e.vStr->edgePtrs[i] != &e)yield *(e.vStr->edgePtrs[i]);
-	
-	}
-
-
-	array<bool, MAX_EDGES> eChecked;
-	// generator<Edge>  !! IMP : co-routine functions cannot be recursive. !
-	void recurseEdges(Edge &startEdge , int &sum )
-	{
-
-		startEdge.draw(G.positions,6.0);
-		glLineWidth(1.0);
-		int cnt = 0;; 
-
-		vector<Edge> con_edges;
-		for (auto e : getNextEdge(startEdge))
-			if (!eChecked[e.id])
-			{
-				e.draw(G.positions,2.0);
-				con_edges.push_back(e);
-			}
-		
-		eChecked[startEdge.id] = true;
-		sum += con_edges.size();
-		//for (auto e : con_edges) cout << e.id << ",";
-		//cout << endl;
-			
-		for (auto e : con_edges)
-			if (!eChecked[e.id])recurseEdges(e,sum);
-		
-		
-	}
-
-
 };
 
 
@@ -206,29 +165,18 @@ SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
 
-array<vec4, 7>clrs;
-
 void setup()
 {
 	S = *new SliderGroup();
 	S.addSlider(&threshold, "threshold");
-	S.sliders[0].attachToVariable(&threshold, -PI, PI);
+	S.sliders[0].attachToVariable(&threshold, 0, 100);
 
 	MeshFactory fac;
 	Mesh tmp = fac.createFromOBJ("data/in.obj", 10, false, false);
 	M = metaMesh( tmp );
 	M.assignScalars();
-	M.createGraph(threshold);
 
-	cout << " - E 85 ------------ " << endl;
-	int sum = 0;
-	//M.recurseEdges(M.G.edges[85],sum);
-	cout << endl;
-	cout << sum << endl;
-	cout << M.G.n_e << endl;
 
-	for (auto &c : clrs)c = vec4(ofRandom(0, 1), ofRandom(0, 1), ofRandom(0, 1), 1); ;
-	
 }
 
 void update(int value)
@@ -268,21 +216,13 @@ void draw()
 		
 	
 		M.createGraph(threshold);
-		for (auto &c : M.eChecked)c = false;
+		
 
 		long start, end;
 		
 		start = GetTickCount();
 
-		for (int i = 0; i < M.G.n_e; i++)
-			if (!M.eChecked[i])
-			{
-				int sum = 0;
-				vec4 clr = clrs[i];; 
-				glColor3f( clr.r,clr.g,clr.b);
-				M.recurseEdges(M.G.edges[i], sum);
-			}
-		
+			M.G.drawIslands();
 
 		end = GetTickCount();
 		timeStats(start, end, " yield islands ");
@@ -299,7 +239,6 @@ void draw()
 void keyPress(unsigned char k, int xm, int ym)
 {
 
-	for (auto &c : clrs)c = vec4(ofRandom(0, 1), ofRandom(0, 1), ofRandom(0, 1), 1); ;
 }
 
 
