@@ -1,9 +1,4 @@
-﻿  sketch_performanceTests.cpp
-C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\shajay.b\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\shajay.b\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-  Generating code
-  20 of 159 functions (12.6%) were compiled, the rest were copied from previous compilation.
-    20 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
-  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)
+﻿  sketch_constCorrectness.cpp
+src\userSrc\sketch_UR\sketch_constCorrectness.cpp(53): error C2228: left of '.print' must have class/struct/union
+  src\userSrc\sketch_UR\sketch_constCorrectness.cpp(53): note: type is 'std::array<Alice::vec,10> *'
+  src\userSrc\sketch_UR\sketch_constCorrectness.cpp(53): note: did you intend to use '->' instead?
