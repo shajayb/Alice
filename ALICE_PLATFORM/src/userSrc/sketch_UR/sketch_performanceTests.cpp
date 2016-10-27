@@ -10,7 +10,7 @@ using namespace std::experimental;
 
 
 
-#define dim 1000
+#define dim 10000
 
 
 //////
@@ -226,7 +226,7 @@ void setup()
 
 
 		end = GetTickCount();
-		timeStats(start, end, "   M (= 1000)  iterations of n-n distance check , auto &a:A | auto &b:B,yield");
+		timeStats(start, end, "  M (= 1000)  iterations of n-n distance check , auto &a:A | auto &b:B,yield");
 
 
 
