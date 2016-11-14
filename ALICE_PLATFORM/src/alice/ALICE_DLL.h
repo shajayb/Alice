@@ -113,8 +113,8 @@ struct vec4
 
 #define C_DIST 100.001 
 #define C_CHARGE 1 
-#define C_DAMP 0.1 
-#define COLOUMB ( 1 * pow(100.0f,2.0f) )  
+#define C_DAMP 10.1 
+#define COLOUMB ( 1 * pow(1.0f,2.0f) )  
 
 #define MAX_PARTICLES 5500 
 #define MAX_SPRINGS 5500 

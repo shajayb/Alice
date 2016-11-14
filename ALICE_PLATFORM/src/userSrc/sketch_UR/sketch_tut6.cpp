@@ -20,7 +20,7 @@ void setup()
 	//////////////////////////////////////////////////////////////////////////
 
 	//nachi = *new Robot();
-	vec pt = nachi.ForwardKineMatics(nachi.rot);
+	//vec pt = nachi.ForwardKineMatics(nachi.rot);
 	nachi.addMeshes();
 
 
@@ -75,7 +75,7 @@ void draw()
 	B.draw();
 
 
-	nachi.draw(true);
+	//nachi.draw(true);
 	glColor3f(1, 0, 1);
 	drawCircle(target, 5, 32);
 
