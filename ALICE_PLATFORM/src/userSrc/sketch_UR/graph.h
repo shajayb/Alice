@@ -4,24 +4,48 @@
 
 #include "nvec.h"
 //#include "matrices.h"
+#define _use_vector_
+//#define _push_back_
 
 class Graph
 {
 
 public:
 	// ------------- topology 
+	
+
+
+#ifdef _use_vector_
+
+	vector<Vertex>vertices;
+	vector<Edge>edges;
+	int n_e, n_v;
+
+	// ------------- attributes ;
+
+	vector<vec>positions;
+
+
+
+	// ------------- ------------- ------------- -------------------------- CONSTRUCTORS  ;
+	Graph()
+	{
+		n_e = n_v = 0;
+		
+		vertices.reserve(MAX_VERTS);
+		edges.reserve(MAX_EDGES);
+		positions.reserve(MAX_VERTS);
+	}
+
+#else
+
 
 	Vertex *vertices;
 	Edge *edges;
 	int n_e, n_v;
 
 	// ------------- attributes ;
-
 	vec * positions;
-
-	Vertex *v_v[MAX_VALENCE];
-
-
 
 	// ------------- ------------- ------------- -------------------------- CONSTRUCTORS  ;
 	Graph()
@@ -32,9 +56,35 @@ public:
 		positions = new vec[MAX_VERTS];
 	}
 
+#endif // !_use vector_
 
 	// ------------- ------------- ------------- -------------------------- TOPOLOGY
+#ifdef _push_back_
+
+
 	// VERTEX
+	Vertex * createVertex(vec &p)
+	{
+		vertices.push_back(Vertex(vertices.size()));
+		positions.push_back(p);
+		n_v = vertices.size() -1;
+
+		return &vertices[n_v];
+	}
+
+	// EDGE
+	Edge * createEdge(Vertex &str, Vertex &end)
+	{
+		edges.push_back( Edge(str, end, edges.size()) );
+		n_e = edges.size() -1;
+		str.addEdge(&edges[n_e]);
+		end.addEdge(&edges[n_e]);
+		
+		return &edges[n_e];
+	}
+
+#else 
+
 	Vertex * createVertex(vec &p)
 	{
 
@@ -56,10 +106,27 @@ public:
 		return &edges[n_e - 1];
 	}
 
-	//FACE 		
+#endif // !_push_back_
 
 
 	// ------------- ------------- ------------- -------------------------- UTILITIES - TOPOLOGY
+	
+	void reset()
+	{
+
+		n_v = n_e = 0;
+		
+#ifdef _use_vector_
+
+		vertices.clear();
+		edges.clear();
+		positions.clear();
+
+#endif // _use_vector_
+
+
+
+	}
 	Edge * edgeExists(Vertex &str, Vertex &end, bool &found)
 	{
 
@@ -89,12 +156,13 @@ public:
 	}
 
 
+
 	array<bool, MAX_EDGES> eChecked;
 	// generator<Edge>  !! IMP : co-routine functions cannot be recursive. !
 	void recurseEdges(Edge &startEdge, int &sum)
 	{
 
-		startEdge.draw(positions, 6.0);
+		//startEdge.draw(&positions, 6.0);
 		glLineWidth(1.0);
 		int cnt = 0;;
 
@@ -102,7 +170,7 @@ public:
 		for (auto e : getNextEdge(startEdge))
 			if (!eChecked[e.id])
 			{
-				e.draw(positions, 2.0);
+				//e.draw(positions, 2.0);
 				con_edges.push_back(e);
 			}
 
@@ -129,6 +197,15 @@ public:
 			}
 
 	}
+
+	array<bool, MAX_VERTS>vChecked;
+	void subGraphs()
+	{
+		for (int i = 0; i < n_v; i++);
+		
+	}
+
+
 
 	// ------------- ------------- ------------- -------------------------- UTILITIES
 	void writeGraph(float scaleBack, string outFileName = "data/graph.txt")
@@ -173,7 +250,10 @@ public:
 
 	// ------------- ------------- ------------- -------------------------- DISPLAY
 
-	
+	void draw_edge( Edge &e )
+	{
+
+	}
 
 	void draw()
 	{
@@ -193,6 +273,9 @@ public:
 			//drawString(s, (positions[edges[i].vStr->id] + positions[edges[i].vEnd->id]) * 0.5 + vec(0, 0, .1));
 			drawLine(positions[edges[i].vStr->id], positions[edges[i].vEnd->id]);
 		}
+
+		//for (auto &v : vertices) drawPoint(positions[v.id]);
+		//for (auto &e : edges) drawLine(positions[e.vEnd->id], positions[e.vStr->id]);
 	}
 
 

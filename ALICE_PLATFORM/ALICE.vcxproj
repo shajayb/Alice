@@ -27,7 +27,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_contours.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_contours.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\userSrc\sketch_UR\sketch_experimental.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -37,6 +39,7 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_performanceTests.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_tut6.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_ur.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>

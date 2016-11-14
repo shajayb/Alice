@@ -55,7 +55,7 @@ namespace ROBOTICS
 		Matrix4 homeBasis, homeBasisInverse, transformMatrix;
 
 		double rot[6];
-		double home_rot[6];
+		//double home_rot[6];
 		//VectorXd inv_rot;
 		Mesh link_meshes[6];// base, link0, link1, link2, link3, link4;
 		Mesh base;
@@ -104,10 +104,10 @@ namespace ROBOTICS
 		Robot_Symmetric();
 		~Robot_Symmetric();
 	
-		void constructRobot(double DH[6][4]);
 		void addMeshes();
 		vec ForwardKineMatics(double rot[DOF]);
 		void invertTransformMeshesToLocal();
+		void constructRobot(double DH[6][4]);
 		//vec ForwardKineMatics(VectorXd rot);
 		//vec inverseKinematics(vec ePt, bool fast = false);
 		/*vec inverseKinematics_analytical(vec ePt, bool showAlt = false);*/

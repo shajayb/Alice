@@ -13,19 +13,6 @@ using namespace std::experimental;
 
 Graph G;
 
-struct E
-{
-	vec t, f;
-
-	E() {}
-	E( vec &_t,vec &_f)
-	{
-		t = _t;
-		f = _f;
-	}
-};
-
-
 
 class metaMesh : public Mesh
 {
@@ -70,9 +57,8 @@ public:
 		double interp;
 		Vertex v;
 		int *edge_vertex_ids = new int[n_e];
-		
-		
-		G.n_v = G.n_e = 0;
+
+		G.reset();
 
 		for (int i = 0; i < n_e; i++)
 		{
@@ -117,46 +103,12 @@ public:
 
 		}
 
+		cout << G.n_e << " " << n_v << endl;
+
 		delete[]edge_vertex_ids;
 	}
 
 };
-
-
-
-//
-generator<E> faceEdges( metaMesh &m , double threshold)
-{
-	int a, b;
-	vec ePt[3];
-	bool e[3];
-	vec diff;
-	double interp;
-
-	for (int i = 0; i < m.n_f; i++)
-	{
-		
-		for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
-		{
-			a = m.faces[i].edgePtrs[j]->vEnd->id;
-			b = m.faces[i].edgePtrs[j]->vStr->id;
-		
-			diff = (m.positions[b] - m.positions[a]);// .normalise();
-			interp = ofMap(threshold, m.scalars[a], m.scalars[b], 0, 1);
-
-			ePt[j] = (interp >= 0.0 && interp <= 1.0) ?  (m.positions[a] + diff * interp) :  ( vec(0, 0, 0) );
-			e[j] = (interp >= 0.0 && interp <= 1.0) ? 1 : 0;
-		}
-
-		
-		if( e[0] && e[1])yield E(ePt[0], ePt[1]);
-		if (e[1] && e[2])yield E(ePt[1], ePt[2]);
-		if (e[2] && e[0])yield E(ePt[2], ePt[0]);
-	
-	}
-}
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,17 +116,58 @@ generator<E> faceEdges( metaMesh &m , double threshold)
 SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
+importer OBJ;
 
 void setup()
 {
-	S = *new SliderGroup();
-	S.addSlider(&threshold, "threshold");
-	S.sliders[0].attachToVariable(&threshold, 0, 100);
 
+
+	vec min, max;
 	MeshFactory fac;
-	Mesh tmp = fac.createFromOBJ("data/in.obj", 10, false, false);
-	M = metaMesh( tmp );
-	M.assignScalars();
+	
+	//Mesh tmp = fac.createFromOBJ("data/in.obj", 10, true, false);
+	
+	OBJ = * new importer("data/in.obj", MAX_VERTS, 1.0);
+	OBJ.read_obj();
+	
+	vec *p = new vec[OBJ.nCnt];
+	for (int i = 0; i < OBJ.nCnt; i++)p[i] = OBJ.nodes[i].pos;
+
+
+	Mesh OBJMesh;
+	Vertex *f_verts[MAX_VALENCE];
+	// ------------------------------------ make vertices 
+
+	for (int i = 0; i < OBJ.nCnt; i++)OBJMesh.createVertex(p[i]);
+
+	// ------------------------------------ make faces ;
+
+	for (int i = 0, strt = 0, num; i < OBJ.fCnt; i++, strt += num)
+	{
+		num = OBJ.faceCounts[i]; // number of vertices per face - tri,quad,nGon ;
+
+							 // --- collect face vertices from global vertex list ;
+		for (int j = strt, f_v_cnt = 0; j < strt + num; j++, f_v_cnt++)
+			f_verts[f_v_cnt] = &OBJMesh.vertices[OBJ.faces[j]];
+
+		OBJMesh.createNGon(f_verts, num, true);
+	}
+
+	// check euler characteristics .
+
+	// recent addition .
+	//for (int i = 0; i < OBJ.n_f; i++)OBJ.faces[i].faceVertices();
+
+
+	//fac.createFromArrays(p, OBJ.nCnt, OBJ.faceCounts, OBJ.fCnt, OBJ.faces, true );
+//	M = metaMesh( tmp );
+	//M.assignScalars();
+//	M.boundingBox(min, max);
+	
+
+	//S = *new SliderGroup();
+	//S.addSlider(&threshold, "threshold");
+	//S.sliders[0].attachToVariable(&threshold,min.z, max.z);
 
 
 }
@@ -198,42 +191,35 @@ void draw()
 	backGround(0.75);
 
 	glLineWidth(1.0);
-	M.draw(true);
+	//M.draw(true);
 
 	glPointSize(5);
 
 	glColor3f(1, 0, 0);
-	//for (double i = 0; i < threshold; i+= threshold * 0.05)
-		for (auto &c : faceEdges(M, threshold))
-		{
-			//drawLine(c.t, c.f);
-			//drawPoint((vec)c.t);
-			//drawPoint((vec)c.f);
-		
-		}
 
-		M.G.draw();
 		
-	
-		M.createGraph(threshold);
 		
+	long start, end;
+	start = GetTickCount();
+		
+	//	M.createGraph(threshold);
+		//M.G.draw();
 
-		long start, end;
 		
-		start = GetTickCount();
+	for (int i = 0; i < OBJ.nCnt; i++)drawPoint(OBJ.nodes[i].pos);
 
-			M.G.drawIslands();
+			//M.G.drawIslands();
 
 		end = GetTickCount();
-		timeStats(start, end, " yield islands ");
+		//timeStats(start, end, " graph + islands ");
 
-		cout << " -------------------------------------------- " << endl;
+	//	cout << " -------------------------------------------- " << endl;
 		//
 
 	glColor3f(0, 0, 0);
 	
 
-	S.draw();
+	//S.draw();
 
 }
 void keyPress(unsigned char k, int xm, int ym)
