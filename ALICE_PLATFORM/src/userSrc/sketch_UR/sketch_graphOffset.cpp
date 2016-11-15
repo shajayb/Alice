@@ -120,15 +120,25 @@ double nearestPointOnEdge(vec &a, vec&b, vec &p, vec&pt)
 	vec n = (b - a).cross(vec(0, 0, 1));
 	n.normalise();
 	pt = n * ((a - p)*n);
+	vec ed = (b - a).normalise();
 
-	return  ((a - pt) * (a - pt) < (b - a) * (b - a)) ? (a - p)*n : 1e10;
+	if ( (p-a) * (ed) > 0 && (p - a) * (ed) < (b-a).mag())
+		return (a - p)*n;
+	else
+	{
+		float d1 = pt.distanceTo(a);
+		float d2 = pt.distanceTo(b);
+		return MIN(d1, d2);
+	}
+
+	//return  ((a - pt) * (a - pt) < (b - a) * (b - a)) ? (a - p)*n : 1e10;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
 void setup()
 {
-	G.createVertex(vec(-1, -1, 0));
+	G.createVertex(vec(-2, -1, 0));
 	G.createVertex(vec(-1, 1, 0));
 	G.createVertex(vec(1, 1, 0));
 	G.createVertex(vec(1, -1, 0));
@@ -146,7 +156,7 @@ void setup()
 	
 	Matrix4 trans;
 	trans.translate((minV + maxV) * 0.5);
-	trans.scale(1.1);
+	trans.scale(1.4);
 	minV = minV * trans;
 	maxV = maxV * trans;
 	
@@ -202,7 +212,7 @@ void setup()
 			e0 = G.edges[j].vEnd->id;
 			e1 = G.edges[j].vStr->id;
 			dChk = nearestPointOnEdge(G.positions[e0], G.positions[e1], MM.positions[i], pt);
-			dChk = fabs(dChk);
+		
 			d = MIN(dChk, d);
 		}
 
@@ -214,12 +224,12 @@ void setup()
 
 
 	//
-	threshold = (dMin);
+	threshold = 0; ;; (dMin);
 
 	S = *new SliderGroup();
 	S.addSlider(&threshold, "threshold");
-	S.sliders[0].minVal = 0 ;
-	S.sliders[0].maxVal = dMin + dMin * 5;
+	S.sliders[0].minVal = -1 ;
+	S.sliders[0].maxVal = 1.0;
 	
 
 	
@@ -244,17 +254,17 @@ void draw()
 
 	S.draw();
 
-	//vec p(-0.1,-0.2,0);
-	//vec pt;
-	//double d = nearestPointOnEdge(G.positions[2], G.positions[1], p,pt);
+	vec p = minV;
+	vec pt;
+	double d = nearestPointOnEdge(G.positions[0], G.positions[1], p,pt);
 
-	//glPointSize(10);
-	//drawPoint(p);
-	//drawLine(p, p + pt);
+	glPointSize(10);
+	drawPoint(p);
+	drawLine(p, p + pt);
 
 
 	wireFrameOn();
-		MM.draw();
+		//MM.draw();
 		MM.G.draw();
 		//MM.G.drawIslands();
 	wireFrameOff();
@@ -263,7 +273,7 @@ void draw()
 	{
 		vec4 clr = getColour(MM.scalars[i], dMin, dMax);
 		glColor3f(clr.r, clr.g, clr.b);
-		//drawPoint(MM.positions[i]);
+		drawPoint(MM.positions[i]);
 	}
 
 
