@@ -13,19 +13,6 @@ using namespace std::experimental;
 
 Graph G;
 
-struct E
-{
-	vec t, f;
-
-	E() {}
-	E( vec &_t,vec &_f)
-	{
-		t = _t;
-		f = _f;
-	}
-};
-
-
 
 class metaMesh : public Mesh
 {
@@ -56,26 +43,11 @@ public:
 		for (int i = 0; i < n_f; i++)faces[i].faceVertices();
 	}
 
-	vec assignScalars(string component = "z")
+	void assignScalars(string component = "y")
 	{
-		if( component == "z")
 		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
-
-		if (component == "m")
-			for (int i = 0; i < n_v; i++)scalars[i] =  vertices[i].getMeanCurvatureGradient(positions).mag(); // 
 		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
 
-		vec ret;
-		ret.x = 1e+10;
-		ret.y = 1e-10;
-		for (int i = 0; i < n_v; i++)
-		{
-			ret.x = MIN(scalars[i], ret.x);
-			ret.y = MAX(scalars[i], ret.y);
-
-		}
-
-		return ret;
 	}
 
 	void createGraph( double threshold)
@@ -85,9 +57,8 @@ public:
 		double interp;
 		Vertex v;
 		int *edge_vertex_ids = new int[n_e];
-		
-		
-		G.n_v = G.n_e = 0;
+
+		G.reset();
 
 		for (int i = 0; i < n_e; i++)
 		{
@@ -132,41 +103,72 @@ public:
 
 		}
 
+		cout << G.n_e << " " << n_v << endl;
+
 		delete[]edge_vertex_ids;
 	}
 
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
-
-ButtonGroup B;
-bool tillThreshold = false;
-bool showMesh = true;
-bool scalarsCurv = false;
+importer OBJ;
 
 void setup()
 {
-	
 
-	MeshFactory fac;
-	Mesh tmp = fac.createFromOBJ("data/in.obj", 1, false, false);
-	M = metaMesh( tmp );
-	
 
 	vec min, max;
-	M.boundingBox(min, max);
-	S = *new SliderGroup();
-	S.addSlider(&threshold, "threshold");
-	S.sliders[0].attachToVariable(&threshold, min.z, max.z);
+	MeshFactory fac;
+	
+	//Mesh tmp = fac.createFromOBJ("data/in.obj", 10, true, false);
+	
+	OBJ = * new importer("data/in.obj", MAX_VERTS, 1.0);
+	OBJ.read_obj();
+	
+	vec *p = new vec[OBJ.nCnt];
+	for (int i = 0; i < OBJ.nCnt; i++)p[i] = OBJ.nodes[i].pos;
 
-	B = *new ButtonGroup(vec(50, 350, 0));
-	B.addButton(&tillThreshold, "tillThreshold");
-	B.addButton(&showMesh, "showMesh");
-	B.addButton(&scalarsCurv, "scalarsCurv");
+
+	Mesh OBJMesh;
+	Vertex *f_verts[MAX_VALENCE];
+	// ------------------------------------ make vertices 
+
+	for (int i = 0; i < OBJ.nCnt; i++)OBJMesh.createVertex(p[i]);
+
+	// ------------------------------------ make faces ;
+
+	for (int i = 0, strt = 0, num; i < OBJ.fCnt; i++, strt += num)
+	{
+		num = OBJ.faceCounts[i]; // number of vertices per face - tri,quad,nGon ;
+
+							 // --- collect face vertices from global vertex list ;
+		for (int j = strt, f_v_cnt = 0; j < strt + num; j++, f_v_cnt++)
+			f_verts[f_v_cnt] = &OBJMesh.vertices[OBJ.faces[j]];
+
+		OBJMesh.createNGon(f_verts, num, true);
+	}
+
+	// check euler characteristics .
+
+	// recent addition .
+	//for (int i = 0; i < OBJ.n_f; i++)OBJ.faces[i].faceVertices();
+
+
+	//fac.createFromArrays(p, OBJ.nCnt, OBJ.faceCounts, OBJ.fCnt, OBJ.faces, true );
+//	M = metaMesh( tmp );
+	//M.assignScalars();
+//	M.boundingBox(min, max);
+	
+
+	//S = *new SliderGroup();
+	//S.addSlider(&threshold, "threshold");
+	//S.sliders[0].attachToVariable(&threshold,min.z, max.z);
+
 
 }
 
@@ -189,28 +191,35 @@ void draw()
 	backGround(0.75);
 
 	glLineWidth(1.0);
-	if(showMesh)M.draw(true);
+	//M.draw(true);
 
-	vec mnx = (scalarsCurv) ? M.assignScalars("m") : M.assignScalars("z");
-	S.sliders[0].maxVal = mnx.y;
-	S.sliders[0].minVal = mnx.x;
-	double inc = (mnx.y - mnx.x) * 0.005;
 	glPointSize(5);
 
-	
-	for( double t = (tillThreshold ? S.sliders[0].minVal : threshold ) ; t <= threshold ; t += inc )
-	{
-		M.createGraph(t);
-		glColor3f(1, 0, 0);
-		M.G.draw();
-		if( !tillThreshold )M.G.drawIslands();
-	}
+	glColor3f(1, 0, 0);
 
+		
+		
+	long start, end;
+	start = GetTickCount();
+		
+	//	M.createGraph(threshold);
+		//M.G.draw();
+
+		
+	for (int i = 0; i < OBJ.nCnt; i++)drawPoint(OBJ.nodes[i].pos);
+
+			//M.G.drawIslands();
+
+		end = GetTickCount();
+		//timeStats(start, end, " graph + islands ");
+
+	//	cout << " -------------------------------------------- " << endl;
+		//
 
 	glColor3f(0, 0, 0);
 	
-	S.draw();
-	B.draw();
+
+	//S.draw();
 
 }
 void keyPress(unsigned char k, int xm, int ym)
@@ -225,7 +234,7 @@ void mousePress(int b, int state, int x, int y)
 	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
 		S.performSelection(x, y, HUDSelectOn);
-		B.performSelection(x, y);
+		//		B.performSelection(x, y);
 	}
 }
 
