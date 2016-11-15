@@ -405,7 +405,7 @@ public:
 			glColor3f(1, 0, 0);
 			drawLine(a, a + vec(0, -30, 0));
 			char s[200];
-			sprintf(s, "%f", rotations[currentPointId][jointNum]);
+			sprintf(s, "%f", rotations[currentPointId][jointNum] );
 			drawString(s, a + vec(0, -35, 0));
 
 		restore3d();
@@ -530,6 +530,9 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	}
 
+	if (k == 'N')path.currentPointId -= 1;
+	
+
 	if (k == 'q')path.checkPathForReachability();
 	if (k == 'w')path.exportGCode();
 	if (k == 'r')setup();
@@ -539,8 +542,8 @@ void keyPress(unsigned char k, int xm, int ym)
 		//// rotation corrections...
 		for (int i = 0; i < path.actualPathLength -1 ; i++)
 		{
-			/*if (i > 0)
-				if ((path.rotations[i][5] - path.rotations[i - 1][5]) > 180 ) path.rotations[i][5] -= 360;*/
+			//if (i > 0)
+			//	if ((path.rotations[i][5] - path.rotations[i - 1][5]) > 180 ) path.rotations[i][5] -= 360;
 
 			if (i > 0)
 				if ( (path.rotations[i][5] - path.rotations[i - 1][5]) < -180 ) path.rotations[i][5] += 360;

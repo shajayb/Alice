@@ -111,6 +111,25 @@ public:
 
 	// ------------- ------------- ------------- -------------------------- UTILITIES - TOPOLOGY
 	
+	void boundingbox( vec &min,vec &max)
+	{
+		min = vec (1e10, 1e10, 1e10);
+		max = min * -1;
+		vec p;
+
+		for ( int i = 0 ; i < n_v ; i ++ )
+		{
+			p = positions[i];
+			min.x = MIN(min.x, p.x);
+			min.y = MIN(min.y, p.y);
+			min.z = MIN(min.z, p.z);
+
+			max.x = MAX(max.x, p.x);
+			max.y = MAX(max.y, p.y);
+			max.z = MAX(max.z, p.z);
+		}
+	}
+
 	void reset()
 	{
 
