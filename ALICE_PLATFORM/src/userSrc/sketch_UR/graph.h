@@ -94,7 +94,7 @@ public:
 	void recurseEdges(Edge &startEdge, int &sum)
 	{
 
-		startEdge.draw(positions, 6.0);
+		startEdge.draw(positions, 2.0);
 		glLineWidth(1.0);
 		int cnt = 0;;
 
@@ -177,7 +177,7 @@ public:
 
 	void draw()
 	{
-		glPointSize(5);
+		glPointSize(2);
 		for (int i = 0; i < n_v; i++)
 		{
 			char s[200];

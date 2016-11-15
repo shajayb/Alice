@@ -56,11 +56,26 @@ public:
 		for (int i = 0; i < n_f; i++)faces[i].faceVertices();
 	}
 
-	void assignScalars(string component = "y")
+	vec assignScalars(string component = "z")
 	{
+		if( component == "z")
 		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
+
+		if (component == "m")
+			for (int i = 0; i < n_v; i++)scalars[i] =  vertices[i].getMeanCurvatureGradient(positions).mag(); // 
 		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
 
+		vec ret;
+		ret.x = 1e+10;
+		ret.y = 1e-10;
+		for (int i = 0; i < n_v; i++)
+		{
+			ret.x = MIN(scalars[i], ret.x);
+			ret.y = MAX(scalars[i], ret.y);
+
+		}
+
+		return ret;
 	}
 
 	void createGraph( double threshold)
@@ -122,60 +137,36 @@ public:
 
 };
 
-
-
-//
-generator<E> faceEdges( metaMesh &m , double threshold)
-{
-	int a, b;
-	vec ePt[3];
-	bool e[3];
-	vec diff;
-	double interp;
-
-	for (int i = 0; i < m.n_f; i++)
-	{
-		
-		for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
-		{
-			a = m.faces[i].edgePtrs[j]->vEnd->id;
-			b = m.faces[i].edgePtrs[j]->vStr->id;
-		
-			diff = (m.positions[b] - m.positions[a]);// .normalise();
-			interp = ofMap(threshold, m.scalars[a], m.scalars[b], 0, 1);
-
-			ePt[j] = (interp >= 0.0 && interp <= 1.0) ?  (m.positions[a] + diff * interp) :  ( vec(0, 0, 0) );
-			e[j] = (interp >= 0.0 && interp <= 1.0) ? 1 : 0;
-		}
-
-		
-		if( e[0] && e[1])yield E(ePt[0], ePt[1]);
-		if (e[1] && e[2])yield E(ePt[1], ePt[2]);
-		if (e[2] && e[0])yield E(ePt[2], ePt[0]);
-	
-	}
-}
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
 
+ButtonGroup B;
+bool tillThreshold = false;
+bool showMesh = true;
+bool scalarsCurv = false;
+
 void setup()
 {
-	S = *new SliderGroup();
-	S.addSlider(&threshold, "threshold");
-	S.sliders[0].attachToVariable(&threshold, 0, 100);
+	
 
 	MeshFactory fac;
-	Mesh tmp = fac.createFromOBJ("data/in.obj", 10, false, false);
+	Mesh tmp = fac.createFromOBJ("data/in.obj", 1, false, false);
 	M = metaMesh( tmp );
-	M.assignScalars();
+	
 
+	vec min, max;
+	M.boundingBox(min, max);
+	S = *new SliderGroup();
+	S.addSlider(&threshold, "threshold");
+	S.sliders[0].attachToVariable(&threshold, min.z, max.z);
+
+	B = *new ButtonGroup(vec(50, 350, 0));
+	B.addButton(&tillThreshold, "tillThreshold");
+	B.addButton(&showMesh, "showMesh");
+	B.addButton(&scalarsCurv, "scalarsCurv");
 
 }
 
@@ -198,42 +189,28 @@ void draw()
 	backGround(0.75);
 
 	glLineWidth(1.0);
-	M.draw(true);
+	if(showMesh)M.draw(true);
 
+	vec mnx = (scalarsCurv) ? M.assignScalars("m") : M.assignScalars("z");
+	S.sliders[0].maxVal = mnx.y;
+	S.sliders[0].minVal = mnx.x;
+	double inc = (mnx.y - mnx.x) * 0.005;
 	glPointSize(5);
 
-	glColor3f(1, 0, 0);
-	//for (double i = 0; i < threshold; i+= threshold * 0.05)
-		for (auto &c : faceEdges(M, threshold))
-		{
-			//drawLine(c.t, c.f);
-			//drawPoint((vec)c.t);
-			//drawPoint((vec)c.f);
-		
-		}
-
-		M.G.draw();
-		
 	
-		M.createGraph(threshold);
-		
+	for( double t = (tillThreshold ? S.sliders[0].minVal : threshold ) ; t <= threshold ; t += inc )
+	{
+		M.createGraph(t);
+		glColor3f(1, 0, 0);
+		M.G.draw();
+		if( !tillThreshold )M.G.drawIslands();
+	}
 
-		long start, end;
-		
-		start = GetTickCount();
-
-			M.G.drawIslands();
-
-		end = GetTickCount();
-		timeStats(start, end, " yield islands ");
-
-		cout << " -------------------------------------------- " << endl;
-		//
 
 	glColor3f(0, 0, 0);
 	
-
 	S.draw();
+	B.draw();
 
 }
 void keyPress(unsigned char k, int xm, int ym)
@@ -248,7 +225,7 @@ void mousePress(int b, int state, int x, int y)
 	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
 		S.performSelection(x, y, HUDSelectOn);
-		//		B.performSelection(x, y);
+		B.performSelection(x, y);
 	}
 }
 
