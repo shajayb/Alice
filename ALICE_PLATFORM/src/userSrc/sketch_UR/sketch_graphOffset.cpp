@@ -120,18 +120,18 @@ double nearestPointOnEdge(vec &a, vec&b, vec &p, vec&pt)
 	vec n = (b - a).cross(vec(0, 0, 1));
 	n.normalise();
 	pt = n * ((a - p)*n);
-	vec ed = (b - a).normalise();
+	pt += p;
 
-	if ( (p-a) * (ed) > 0 && (p - a) * (ed) < (b-a).mag())
-		return (a - p)*n;
-	else
-	{
-		float d1 = pt.distanceTo(a);
-		float d2 = pt.distanceTo(b);
-		return MIN(d1, d2);
-	}
+	
+	float len = (a - b).mag();
+	
+	vec ed = (a - b)/len;
+	double param = (pt - b) * ed;
 
-	//return  ((a - pt) * (a - pt) < (b - a) * (b - a)) ? (a - p)*n : 1e10;
+	param = ofClamp(param, 0, len);
+	pt = b + ed * param;
+
+	return (p - pt) * (p - pt);// p.distanceTo(pt);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -142,32 +142,38 @@ void setup()
 	G.createVertex(vec(-1, 1, 0));
 	G.createVertex(vec(1, 1, 0));
 	G.createVertex(vec(1, -1, 0));
-//	G.createVertex(vec(-2, 3, 0));
+	G.createVertex(vec(-2, 3, 0));
+	G.createVertex(vec(2.1, 3, 0));
 
 	G.createEdge(G.vertices[0], G.vertices[1]);
 	G.createEdge(G.vertices[1], G.vertices[2]);
 	G.createEdge(G.vertices[2], G.vertices[3]);
-	//G.createEdge(G.vertices[4], G.vertices[0]);
+	G.createEdge(G.vertices[4], G.vertices[0]);
+	G.createEdge(G.vertices[5], G.vertices[4]);
 	
 	
-	for (int i = 0; i < G.n_v; i++) G.positions[i] *= 10;
+	for (int i = 0; i < G.n_v; i++) G.positions[i] *= 1;
 	
 	G.boundingbox(minV, maxV);
 	
 	Matrix4 trans;
 	trans.translate((minV + maxV) * 0.5);
-	trans.scale(1.4);
+	trans.scale(1.5);
 	minV = minV * trans;
 	maxV = maxV * trans;
 	
 
 	int rowCnt = 0;
 	int colCnt = 0;
-	for (float x = minV.x; x <= maxV.x; x += (maxV.x - minV.x)*0.02)
+	int divs = 100;
+	/*for (float x = minV.x; x <= maxV.x; x += (maxV.x - minV.x)*0.01)*/
+	for (int i = 0 ; i < divs; i++ )
 	{
+		float x = minV.x + (maxV.x - minV.x) / float(divs) * float(i);
 		rowCnt = 0;
-			for (float y = minV.y; y <= maxV.y; y += (maxV.y - minV.y)*0.02)
+			for (int j = 0; j < divs; j++)
 			{
+				float y = minV.y + (maxV.y - minV.y) / float(divs) * float(j);
 				M.createVertex(vec(x, y, 0));
 				rowCnt++;
 			}
@@ -176,6 +182,8 @@ void setup()
 		
 	
 	Vertex *fVerts[4];
+	Vertex *fv[3];
+
 	for (int i = 0; i < rowCnt-1; i++)
 	{
 		for (int j = 0; j < colCnt; j++)
@@ -186,6 +194,17 @@ void setup()
 			fVerts[2] = &M.vertices[(i+1)*colCnt + j-1];
 			fVerts[3] = &M.vertices[i*colCnt + j-1];
 			M.createNGon(fVerts, 4,true);
+			
+		/*	fv[0] = &M.vertices[i*colCnt + j];;
+			fv[1] = &M.vertices[i*colCnt + j-1];;
+			fv[2] = &M.vertices[(i+1)*colCnt + j];;
+			M.createFace(fv, 3);
+
+
+			fv[0] = &M.vertices[(i )*colCnt + j-1];
+			fv[1] = &M.vertices[(i+1)*colCnt + j - 1];;
+			fv[2] = &M.vertices[(i + 1)*colCnt + j];;
+			M.createFace(fv, 3);*/
 		}
 	}
 
@@ -203,7 +222,7 @@ void setup()
 		
 		vec pt;
 		double d = 1e10;
-		double dChk;
+		double dChk = 0.0;
 			//= nearestPointOnEdge(G.positions[1], G.positions[0], p, pt);
 
 		for (int j = 0; j < G.n_e; j++)
@@ -211,11 +230,15 @@ void setup()
 			int e0, e1;
 			e0 = G.edges[j].vEnd->id;
 			e1 = G.edges[j].vStr->id;
-			dChk = nearestPointOnEdge(G.positions[e0], G.positions[e1], MM.positions[i], pt);
-		
-			d = MIN(dChk, d);
+			float Di = nearestPointOnEdge(G.positions[e0], G.positions[e1], MM.positions[i], pt);
+			//dChk = Di;
+			//dChk -= 1.0;
+			dChk += 1.0 / (pow((Di + 0.01 ), 2.0));
+
+			//d= MIN(dChk, d);
 		}
 
+		d = dChk;
 		MM.scalars[i] = d;
 		
 		dMin = MIN(dMin, d);
@@ -224,14 +247,14 @@ void setup()
 
 
 	//
-	threshold = 0; ;; (dMin);
+	threshold = 0; ; 
 
 	S = *new SliderGroup();
 	S.addSlider(&threshold, "threshold");
-	S.sliders[0].minVal = -1 ;
-	S.sliders[0].maxVal = 1.0;
+	S.sliders[0].minVal = 0;
+	S.sliders[0].maxVal = dMax;
 	
-
+	cout << dMin << " " << dMax << endl;
 	
 }
 
@@ -242,7 +265,7 @@ void update(int value)
 
 	MeshFactory fac;
 
-	MM.createGraph((dMin + dMax) * threshold);
+	MM.createGraph( threshold);
 }
 
 void draw()
@@ -250,19 +273,12 @@ void draw()
 
 	backGround(0.75);
 
-	G.draw();
 
 	S.draw();
 
-	vec p = minV;
-	vec pt;
-	double d = nearestPointOnEdge(G.positions[0], G.positions[1], p,pt);
+	
 
-	glPointSize(10);
-	drawPoint(p);
-	drawLine(p, p + pt);
-
-
+	G.draw();
 	wireFrameOn();
 		//MM.draw();
 		MM.G.draw();
