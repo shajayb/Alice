@@ -27,20 +27,27 @@ SliderGroup S;
 
 void setup()
 {
-	G.createVertex(vec(-2, -1, 0));
-	G.createVertex(vec(-1, 1, 0));
-	G.createVertex(vec(1, 1, 0));
-	G.createVertex(vec(1, -1, 0));
-	G.createVertex(vec(-2, 3, 0));
-	G.createVertex(vec(2.1, 3, 0));
+	//G.createVertex(vec(-2, -1, 0));
+	//G.createVertex(vec(-1, 1, 0));
+	//G.createVertex(vec(1, 1, 0));
+	//G.createVertex(vec(1, -1, 0));
+	//G.createVertex(vec(-2, 3, 0));
+	//G.createVertex(vec(2.1, 3, 0));
 
-	G.createEdge(G.vertices[0], G.vertices[1]);
-	G.createEdge(G.vertices[1], G.vertices[2]);
-	G.createEdge(G.vertices[2], G.vertices[3]);
-	G.createEdge(G.vertices[4], G.vertices[0]);
-	G.createEdge(G.vertices[5], G.vertices[2]);
-	
-	
+	//G.createEdge(G.vertices[0], G.vertices[1]);
+	//G.createEdge(G.vertices[1], G.vertices[2]);
+	//G.createEdge(G.vertices[2], G.vertices[3]);
+	//G.createEdge(G.vertices[4], G.vertices[0]);
+	//G.createEdge(G.vertices[5], G.vertices[2]);
+
+	importer imp = *new importer("data/tree_pts.txt", 10000, 5.0);
+	imp.readEdges();
+
+	G.reset();
+	for (int i = 0; i < imp.nCnt; i++)G.createVertex( imp.nodes[i].pos );
+	for (int i = 0; i < imp.eCnt; i++)G.createEdge( G.vertices[ imp.edges[i].n0 ], G.vertices[ imp.edges[i].n1 ] );
+
+
 	for (int i = 0; i < G.n_v; i++) G.positions[i] *= 1;
 	
 	G.boundingbox(minV, maxV);
@@ -65,16 +72,21 @@ void setup()
 	S = *new SliderGroup();
 	S.addSlider(&threshold, "threshold");
 	S.sliders[0].minVal = 0;
-	S.sliders[0].maxVal = dMax;
+	S.sliders[0].maxVal = 400;
 	
 	cout << dMin << " " << dMax << endl;
 
 }
 
 
-
+bool run = false;
 void update(int value)
 {
+
+	if(run)
+		for (int i = 0; i < 10; i++)
+			MM.G.smooth_connectedVertices();
+			
 }
 
 void draw()
@@ -85,24 +97,25 @@ void draw()
 
 	S.draw();
 
-	
+	G.draw();
 	wireFrameOn();
 	
+		////MM.draw();
 		MM.G.computeIslandsAsEdgeAndVertexList();
 	
-		glColor3f(1, 0, 0);
-			MM.G.drawConnectedEdgeList();
+		//glColor3f(1, 0, 0);
+		MM.G.drawConnectedEdgeList();
 	
-		glColor3f(0, 0, 0);
+		//glColor3f(0, 0, 0);
 		MM.G.draw();
 
 	wireFrameOff();
 
-	for (int i = 0; i < M.n_v; i++)
+	for (int i = 0; i < MM.n_v; i++)
 	{
 		vec4 clr = getColour(MM.scalars[i], dMin, dMax);
 		glColor3f(clr.r, clr.g, clr.b);
-		//drawPoint(MM.positions[i]);
+		drawPoint(MM.positions[i]);
 	}
 
 
@@ -111,6 +124,7 @@ void keyPress(unsigned char k, int xm, int ym)
 {
 	if( k == ' ')MM.G.smooth_connectedVertices();
 	if (k == 'w')MM.G.writeGraph(1.0);
+	if (k == 'r')run = !run;
 }
 
 void mousePress(int b, int state, int x, int y)

@@ -144,7 +144,6 @@ public:
 
 			d = dChk;
 			scalars[i] = d;
-
 			//dMin = MIN(dMin, d);
 			//dMax = MAX(dMax, d);
 		}
