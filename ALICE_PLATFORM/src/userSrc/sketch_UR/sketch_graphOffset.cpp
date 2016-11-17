@@ -8,103 +8,9 @@ using namespace ROBOTICS;
 using namespace std;
 using namespace std::experimental;
 
-#include "graph.h"
-
-class metaMesh : public Mesh
-{
-public:
-
-	Graph G;
-	array<double, MAX_VERTS> scalars;
-	metaMesh()
-	{
-
-	};
-	metaMesh(Mesh &in)
-	{
-		G = *new Graph();
-
-		///
-
-		for (int i = 0; i < in.n_v; i++) positions[i] = in.positions[i];
-		for (int i = 0; i < in.n_v; i++) createVertex(positions[i]);
-		Vertex *f_v[MAX_VALENCE];
-		for (int i = 0; i < in.n_f; i++)
-		{
-			int *face_verts = in.faces[i].faceVertices();
-			for (int j = 0; j < in.faces[i].n_e; j++)f_v[j] = &vertices[face_verts[j]];
-			createFace(f_v, in.faces[i].n_e);
-		}
-
-		for (int i = 0; i < n_f; i++)faces[i].faceVertices();
-	}
-
-	void assignScalars(string component = "y")
-	{
-		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
-																 //(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
-
-	}
-
-	void createGraph(double threshold)
-	{
-		int a, b;
-		vec diff;
-		double interp;
-		Vertex v;
-		int *edge_vertex_ids = new int[n_e];
-
-		G.reset();
-
-		for (int i = 0; i < n_e; i++)
-		{
-			a = edges[i].vStr->id;
-			b = edges[i].vEnd->id;
-
-			diff = (positions[b] - positions[a]);// .normalise();
-			interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
-			if (interp >= 0.0 && interp <= 1.0)
-			{
-				v = *(G.createVertex((positions[a] + diff * interp)));
-				//v.clr = getColour(interp,0,1);
-				edge_vertex_ids[i] = v.id;
-			}
-			else
-				edge_vertex_ids[i] = -1;
-
-		}
+#include"metaMesh.h"
 
 
-		////
-
-		int e_id;
-		int e_v_ids[3];
-
-		for (int i = 0; i < n_f; i++)
-		{
-
-			e_v_ids[0] = e_v_ids[1] = e_v_ids[2] = -1;;
-
-			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
-			{
-				e_id = faces[i].edgePtrs[j]->id;
-				e_v_ids[j] = edge_vertex_ids[e_id];
-			}
-
-
-			if (e_v_ids[0] >= 0 && e_v_ids[1] >= 0)G.createEdge(G.vertices[e_v_ids[0]], G.vertices[e_v_ids[1]]);
-			if (e_v_ids[1] >= 0 && e_v_ids[2] >= 0)G.createEdge(G.vertices[e_v_ids[1]], G.vertices[e_v_ids[2]]);
-			if (e_v_ids[2] >= 0 && e_v_ids[0] >= 0)G.createEdge(G.vertices[e_v_ids[2]], G.vertices[e_v_ids[0]]);
-
-
-		}
-
-		//cout << G.n_e << " " << n_v << endl;
-
-		delete[]edge_vertex_ids;
-	}
-
-};
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Mesh M;
@@ -113,26 +19,9 @@ Graph G;
 vec minV, maxV;
 double dMin, dMax;
 double threshold;
+double iter;
 SliderGroup S;
 
-double nearestPointOnEdge(vec &a, vec&b, vec &p, vec&pt)
-{
-	vec n = (b - a).cross(vec(0, 0, 1));
-	n.normalise();
-	pt = n * ((a - p)*n);
-	pt += p;
-
-	
-	float len = (a - b).mag();
-	
-	vec ed = (a - b)/len;
-	double param = (pt - b) * ed;
-
-	param = ofClamp(param, 0, len);
-	pt = b + ed * param;
-
-	return (p - pt) * (p - pt);// p.distanceTo(pt);
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -149,7 +38,7 @@ void setup()
 	G.createEdge(G.vertices[1], G.vertices[2]);
 	G.createEdge(G.vertices[2], G.vertices[3]);
 	G.createEdge(G.vertices[4], G.vertices[0]);
-	G.createEdge(G.vertices[5], G.vertices[4]);
+	G.createEdge(G.vertices[5], G.vertices[2]);
 	
 	
 	for (int i = 0; i < G.n_v; i++) G.positions[i] *= 1;
@@ -163,88 +52,12 @@ void setup()
 	maxV = maxV * trans;
 	
 
-	int rowCnt = 0;
-	int colCnt = 0;
-	int divs = 100;
-	/*for (float x = minV.x; x <= maxV.x; x += (maxV.x - minV.x)*0.01)*/
-	for (int i = 0 ; i < divs; i++ )
-	{
-		float x = minV.x + (maxV.x - minV.x) / float(divs) * float(i);
-		rowCnt = 0;
-			for (int j = 0; j < divs; j++)
-			{
-				float y = minV.y + (maxV.y - minV.y) / float(divs) * float(j);
-				M.createVertex(vec(x, y, 0));
-				rowCnt++;
-			}
-		colCnt++;
-	}
-		
-	
-	Vertex *fVerts[4];
-	Vertex *fv[3];
-
-	for (int i = 0; i < rowCnt-1; i++)
-	{
-		for (int j = 0; j < colCnt; j++)
-		{
-			if (j == 0)continue;
-			fVerts[0] = & M.vertices[i*colCnt + j];
-			fVerts[1] = &M.vertices[(i+1)*colCnt + j];
-			fVerts[2] = &M.vertices[(i+1)*colCnt + j-1];
-			fVerts[3] = &M.vertices[i*colCnt + j-1];
-			M.createNGon(fVerts, 4,true);
-			
-		/*	fv[0] = &M.vertices[i*colCnt + j];;
-			fv[1] = &M.vertices[i*colCnt + j-1];;
-			fv[2] = &M.vertices[(i+1)*colCnt + j];;
-			M.createFace(fv, 3);
-
-
-			fv[0] = &M.vertices[(i )*colCnt + j-1];
-			fv[1] = &M.vertices[(i+1)*colCnt + j - 1];;
-			fv[2] = &M.vertices[(i + 1)*colCnt + j];;
-			M.createFace(fv, 3);*/
-		}
-	}
-
-
-	for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
-
-	
-	MM = metaMesh(M);
-	
-	dMin = 1e10;
-	dMax = dMin * -1;
-
-	for (int i = 0; i < MM.n_v; i++)
-	{
-		
-		vec pt;
-		double d = 1e10;
-		double dChk = 0.0;
-			//= nearestPointOnEdge(G.positions[1], G.positions[0], p, pt);
-
-		for (int j = 0; j < G.n_e; j++)
-		{
-			int e0, e1;
-			e0 = G.edges[j].vEnd->id;
-			e1 = G.edges[j].vStr->id;
-			float Di = nearestPointOnEdge(G.positions[e0], G.positions[e1], MM.positions[i], pt);
-			//dChk = Di;
-			//dChk -= 1.0;
-			dChk += 1.0 / (pow((Di + 0.01 ), 2.0));
-
-			//d= MIN(dChk, d);
-		}
-
-		d = dChk;
-		MM.scalars[i] = d;
-		
-		dMin = MIN(dMin, d);
-		dMax = MAX(dMax, d);
-	}
-
+	MeshFactory fac;
+	//MM = metaMesh(fac.createFromOBJ("data/in.obj", 1.0, false, false));
+	//MM.assignScalars("z");
+	MM = MM.createFromPlane(minV, maxV, 100);
+	MM.assignScalarsAsLineDistanceField(G);
+	MM.getMinMaxOfScalarField(dMin, dMax);
 
 	//
 	threshold = 0; ; 
@@ -255,17 +68,13 @@ void setup()
 	S.sliders[0].maxVal = dMax;
 	
 	cout << dMin << " " << dMax << endl;
-	
+
 }
 
 
 
 void update(int value)
 {
-
-	MeshFactory fac;
-
-	MM.createGraph( threshold);
 }
 
 void draw()
@@ -277,27 +86,31 @@ void draw()
 	S.draw();
 
 	
-
-	G.draw();
 	wireFrameOn();
-		//MM.draw();
+	
+		MM.G.computeIslandsAsEdgeAndVertexList();
+	
+		glColor3f(1, 0, 0);
+			MM.G.drawConnectedEdgeList();
+	
+		glColor3f(0, 0, 0);
 		MM.G.draw();
-		//MM.G.drawIslands();
+
 	wireFrameOff();
 
 	for (int i = 0; i < M.n_v; i++)
 	{
 		vec4 clr = getColour(MM.scalars[i], dMin, dMax);
 		glColor3f(clr.r, clr.g, clr.b);
-		drawPoint(MM.positions[i]);
+		//drawPoint(MM.positions[i]);
 	}
 
 
 }
 void keyPress(unsigned char k, int xm, int ym)
 {
-
-
+	if( k == ' ')MM.G.smooth_connectedVertices();
+	if (k == 'w')MM.G.writeGraph(1.0);
 }
 
 void mousePress(int b, int state, int x, int y)
@@ -305,7 +118,8 @@ void mousePress(int b, int state, int x, int y)
 	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
 		S.performSelection(x, y, HUDSelectOn);
-		//		B.performSelection(x, y);
+		if(HUDSelectOn)MM.createIsoContourGraph(threshold);
+
 	}
 }
 
@@ -314,6 +128,8 @@ void mouseMotion(int x, int y)
 	//if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
 		S.performSelection(x, y, HUDSelectOn);
+		if (HUDSelectOn)MM.createIsoContourGraph(threshold);
+		
 	}
 }
 
