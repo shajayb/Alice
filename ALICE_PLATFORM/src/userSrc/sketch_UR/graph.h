@@ -24,8 +24,12 @@ public:
 	// ------------- attributes ;
 
 	vector<vec>positions;
-
-
+	
+	/// islands
+	vector<int> connected_edges;
+	vector<int> connected_vertices;
+	array<bool, MAX_EDGES> eChecked;
+	array<bool, MAX_EDGES> eAdded;
 
 	// ------------- ------------- ------------- -------------------------- CONSTRUCTORS  ;
 	Graph()
@@ -163,9 +167,12 @@ public:
 		return createEdge(str, end);
 	}
 
+
+	// ------------- ------------- ------------- -------------------------- COMPUTE - TOPOLOGY
+
 	generator<Edge> getNextEdge(Edge &e)
 	{
-		//cout << " getNextEdge called on " << e.id << endl;
+
 		for (int i = 0; i < e.vEnd->n_e; i++)
 			if (e.vEnd->edgePtrs[i] != &e)yield *(e.vEnd->edgePtrs[i]);
 
@@ -175,56 +182,160 @@ public:
 	}
 
 
-
-	array<bool, MAX_EDGES> eChecked;
-	// generator<Edge>  !! IMP : co-routine functions cannot be recursive. !
-	void recurseEdges(Edge &startEdge, int &sum)
+	void addEdgeToList( Edge &e , vector<int> &connectedEdgeList)
 	{
-
-		//startEdge.draw(&positions, 6.0);
-		glLineWidth(1.0);
-		int cnt = 0;;
+		if (!eAdded[e.id])
+		{
+			eAdded[e.id] = true;
+			connectedEdgeList.push_back(e.id);
+		}
+	}
+	// generator<Edge>  !! IMP : co-routine functions cannot be recursive. !
+	void recurseEdges(Edge &startEdge, vector<int> &connectedEdgeList)
+	{
+		addEdgeToList(startEdge, connectedEdgeList);
 
 		vector<Edge> con_edges;
 		for (auto e : getNextEdge(startEdge))
 			if (!eChecked[e.id])
 			{
-				//e.draw(positions, 2.0);
 				con_edges.push_back(e);
+				addEdgeToList(e, connectedEdgeList);
 			}
 
 		eChecked[startEdge.id] = true;
-		sum += con_edges.size();
-		//for (auto e : con_edges) cout << e.id << ",";
-		//cout << endl;
+		
 
-		for (auto e : con_edges)
-			if (!eChecked[e.id])recurseEdges(e, sum);
+		for (auto &e : con_edges)
+			if (!eChecked[e.id])
+			{
+				recurseEdges(e, connectedEdgeList);
+				eChecked[e.id] = true;
+			}
+			//else
+				
 	}
 
-	void drawIslands()
+	void computeIslandsAsEdgeAndVertexList()
 	{
 		for (auto &c : eChecked)c = false;
-
-		for (int i = 0; i < n_e; i++)
-			if (!eChecked[i])
-			{
-				int sum = 0;
-				//vec4 clr = clrs[i];;
-				//glColor3f(clr.r, clr.g, clr.b);
-				recurseEdges(edges[i], sum);
-			}
-
-	}
-
-	array<bool, MAX_VERTS>vChecked;
-	void subGraphs()
-	{
-		for (int i = 0; i < n_v; i++);
+		for (auto &c : eAdded)c = false;
 		
+		connected_edges.clear();
+		
+		for (int i = 0; i < n_e; i++)
+			if (!eChecked[i])//glColor3f(clr.r, clr.g, clr.b);
+				recurseEdges(edges[i], connected_edges);
+
+		connected_vertices.clear();
+		computeConnectedVertexListFromEdgeList(connected_edges);
+	}
+
+	void computeConnectedVertexListFromEdgeList(vector<int> &connectedEdgeList)
+	{
+		if (!connectedEdgeList.size() > 0)return;
+		
+		swap(connected_edges[0], connected_edges[2]); // !! temporary fix.. this function should be recursive
+		swap(connected_edges[1], connected_edges[2]); // !! temporary fix.. this function should be recursive
+
+		int str_Vid;
+		Edge e = edges[connectedEdgeList[0]];
+		
+		connected_vertices.push_back(e.vEnd->id);
+		connected_vertices.push_back(e.vStr->id);
+		str_Vid = e.vEnd->id;
+
+		int n = connectedEdgeList.size();
+		for (int i = 1; i < n ; i += 1) 
+		{
+			Edge e = edges[connectedEdgeList[i]];
+			int e1 = e.vEnd->id;
+			int e2 = e.vStr->id;
+			str_Vid = (e1 == str_Vid) ? e2 : e1;
+			
+			connected_vertices.push_back(str_Vid);
+		}
+	}
+
+	void smooth_connectedVertices()
+	{
+		if (!connected_vertices.size() > 0)return;
+		
+		int n = connected_vertices.size();
+		for (int i = 0; i < n; i += 1)
+		{
+			int Vi = connected_vertices[Mod(i, n)];
+			int Vi_minus = connected_vertices[Mod(i - 1, n)];
+			int Vi_plus = connected_vertices[Mod(i + 1, n)];
+			positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
+		}
+	}
+
+	// ------------- ------------- ------------- -------------------------- DISPLAY 
+
+	void drawConnectedEdgeList( bool debugDraw = false)
+	{
+		if (!connected_vertices.size() > 0)return;
+
+		int e1, e2;
+		int n = connected_vertices.size();
+		for (int i = 0; i < n; i += 1) // += 3 -> fix! (?)
+		{
+			e1 = connected_vertices[i];
+			e2 = connected_vertices[ Mod(i+1,n) ];
+			drawLine(positions[e1], positions[e2]);
+				
+			if (debugDraw)
+			{
+				glPointSize(3);
+				drawPoint(positions[e1]);
+				char c[200];
+				sprintf(c, "%i ", i);
+				string s = "";
+				s += c;
+				drawString(s, positions[e1]);
+			}
+		}
+
+	}
+
+	void drawConnectedEdgeNumbers()
+	{
+
+		for (int i = 0; i < connected_edges.size(); i += 1)
+		{
+			int e1 = connected_edges[i];
+			Edge e = edges[e1];
+			vec pt = (positions[e.vEnd->id] + positions[e.vStr->id]) * 0.5;
+			char c[200];
+			sprintf(c, "%i ", i);
+			string s = "";
+			s += c;
+			drawString(s,pt);
+
+		}
+	}
+
+	void drawConnectedVertexList()
+	{
+
+		for (int i = 0; i < connected_vertices.size(); i += 1)
+			drawPoint(positions[connected_vertices[i]]);
+	}
+
+	int Mod(int a, int n)
+	{
+		a = a % n;
+		return (a < 0) ? a + n : a;
 	}
 
 
+	void draw_connectedVertices()
+	{
+		if (!connected_vertices.size() > 0)return;
+
+			for (int i = 0; i < connected_vertices.size(); i += 1)drawPoint(positions[connected_vertices[i]]);
+	}
 
 	// ------------- ------------- ------------- -------------------------- UTILITIES
 	void writeGraph(float scaleBack, string outFileName = "data/graph.txt")
@@ -285,6 +396,8 @@ public:
 			drawPoint(positions[i]);
 		}
 		glPointSize(1);
+
+		
 		for (int i = 0; i < n_e; i++)
 		{
 			char s[200];
