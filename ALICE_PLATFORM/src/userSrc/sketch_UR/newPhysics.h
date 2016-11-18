@@ -10,7 +10,7 @@ using namespace std::experimental;
 
 #include "graph.h"
 
-
+//derived class
 class newPhysics : public physics
 {
 
@@ -18,33 +18,87 @@ public:
 
 	newPhysics()
 	{
-		calcCharge = false;
+		calcCharge = true;
 		calcCustom = true;
 		down = vec(0, 0, 0.0);
 		gravity = down.mag();
 	}
 
-	//virtual void calcCustomForces_post(PARTICLE *p)
-	//{
-	//	for (int i = 0; i < np; i++)
-	//		for (int j = 0; j < np; j++)
-	//		{
-	//			if (i == j)continue;
+	virtual void calcCustomForces_post(PARTICLE *p)
+	{
+		for (int i = 0; i < np; i++)
+			for (int j = 0; j < np; j++)
+			{
+				if (i == j)continue;
 
-	//			vec f = p[i].p - p[j].p;
-	//			double d = f*f;
+				vec f = p[i].p - p[j].p;
+				double d = f*f;
 
-	//			f.normalise();
-	//			if (d >= 1e-8 && d < 18)
-	//			{
+				f.normalise();
+				if (d >= 1e-8 && d < 18)
+				{
 
-	//				if (!p[i].fixed)p[i].f += (f * 1) / d;
-	//				if (!p[j].fixed)p[j].f -= (f * 1) / d;
-	//			}
-	//		
-	//		}
-	//}
+					if (!p[i].fixed)p[i].f += (f * 1) / d;
+					if (!p[j].fixed)p[j].f -= (f * 1) / d;
+				}
+			
+			}
+	}
 
 
 };
-#pragma once
+
+
+
+/*
+
+Class name
+{
+public :
+	//------------------------------------- class variables / properties
+	// vec A,P,V, ;
+	//vector<int> IDs
+	//float distance, length
+
+	//------------------------------------- constructors / setup methods
+	name()
+	{
+			for( int i = 0 ; i < 100 ; i++)IDS.push_back(i) ;
+	}
+
+	void setup()
+	{
+	}
+
+	void initiliase()
+	{
+	}
+	//------------------------------------- update / compute methods
+
+	void computeNearestNeighbors()
+	{
+	}
+
+	void calculateForces()
+	{
+	}
+
+	void updateParticlePositions()
+	{
+	}
+
+	//------------------------------------- display / draw methods
+
+	void draw()
+	{
+			drawPoint(A);
+			drawLine(A,B);
+	}
+
+	void drawStats()
+	{
+	}
+};
+
+
+*/

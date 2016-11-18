@@ -115,20 +115,28 @@ double dMin, dMax;
 double threshold;
 SliderGroup S;
 
-double nearestPointOnEdge(vec &a, vec&b, vec &p, vec&pt)
+double nearestPointOnEdge(vec a, vec b, vec p, vec&pt)
 {
 	vec n = (b - a).cross(vec(0, 0, 1));
 	n.normalise();
 	pt = n * ((a - p)*n);
-	vec ed = (b - a).normalise();
-
-	if ( (p-a) * (ed) > 0 && (p - a) * (ed) < (b-a).mag())
+	
+	float e_len = (b - a).mag();
+	vec ed = (b - a) / e_len;
+	double param = (b - (pt+p)) * ed;
+	
+	
+	if (param > 0 && param < e_len)
+	{
 		return (a - p)*n;
+	}
 	else
 	{
-		float d1 = pt.distanceTo(a);
-		float d2 = pt.distanceTo(b);
-		return MIN(d1, d2);
+		float d1 = (pt + p).distanceTo(a);
+		float d2 = (pt + p).distanceTo(b);
+		pt = d1 < d2 ? a-p : b-p;
+		float d3 = p.distanceTo(pt);
+		return d3;// < 1 ? d3 : 0.0;
 	}
 
 	//return  ((a - pt) * (a - pt) < (b - a) * (b - a)) ? (a - p)*n : 1e10;
@@ -195,7 +203,7 @@ void setup()
 	
 	MM = metaMesh(M);
 	
-	dMin = 1e10;
+	dMin = 1e100;
 	dMax = dMin * -1;
 
 	for (int i = 0; i < MM.n_v; i++)
@@ -203,23 +211,36 @@ void setup()
 		
 		vec pt;
 		double d = 1e10;
-		double dChk;
-			//= nearestPointOnEdge(G.positions[1], G.positions[0], p, pt);
+		double dChk = 0.0;;
+		
+		vec p = MM.positions[i];
 
 		for (int j = 0; j < G.n_e; j++)
 		{
 			int e0, e1;
 			e0 = G.edges[j].vEnd->id;
 			e1 = G.edges[j].vStr->id;
-			dChk = nearestPointOnEdge(G.positions[e0], G.positions[e1], MM.positions[i], pt);
+			//dChk = nearestPointOnEdge(G.positions[e0], G.positions[e1], MM.positions[i], pt);
+			vec a = G.positions[e0];
+			vec b = G.positions[e1];
+			float len = (a - b).mag();
+			vec ed = (a - b).normalise();
+			for (float param  = 0.0; param <= len; param += len * 0.1)
+			{
+				vec sPt = b + ed * param;
+				float dSq = ((sPt - p)*(sPt - p));
+				dSq = ofClamp(dSq, 0.001, pow(10.0f, 5.0f));
+				
+				dChk += 1.0 / dSq;
+			}
 		
-			d = MIN(dChk, d);
+			//d = dChk; // MIN(dChk, d);
 		}
 
-		MM.scalars[i] = d;
+		MM.scalars[i] = dChk;
 		
-		dMin = MIN(dMin, d);
-		dMax = MAX(dMax, d);
+		dMin = MIN(dMin, dChk);
+		dMax = MAX(dMax, dChk);
 	}
 
 
@@ -253,14 +274,40 @@ void draw()
 	G.draw();
 
 	S.draw();
-
-	vec p = minV;
-	vec pt;
-	double d = nearestPointOnEdge(G.positions[0], G.positions[1], p,pt);
-
 	glPointSize(10);
-	drawPoint(p);
-	drawLine(p, p + pt);
+	for (int i = 0; i <3; i++)
+	{
+
+		vec pt;
+		double d = 1e10;
+		double dChk;
+		vec p = MM.positions[i];
+
+		for (int j = 0; j < G.n_e; j++)
+		{
+			int e0, e1;
+			e0 = G.edges[j].vEnd->id;
+			e1 = G.edges[j].vStr->id;
+			vec a = G.positions[e0];
+			vec b = G.positions[e1];
+			float len = (a - b).mag();
+			vec ed = (a - b).normalise();
+			for (float param = 0.0; param <= len; param += len * 0.1)
+			{
+				vec sPt = b + ed * param;
+				drawPoint(sPt);
+				float dSq = ((sPt - p)*(sPt - p));
+				cout << dSq << endl;
+				dSq = ofClamp(dSq, 0.001, pow(10.0f, 5.0f));
+
+				dChk += 100.0 / dSq;
+			}
+		}
+		
+
+		//drawLine(MM.positions[i], MM.positions[i] + pp);
+		//drawPoint(MM.positions[i]);
+	}
 
 
 	wireFrameOn();
@@ -269,11 +316,12 @@ void draw()
 		//MM.G.drawIslands();
 	wireFrameOff();
 
+	glPointSize(10);
 	for (int i = 0; i < M.n_v; i++)
 	{
 		vec4 clr = getColour(MM.scalars[i], dMin, dMax);
 		glColor3f(clr.r, clr.g, clr.b);
-		drawPoint(MM.positions[i]);
+		//drawPoint(MM.positions[i]);
 	}
 
 

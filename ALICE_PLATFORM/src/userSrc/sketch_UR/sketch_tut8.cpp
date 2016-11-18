@@ -33,11 +33,11 @@ public:
 			int n = phy.makeParticle(vec(x, y, 0) + cen, 1.0, false);
 			particles.push_back(n);
 			phy.p[n].v = (phy.p[n].p - cen).normalise() * 5.0;
-			if( i > 0)phy.makeSpring(n, n - 1, 0.01);
+			if (i > 0)phy.makeSpring(n, n - 1, 0.1);
 		}
 	}
 
-	void checkCollide( circle &other , newPhysics &phy )
+	void checkCollide(circle &other, newPhysics &phy)
 	{
 		for (int i = 0; i < particles.size(); i++)
 		{
@@ -48,7 +48,7 @@ public:
 				vec a = phy.p[id1].p;
 				vec b = phy.p[id2].p;
 				vec c = b - a;
-				if (c * c < 2 )
+				if (c * c < 2)
 				{
 					phy.p[id1].fixed = true;
 					phy.p[id2].fixed = true;
@@ -59,12 +59,12 @@ public:
 
 	}
 
-	void draw( newPhysics &phy)
+	void draw(newPhysics &phy)
 	{
-		for (int i = 1; i < particles.size(); i++)drawLine(phy.p[ particles[i]].p, phy.p[particles[i-1]].p);
+		for (int i = 1; i < particles.size(); i++)drawLine(phy.p[particles[i]].p, phy.p[particles[i - 1]].p);
 		//for (int i = 0; i < trailCnt; i++)drawPoint(trail[i]);
 
-		for (int i = 0; i < frame * 64; i+=64)
+		for (int i = 0; i < frame * 64; i += 64)
 			for (int j = i; j < i + particles.size(); j++)
 			{
 				vec4 clr = getColour(i, 0, frame * 64);
@@ -104,7 +104,7 @@ void setup()
 {
 	j = 0;
 	phy = *new newPhysics();
-	
+
 	circles.clear();
 
 	for (int i = 0; i < 6; i++)
@@ -137,20 +137,20 @@ void setup()
 	for (int i = 0; i < imp.nCnt; i++)
 	{
 		G.positions[i].z = 0;
-		circles.push_back(circle(G.positions[i], ofRandom(1,5), phy));
+		//circles.push_back(circle(G.positions[i], ofRandom(1, 5), phy));
 	}
 }
 
 void update(int value)
 {
-	
-	phy.UpdateParticles(1, 2);
+
+	phy.UpdateParticles(0.15, 2);
 
 	for (auto &cir : circles)
 		for (auto &cir2 : circles)
 		{
 			if (&cir == &cir2) continue;
-			cir.checkCollide(cir2,phy);
+			cir.checkCollide(cir2, phy);
 		}
 
 	for (auto &cir : circles)cir.updateTrail(phy);
@@ -158,12 +158,12 @@ void update(int value)
 
 void draw()
 {
-	
+
 	backGround(0.75);
 
-	//phy.display();
+	phy.display();
 	//G.draw();
-	for (auto &cir : circles)cir.draw( phy );
+	for (auto &cir : circles)cir.draw(phy);
 }
 
 
@@ -175,9 +175,16 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	if (k == 'c')
 	{
-		circle c = *new circle(vec( j * 10, ofRandom(-10, 10), 0), 4, phy);
+		circle c = *new circle(vec(j * 10, ofRandom(-10, 10), 0), 4, phy);
 		circles.push_back(c);
 		j++;
+	}
+	if (k == 'a')
+	{
+
+		int n = phy.makeParticle(vec(ofRandom(-10, 10), 0, 0));
+		int n2 = ofRandom(0, phy.np - 1);
+		phy.makeSpring(n, n2, 0.1);
 	}
 }
 
@@ -188,7 +195,6 @@ void mousePress(int b, int state, int x, int y)
 
 void mouseMotion(int x, int y)
 {
-	
-}
 
+}
 

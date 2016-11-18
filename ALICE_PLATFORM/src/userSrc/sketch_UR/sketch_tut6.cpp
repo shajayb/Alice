@@ -75,7 +75,7 @@ void draw()
 	B.draw();
 
 
-	//nachi.draw(true);
+	nachi.draw(true);
 	glColor3f(1, 0, 1);
 	drawCircle(target, 5, 32);
 
