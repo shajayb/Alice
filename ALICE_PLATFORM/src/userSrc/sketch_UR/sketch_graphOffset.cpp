@@ -27,18 +27,18 @@ SliderGroup S;
 
 void setup()
 {
-	//G.createVertex(vec(-2, -1, 0));
-	//G.createVertex(vec(-1, 1, 0));
-	//G.createVertex(vec(1, 1, 0));
-	//G.createVertex(vec(1, -1, 0));
-	//G.createVertex(vec(-2, 3, 0));
-	//G.createVertex(vec(2.1, 3, 0));
+	/*G.createVertex(vec(-2, -1, 0));
+	G.createVertex(vec(-1, 1, 0));
+	G.createVertex(vec(1, 1, 0));
+	G.createVertex(vec(1, -1, 0));
+	G.createVertex(vec(-2, 3, 0));
+	G.createVertex(vec(2.1, 3, 0));
 
-	//G.createEdge(G.vertices[0], G.vertices[1]);
-	//G.createEdge(G.vertices[1], G.vertices[2]);
-	//G.createEdge(G.vertices[2], G.vertices[3]);
-	//G.createEdge(G.vertices[4], G.vertices[0]);
-	//G.createEdge(G.vertices[5], G.vertices[2]);
+	G.createEdge(G.vertices[0], G.vertices[1]);
+	G.createEdge(G.vertices[1], G.vertices[2]);
+	G.createEdge(G.vertices[2], G.vertices[3]);
+	G.createEdge(G.vertices[4], G.vertices[0]);
+	G.createEdge(G.vertices[5], G.vertices[2]);*/
 
 	importer imp = *new importer("data/tree_pts.txt", 10000, 5.0);
 	imp.readEdges();
