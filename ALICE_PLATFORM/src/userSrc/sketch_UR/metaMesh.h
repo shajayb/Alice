@@ -10,6 +10,13 @@ using namespace std::experimental;
 
 #include "graph.h"
 
+
+#ifndef _META_MESH_
+
+#define  _META_MESH_
+
+
+
 class metaMesh : public Mesh
 {
 public:
@@ -222,3 +229,7 @@ public:
 	}
 
 };
+
+
+#endif // !_META_MESH_
+

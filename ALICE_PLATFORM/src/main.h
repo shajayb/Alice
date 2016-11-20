@@ -116,7 +116,7 @@ void drawCallBack()
 
 	updateCamera() ;
 	glColor3f(1,1,1);
-	drawGrid( gridSz );	
+	//drawGrid( gridSz );	
 
 	draw() ;
 
