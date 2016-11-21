@@ -43,18 +43,24 @@ public:
 
 		Matrix4 trans;
 		double preferedDiag = 50;
-		trans.translate( (minV + maxV) * 0.5);
 		trans.scale( preferedDiag / (minV.distanceTo(maxV)) );
-		//for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
-		
-		G.boundingbox(minV, maxV);
-		trans.identity();
 		trans.translate((minV + maxV) * 0.5);
-		trans.scale(1.5);
+		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
+		cout << " ACUTAL DIAG " << minV.distanceTo(maxV) << endl;
+		G.boundingbox(minV, maxV);
+
+		trans.identity();
+		trans.translate( vec(40,0,0) - (minV + maxV) * 0.5);
+		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 		minV = minV * trans;
 		maxV = maxV * trans;
 
+		G.boundingbox(minV, maxV);
+		minV -= (maxV - minV).normalise() * 1.5;
+		maxV += (maxV - minV).normalise() * 1.5;
+
 		//---------
+
 		createDataMeshGrid(G);
 		createIsoContourGraph(0.1);
 

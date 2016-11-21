@@ -111,10 +111,31 @@ void draw()
 
 	setup2d();
 
-	drawString(s, winW * 0.5, winH - 50);
-	drawString(t, winW * 0.5, winH - 75);
-	drawString(jts, winW * 0.5, winH - 100);
+		drawString(s, winW * 0.5, winH - 50);
+		drawString(t, winW * 0.5, winH - 75);
+		drawString(jts, winW * 0.5, winH - 100);
 
+		int hts = 50;
+		int wid = winW * 0.75;
+		 drawString(" n : path.goToNextPoint();",wid, hts); hts += 25;
+		 drawString(" b : path.goToPrev();", wid, hts); hts += 25;
+		 drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
+		 drawString(" w : path.exportGCode();", wid, hts); hts += 25;
+		 drawString(" r : setup();", wid, hts); hts += 25;
+		 drawString(" h : path.home();", wid, hts); hts += 25;
+		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
+		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
+		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
+		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
+		 hts += 25;
+		 drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
+		 drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
+		 drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
+		 drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
+		 drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
+		 drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
+	 
+	 
 	restore3d();
 
 

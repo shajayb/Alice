@@ -620,86 +620,87 @@ public:
 		//////////////////////////////////////////////////////////////////////////
 		// ------------------- draw bounding box ;
 		glLineWidth(10);
-		vec x = E_disp.XA;
-		vec y = E_disp.YA;
-		vec z = E_disp.ZA;
-		vec cen = E_disp.cen;
 
-		vec xf = E_disp.XA_f;
-		vec yf = E_disp.YA_f;
-		vec zf = E_disp.ZA_f;
-		vec cenf = E_disp.cen_f;
+			vec x = E_disp.XA;
+			vec y = E_disp.YA;
+			vec z = E_disp.ZA;
+			vec cen = E_disp.cen;
+
+			vec xf = E_disp.XA_f;
+			vec yf = E_disp.YA_f;
+			vec zf = E_disp.ZA_f;
+			vec cenf = E_disp.cen_f;
 		
-		//cout << "original" << endl;
-		Matrix3 rotA, rotB;
-		rotA = E_disp.rot; rotB = E_disp.rotf;
-		//angleBetweenFrames(rotA, rotB);
+			//cout << "original" << endl;
+			Matrix3 rotA, rotB;
+			rotA = E_disp.rot; rotB = E_disp.rotf;
+			//angleBetweenFrames(rotA, rotB);
 
-		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
-		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
-		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
+			glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
+			glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
+			glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
 
-		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
-		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
-		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+			glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
+			glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
+			glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
 		
-		////  ------------------ invert to origin ;
+			////  ------------------ invert to origin ;
 
-		Matrix3 trans = rotA;
-		trans.transpose();
+			Matrix3 trans = rotA;
+			trans.transpose();
 
-		x = trans * x;y = trans * y;z = trans * z;
-		xf = trans * xf; yf = trans * yf; zf = trans * zf;
+			x = trans * x;y = trans * y;z = trans * z;
+			xf = trans * xf; yf = trans * yf; zf = trans * zf;
 
-		Matrix4 T;
-		T.identity();
-		T.setColumn(3, cen);
-		T.invert();
-		cenf = T * cenf;
-		cen = T * cen;
-		cenf = cen + z.normalise() * 20.85;
+			Matrix4 T;
+			T.identity();
+			T.setColumn(3, cen);
+			T.invert();
+			cenf = T * cenf;
+			cen = T * cen;
+			cenf = cen + z.normalise() * 20.85;
 	
-		//cout << "inverted" << endl;
-		rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
-		rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
-		//angleBetweenFrames(rotA, rotB);
+			//cout << "inverted" << endl;
+			rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
+			rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
+			//angleBetweenFrames(rotA, rotB);
 
-		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
-		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
-		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
+			glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
+			glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
+			glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
 
-		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
-		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
-		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+			glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
+			glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
+			glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
 
 
-		// -------------- forward to tool location
-		EE = getToolLocation(n);
-		trans.setColumn(0, EE.getColumn(0).normalise());
-		trans.setColumn(1, EE.getColumn(1).normalise());
-		trans.setColumn(2, EE.getColumn(2).normalise());
+			// -------------- forward to tool location
+			EE = getToolLocation(n);
+			trans.setColumn(0, EE.getColumn(0).normalise());
+			trans.setColumn(1, EE.getColumn(1).normalise());
+			trans.setColumn(2, EE.getColumn(2).normalise());
 		
-		x = trans * x; y = trans * y; z = trans * z;
-		xf = trans * xf; yf = trans * yf; zf = trans * zf;
+			x = trans * x; y = trans * y; z = trans * z;
+			xf = trans * xf; yf = trans * yf; zf = trans * zf;
 
-		T.identity();
-		T.setColumn(3, EE.getColumn(3));
-		//cenf += EE.getColumn(3);
-		cen += EE.getColumn(3);
-		cenf = cen - z.normalise() * 20.85;
+			T.identity();
+			T.setColumn(3, EE.getColumn(3));
+			//cenf += EE.getColumn(3);
+			cen += EE.getColumn(3);
+			cenf = cen - z.normalise() * 20.85;
 
-		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
-		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
-		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
+			glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
+			glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
+			glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
 
-		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
-		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
-		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+			glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
+			glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
+			glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
 
-		//cout << "forward" << endl;
-		rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
-		rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
-		//angleBetweenFrames(rotA, rotB);
+			//cout << "forward" << endl;
+			rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
+			rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
+			//angleBetweenFrames(rotA, rotB);
 
 		glLineWidth(1);
 		// ------------------- draw Robot ;
