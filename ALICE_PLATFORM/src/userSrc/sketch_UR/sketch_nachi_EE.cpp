@@ -81,19 +81,22 @@ void draw()
 {
 
 	backGround(0.75);
-	drawGrid(200.0);
+	drawGrid(20.0);
 
 
 	S.draw();
 	B.draw();
 	//// ------------------------ draw the path points / Tool orientations 
 
-	if(showRobot)path.draw(false);
+	if(showRobot)
+		path.draw(false);
+	else
+		GS.draw();
 
 
 	//// graph 
 
-	//GS.draw();
+
 
 
 	//////////////////////////////////////////////////////////
@@ -135,15 +138,19 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == 'h')
 	{
 		for (int i = 0; i < DOF; i++)path.Nachi_tester.rot[i] = 0.;
-		//path.Nachi_tester.rot[0] = path.Nachi_tester.rot[2] = 0.0;// path.Nachi_tester.rot[3] = 0.0;
 		path.Nachi_tester.rot[1] = 90.0;
-		//path.Nachi_tester.rot[2] = -90;
 		path.Nachi_tester.ForwardKineMatics(path.Nachi_tester.rot);
 	}
+
 	/////
 
 
 	if (k == ' ')GS.smoothCurrentGraph();
+	if (k == 'c')GS.convertContourToCyclicGraph();
+	if (k == '-')GS.reducePointsOnContourGraph(2);
+	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.05, 0.4);
+	if (k == 'L')GS.ConvertContourStackToPrintPath(path);
+
 	if (k == 'w')GS.writeCurrentGraph();
 	if (k == 'R')run = !run;
 }

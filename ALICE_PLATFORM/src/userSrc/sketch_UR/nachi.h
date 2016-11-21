@@ -14,6 +14,9 @@ public:
 	vec XA_f, YA_f, ZA_f;
 	vec XA, YA, ZA;
 	vec cen,cen_f;
+	Matrix3 rot, rotf;
+	Matrix4 transformMatrix;
+
 	EndEffector() {};
 	EndEffector(string file )
 	{
@@ -50,7 +53,7 @@ public:
 	{
 		Nachi_tester.ForwardKineMatics(Nachi_tester.rot);
 
-		Matrix4 transformMatrix = Nachi_tester.Bars_to_world_matrices[5];
+		transformMatrix = Nachi_tester.Bars_to_world_matrices[5];
 	
 		XA_f = transformMatrix.getColumn(0).normalise();
 		YA_f = transformMatrix.getColumn(1).normalise();
@@ -58,15 +61,19 @@ public:
 		cen_f = transformMatrix.getColumn(3);
 
 		cen = (M.positions[1] + M.positions[5]) * 0.5;
-		ZA = M.positions[1] - M.positions[7];
-		XA = M.positions[5] - M.positions[7];
-		YA = XA.cross(ZA);
+		
+		YA = M.positions[5] - M.positions[7];
+		XA = M.positions[1] - M.positions[7];
+		//XA *= -1;
+		ZA = YA.cross(XA);
+		
 		XA.normalise();
 		YA.normalise();
 		ZA.normalise();
-		
-		//transformMatrix.invert();
-		//for (int i = 0; i < M.n_v; i++)M.positions[i] = transformMatrix * M.positions[i];
+
+		rot.setColumn(0, XA); rotf.setColumn(0, XA_f);
+		rot.setColumn(1,YA);  rotf.setColumn(1, YA_f);
+		rot.setColumn(2, ZA); rotf.setColumn(2, ZA_f);
 	}
 
 	void draw()
@@ -163,9 +170,13 @@ public:
 	pathImporter()
 	{
 		currentPointId = 0;
-		//Nachi_tester.addMeshes();
-		E = *new EndEffector("data/EE.obj");
+		Nachi_tester.addMeshes();
+		E = *new EndEffector("data/EE_disp.obj");
 		E_disp = *new EndEffector("data/EE_disp.obj");
+
+		Matrix4 EE = E.transformMatrix;
+		EE.invert();
+		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];// to tcip
 	}
 
 	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
@@ -183,8 +194,27 @@ public:
 		return vec(atof(content[id].c_str()), atof(content[id + 1].c_str()), atof(content[id + 2].c_str()));
 	}
 
+
+	void angleBetweenFrames( Matrix3 rotA, Matrix3 rotB)
+	{
+		for (int i = 0; i < 3; i++)
+			cout << rotA.getColumn(i).angle(rotB.getColumn(i)) << " ";
+		cout << endl;
+	}
+
+	void addPoint( vec tcp, vec tcp_x = vec(1, 0, 0), vec tcp_y = vec(0, 1, 0), vec tcp_z = vec(0, 0, -1) )
+	{
+
+		path[actualPathLength][0] = tcp;
+		path[actualPathLength][1] = tcp_x * 1;
+		path[actualPathLength][2] = tcp_y * 1;
+		path[actualPathLength][3] = tcp_z * 1;
+		actualPathLength++;
+		if (actualPathLength > maxPts)actualPathLength = 0;
+	}
 	void readPath(string fileToRead = "data/path.txt", string delimiter = ",")
 	{
+		cout << "reading file for path " << fileToRead << endl;
 
 		////////////////////////////////////////////////////////////////////////// read file
 
@@ -211,17 +241,7 @@ public:
 			if (content.size() >= 12)tcp_z = extractVecFromStringArray(9, content).normalise() * 1;
 
 			
-		
-			tcp_x = vec(1, 0, 0);
-			tcp_y = vec(0, 1, 0);
-			tcp_z = vec(0, 0, -1);
-
-			path[actualPathLength][0] = tcp;
-			path[actualPathLength][1] = tcp_x * 1;
-			path[actualPathLength][2] = tcp_y * 1;
-			path[actualPathLength][3] = tcp_z * 1;
-			actualPathLength++;
-
+			addPoint(tcp);
 		}
 
 		fs.close();
@@ -283,33 +303,47 @@ public:
 		vec z = E_disp.ZA;
 		vec cen = E_disp.cen;
 
-		Matrix3 rot;
-		rot.setColumn(0, x);
-		rot.setColumn(1, y);
-		rot.setColumn(2, z);
-		rot.transpose();
+		vec xf = E_disp.XA_f;
+		vec yf = E_disp.YA_f;
+		vec zf = E_disp.ZA_f;
+		vec cenf = E_disp.cen_f;
 
 
-		vec x_f = E_disp.XA_f;
-		vec y_f = E_disp.YA_f;
-		vec z_f = E_disp.ZA_f;
-		vec cen_f = E_disp.cen_f;
-		x_f = rot * x_f;
-		y_f = rot * y_f;
-		z_f = rot * z_f;
+		////  ------------------ inert to origin ;
 
-		x_f.normalise();
-		y_f.normalise();
-		z_f.normalise();
+		Matrix3 trans = E_disp.rot;
+		trans.transpose();
 
-		cen_f += (EE.getColumn(3)) - cen;
+		x = trans * x; y = trans * y; z = trans * z;
+		xf = trans * xf; yf = trans * yf; zf = trans * zf;
 
-		//TOOL.identity();
-		TOOL.setColumn(0, x_f.normalise() * 1);
-		TOOL.setColumn(1, y_f.normalise() * 1);
-		TOOL.setColumn(2, z_f.normalise());
-		//TOOL.setColumn(3, cen_f);
+		Matrix4 T;
+		T.identity();
+		T.setColumn(3, cen);
+		T.invert();
+		cenf = T * cenf;
+		cen = T * cen;
+		cenf = cen + z.normalise() * 20.85;
 
+
+		// -------------- forward to tool location
+		trans.setColumn(0, EE.getColumn(0).normalise());
+		trans.setColumn(1, EE.getColumn(1).normalise());
+		trans.setColumn(2, EE.getColumn(2).normalise());
+
+		x = trans * x; y = trans * y; z = trans * z;
+		xf = trans * xf; yf = trans * yf; zf = trans * zf;
+
+		T.identity();
+		T.setColumn(3, EE.getColumn(3));
+		//cenf += EE.getColumn(3);
+		cen += EE.getColumn(3);
+		cenf = cen - z.normalise() * 20.85;
+
+		TOOL.setColumn(0, xf.normalise());
+		TOOL.setColumn(1, yf.normalise());
+		TOOL.setColumn(2, zf.normalise());
+		TOOL.setColumn(3, cenf);
 	}
 	void goToNextPoint()
 	{
@@ -570,17 +604,17 @@ public:
 
 		int n = currentPointId;
 		if (currentPointId > 0 && currentPointId < actualPathLength) n = currentPointId -1;
-		Matrix4 EE = getToolLocation(n);// Nachi_tester.Bars_to_world_matrices[5];
+		Matrix4 EE =  Nachi_tester.Bars_to_world_matrices[5];
 		
-		//for (int i = 0; i < E_disp.M.n_v; i++)E_disp.M.positions[i] = EE * E_disp.M.positions[i];// to tcip
+		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];// to tcip
 
 		wireFrameOn();
-		E_disp.draw();
+		//E_disp.draw();
 		E.draw();
 		wireFrameOff();
 
-		//EE.invert();
-		//for (int i = 0; i < E_disp.M.n_v; i++)E_disp.M.positions[i] = EE * E_disp.M.positions[i];
+		EE.invert();
+		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];
 
 
 		//////////////////////////////////////////////////////////////////////////
@@ -595,7 +629,11 @@ public:
 		vec yf = E_disp.YA_f;
 		vec zf = E_disp.ZA_f;
 		vec cenf = E_disp.cen_f;
-	
+		
+		//cout << "original" << endl;
+		Matrix3 rotA, rotB;
+		rotA = E_disp.rot; rotB = E_disp.rotf;
+		//angleBetweenFrames(rotA, rotB);
 
 		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
 		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
@@ -604,27 +642,28 @@ public:
 		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
 		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
 		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+		
+		////  ------------------ invert to origin ;
 
-		Matrix3 trans;
-		trans.setColumn(0, x.normalise());
-		trans.setColumn(1, y.normalise());
-		trans.setColumn(2, z.normalise());
-		//trans.setColumn(3, cen);
+		Matrix3 trans = rotA;
 		trans.transpose();
 
-		x = trans * x;
-		y = trans * y;
-		z = trans * z;
-		
+		x = trans * x;y = trans * y;z = trans * z;
+		xf = trans * xf; yf = trans * yf; zf = trans * zf;
 
-		xf = trans * xf;
-		yf = trans * yf;
-		zf = trans * zf;
-		
-		cenf -= cen;
-		cen -= cen;
+		Matrix4 T;
+		T.identity();
+		T.setColumn(3, cen);
+		T.invert();
+		cenf = T * cenf;
+		cen = T * cen;
+		cenf = cen + z.normalise() * 20.85;
+	
+		//cout << "inverted" << endl;
+		rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
+		rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
+		//angleBetweenFrames(rotA, rotB);
 
-		
 		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
 		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
 		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
@@ -634,27 +673,33 @@ public:
 		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
 
 
-		//forward to tool location
+		// -------------- forward to tool location
+		EE = getToolLocation(n);
 		trans.setColumn(0, EE.getColumn(0).normalise());
 		trans.setColumn(1, EE.getColumn(1).normalise());
 		trans.setColumn(2, EE.getColumn(2).normalise());
-		x = trans * x;
-		y = trans * y;
-		z = trans * z;
+		
+		x = trans * x; y = trans * y; z = trans * z;
+		xf = trans * xf; yf = trans * yf; zf = trans * zf;
+
+		T.identity();
+		T.setColumn(3, EE.getColumn(3));
+		//cenf += EE.getColumn(3);
 		cen += EE.getColumn(3);
+		cenf = cen - z.normalise() * 20.85;
 
 		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
 		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
 		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
 
-		xf = trans * xf;
-		yf = trans * yf;
-		zf = trans * zf;
-		cenf += EE.getColumn(3);
-		cout << cenf.distanceTo(cen) << endl;;
 		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
 		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
 		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+
+		//cout << "forward" << endl;
+		rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
+		rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
+		//angleBetweenFrames(rotA, rotB);
 
 		glLineWidth(1);
 		// ------------------- draw Robot ;

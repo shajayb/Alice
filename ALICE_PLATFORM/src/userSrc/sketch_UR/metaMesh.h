@@ -228,6 +228,27 @@ public:
 		cout << eCnt << " -- metaMesh Graph " << G.n_v << endl;
 	}
 
+
+	void convertContourToCyclicGraph()
+	{
+		if (!G.connected_vertices.size() > 0)return;
+		{
+			Graph A;
+			for (int i = 0; i < G.n_v; i += 1)
+				A.createVertex( G.positions[ G.connected_vertices[i]] );
+
+			for (int i = 0; i < A.n_v; i += 1)
+				A.createEdge(A.vertices[i], A.vertices[A.Mod(i + 1, A.n_v)]);
+
+			G.reset();
+
+			for (int i = 0; i < A.n_v; i += 1)
+				G.createVertex(A.positions[i]);
+
+			for (int i = 0; i < A.n_v; i += 1)
+				G.createEdge( G.vertices[A.edges[i].vStr->id], G.vertices[A.edges[i].vEnd->id]);
+		}
+	}
 };
 
 

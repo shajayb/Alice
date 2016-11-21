@@ -1,9 +1,9 @@
 ﻿  sketch_nachi_EE.cpp
 C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
   Generating code
-  9 of 818 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    6 functions had inline decision re-evaluated but remain unchanged
+  35 of 759 functions ( 4.6%) were compiled, the rest were copied from previous compilation.
+    2 functions were new in current compilation
+    11 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
   ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)

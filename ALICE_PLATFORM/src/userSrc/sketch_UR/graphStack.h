@@ -10,37 +10,45 @@ class graphStack
 {
 public:
 
-	vector<Graph> ContourStack;
+	Graph PrintStack[25];
 	Graph G;
 	vec minV, maxV;
 	double dMin, dMax;
 	double threshold;
 	int currentStackLayer;
 	metaMesh MM;
-
+	bool convertedTocyclic;
 	////---------------------------------------------------- CONSTRUCTOR --------------------------------------
 	graphStack( )
 	{
 		//---------
-		ContourStack.reserve(25);
+		//PrintStack.reserve(25);
+		//PrintStack = * new Graph[25]
 	}
 
 	////---------------------------------------------------- COMPUTE  --------------------------------------
 	void readGraphAndCreateDataMesh(string fileToImport, float scale = 1.0)
 	{
 		//---------
-		importer imp = *new importer(fileToImport, 10000, 5.0);
+		importer imp = *new importer(fileToImport, 10000, 1.0);
 		imp.readEdges();
 
 		//---------
-		Graph G;
+		G.reset();
 		for (int i = 0; i < imp.nCnt; i++)G.createVertex(imp.nodes[i].pos);
 		for (int i = 0; i < imp.eCnt; i++)G.createEdge(G.vertices[imp.edges[i].n0], G.vertices[imp.edges[i].n1]);
-		for (int i = 0; i < G.n_v; i++) G.positions[i] *= 1;
+		
 		//
 		G.boundingbox(minV, maxV);
-		//
+
 		Matrix4 trans;
+		double preferedDiag = 50;
+		trans.translate( (minV + maxV) * 0.5);
+		trans.scale( preferedDiag / (minV.distanceTo(maxV)) );
+		//for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
+		
+		G.boundingbox(minV, maxV);
+		trans.identity();
 		trans.translate((minV + maxV) * 0.5);
 		trans.scale(1.5);
 		minV = minV * trans;
@@ -50,6 +58,9 @@ public:
 		createDataMeshGrid(G);
 		createIsoContourGraph(0.1);
 
+		//
+		currentStackLayer = 0;
+		convertedTocyclic = false; 
 	}
 
 
@@ -67,6 +78,11 @@ public:
 	{
 		MM.createIsoContourGraph(threshold);
 	}
+	void convertContourToCyclicGraph()
+	{
+		MM.convertContourToCyclicGraph();
+		convertedTocyclic = true;
+	}
 
 	void smoothCurrentGraph()
 	{
@@ -75,16 +91,50 @@ public:
 
 	////---------------------------------------------------- UTILITIES  --------------------------------------
 
-
-	void setCurrentGraphAsBase()
+	void reducePointsOnContourGraph( int inc = 3)
 	{
-		//---------
-		currentStackLayer = 0;
-		ContourStack[currentStackLayer].reset();
-		ContourStack[currentStackLayer] = MM.G;
-		currentStackLayer++;
+		Graph A;
+		for (int i = 0; i < MM.G.n_v; i += inc)
+			A.createVertex( MM.G.positions[i]);
+
+		for (int i = 0; i < A.n_v; i += 1)
+			A.createEdge( A.vertices[i], A.vertices[ A.Mod(i + 1, A.n_v) ]);
+
+		MM.G.reset();
+
+		for (int i = 0; i < A.n_v; i += 1)
+			MM.G.createVertex(A.positions[i]);
+
+		for (int i = 0; i < A.n_v; i += 1)
+			MM.G.createEdge( MM.G.vertices[ A.edges[i].vStr->id], MM.G.vertices[A.edges[i].vEnd->id]);
 	}
 
+	void addCurrentContourGraphToPrintStack( float layersize = 0.1 , float baseOffset = 0.4)
+	{
+		//---------
+		for (int i = 0; i < MM.G.n_v; i++)
+			MM.G.positions[i].z += currentStackLayer * layersize + baseOffset;
+
+		PrintStack[currentStackLayer] = *new Graph();
+		PrintStack[currentStackLayer].reset();
+		
+		for (int i = 0; i < MM.G.n_v; i++)
+			PrintStack[currentStackLayer].createVertex(MM.G.positions[i]);
+
+		for (int i = 0; i < MM.G.n_e; i++)
+			PrintStack[currentStackLayer].createEdge( PrintStack[currentStackLayer].vertices[ MM.G.edges[i].vStr->id ], PrintStack[currentStackLayer].vertices[MM.G.edges[i].vEnd->id]);
+
+		currentStackLayer++;
+		if (currentStackLayer >= 25)currentStackLayer = 0;
+	}
+
+	void ConvertContourStackToPrintPath(pathImporter &path)
+	{
+		path.actualPathLength = 0;
+		for (int i = 0; i < currentStackLayer; i++)
+			for (int j = 0; j < PrintStack[i].n_v; j++)
+				path.addPoint( PrintStack[i].positions[j] );
+	}
 
 	void writeCurrentGraph()
 	{
@@ -96,18 +146,22 @@ public:
 	void draw()
 	{
 		
-		for (auto &G : ContourStack)G.draw();
+
 		
 		wireFrameOn();
 
-			////MM.draw();
-		//G = stack[currentStackLayer];
-		//G.computeIslandsAsEdgeAndVertexList();
-		//G.drawConnectedEdgeList();
-		MM.G.draw();
+				////MM.draw();
+		G.draw();
+
+			MM.G.computeIslandsAsEdgeAndVertexList();
+			MM.G.drawConnectedEdgeList();
+			
+			convertedTocyclic ? glColor3f(1, 0, 0) : glColor3f(0, 0, 0);
+			MM.G.draw();
 
 		wireFrameOff();
 
+		//----------------- drawDataGridMesh
 		for (int i = 0; i < MM.n_v; i++)
 		{
 			vec4 clr = getColour(MM.scalars[i], dMin, dMax);
@@ -115,6 +169,18 @@ public:
 			drawPoint(MM.positions[i]);
 		}
 
+		//----------------- drawDataGridMesh
+		glColor3f(1, 0, 0);
+		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw();
+
+		//draw stats
+		char s[200];
+		sprintf_s(s, " num points in contour : %i", MM.G.n_v);
+		setup2d();
+			drawString(s, vec(winW * 0.5, 50, 0));
+			sprintf_s(s, " num points in stack : %i", MM.G.n_v * currentStackLayer);
+			drawString(s, vec(winW * 0.5, 75, 0));
+		restore3d();
 	}
 
 };
