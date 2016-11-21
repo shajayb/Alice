@@ -579,7 +579,7 @@ public:
 		E.draw();
 		wireFrameOff();
 
-		EE.invert();
+		//EE.invert();
 		//for (int i = 0; i < E_disp.M.n_v; i++)E_disp.M.positions[i] = EE * E_disp.M.positions[i];
 
 
@@ -590,22 +590,72 @@ public:
 		vec y = E_disp.YA;
 		vec z = E_disp.ZA;
 		vec cen = E_disp.cen;
-		Matrix4 trans;
-		trans.setColumn(0, x);
-		trans.setColumn(1, y);
-		trans.setColumn(2, z);
-		trans.setColumn(3, cen);
-		trans.invert();
-		cen = trans * cen;
-		trans.transpose();
-		x = trans * x;
-		y = trans * y;
-		z = trans * z;
-		;
-		cout << x.angle(y) << "  " << y.angle(z) << " " << x.angle(z) << endl;
+
+		vec xf = E_disp.XA_f;
+		vec yf = E_disp.YA_f;
+		vec zf = E_disp.ZA_f;
+		vec cenf = E_disp.cen_f;
+	
+
 		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
 		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
 		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
+
+		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
+		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
+		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+
+		Matrix3 trans;
+		trans.setColumn(0, x.normalise());
+		trans.setColumn(1, y.normalise());
+		trans.setColumn(2, z.normalise());
+		//trans.setColumn(3, cen);
+		trans.transpose();
+
+		x = trans * x;
+		y = trans * y;
+		z = trans * z;
+		
+
+		xf = trans * xf;
+		yf = trans * yf;
+		zf = trans * zf;
+		
+		cenf -= cen;
+		cen -= cen;
+
+		
+		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
+		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
+		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
+
+		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
+		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
+		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+
+
+		//forward to tool location
+		trans.setColumn(0, EE.getColumn(0).normalise());
+		trans.setColumn(1, EE.getColumn(1).normalise());
+		trans.setColumn(2, EE.getColumn(2).normalise());
+		x = trans * x;
+		y = trans * y;
+		z = trans * z;
+		cen += EE.getColumn(3);
+
+		glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
+		glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
+		glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
+
+		xf = trans * xf;
+		yf = trans * yf;
+		zf = trans * zf;
+		cenf += EE.getColumn(3);
+		cout << cenf.distanceTo(cen) << endl;;
+		glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
+		glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
+		glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
+
 		glLineWidth(1);
 		// ------------------- draw Robot ;
 
