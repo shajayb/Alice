@@ -22,6 +22,9 @@ SliderGroup S;
 ButtonGroup B;
 bool showRobot = true;
 
+char s[200];
+char t[200];
+char jts[400];
 
 void setup()
 {
@@ -73,9 +76,7 @@ void update(int value)
 
 }
 
-char s[200];
-char t[200];
-char jts[400];
+
 
 void draw()
 {
