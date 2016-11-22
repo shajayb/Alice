@@ -141,6 +141,7 @@ public:
 		for (int i = 0; i < currentStackLayer; i++)
 			for (int j = 0; j < PrintStack[i].n_v; j++)
 				path.addPoint( PrintStack[i].positions[j] );
+		
 	}
 
 	void writeCurrentGraph()

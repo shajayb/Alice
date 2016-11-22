@@ -98,6 +98,8 @@ void draw()
 	else
 		GS.draw();
 
+	
+
 
 	//// graph 
 

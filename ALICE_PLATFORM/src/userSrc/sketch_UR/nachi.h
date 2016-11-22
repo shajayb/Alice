@@ -164,6 +164,7 @@ public:
 	Robot_Symmetric Nachi_tester;
 	EndEffector E;
 	EndEffector E_disp;
+	Graph taskGraph;
 
 	////////////////////////////////////////////////////////////////////////// CLASS METHODS 
 
@@ -179,6 +180,8 @@ public:
 		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];// to tcip
 
 		actualPathLength = 0;
+		taskGraph = *new Graph();
+		taskGraph.reset();
 	}
 
 	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
@@ -256,17 +259,20 @@ public:
 		getBoundingBox();
 
 	//	checkReach();
+		copyPathToGraph();
 
 	}
-
-	void duplicateLayers( int num = 50)
+	void copyPathToGraph()
 	{
-	
-	}
+		cout << "copying" << endl;
 
-	void copyPathFromGraph(Graph &G)
-	{
+		for (int i = 0; i < actualPathLength; i++)
+			taskGraph.createVertex(path[i][0]);
+		for (int i = 0; i < actualPathLength; i++)
+			taskGraph.createEdge(taskGraph.vertices[ taskGraph.Mod(i, actualPathLength) ], taskGraph.vertices[ taskGraph.Mod(i + 1, actualPathLength) ]);
 
+		cout << taskGraph.n_v << " -- " << taskGraph.n_e << endl;
+		for (int i = 0; i < actualPathLength; i++)path[i][0].print();
 	}
 
 	void getBoundingBox()
@@ -365,17 +371,12 @@ public:
 
 		Nachi_tester.inverseKinematics_analytical(TOOL, false);
 
+		angleCorrection(rot_prev);
 
-		//Nachi_tester.rot[3] += 180;
 		vec pt = Nachi_tester.ForwardKineMatics(Nachi_tester.rot);
 
 		cout << rot_prev[3] - Nachi_tester.rot[3] << " J3 diff " << endl;
 		cout << rot_prev[3] << " J3_prev " << endl;
-
-
-		angleCorrection(rot_prev);
-
-
 	
 
 		cout << " -- current point -- " << currentPointId << endl;
@@ -586,11 +587,23 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////// DISPLAY METHODS
+	void drawFrame(Matrix4 &tool , float sz)
+	{
+		
+		tcp = tool.getColumn(3);
+		tcp_x = tool.getColumn(0); tcp_y = tool.getColumn(1); tcp_z = tool.getColumn(2);
+
+		glColor3f(1, 0, 0); drawLine( tcp, tcp + tcp_x.normalise() * sz );
+		glColor3f(0, 1, 0); drawLine( tcp, tcp + tcp_y.normalise() * sz);
+		glColor3f(0, 0, 1); drawLine( tcp, tcp + tcp_z.normalise() * sz);
+	}
 
 	void draw(bool wireFrame = true, bool showSphere = false)
 	{
-		// ------------------- TCP locations
+		// ------------------- taskGraph
+		taskGraph.draw();
 
+		// ------------------- TCP locations
 		glPointSize(3);
 		for (int i = 0; i < actualPathLength; i++)
 		{
@@ -600,13 +613,9 @@ public:
 		glPointSize(1);
 
 		// ------------------- TCP orientation axes
+		
+		for (int i = 0; i < actualPathLength; i++)drawFrame(getToolLocation(i),.1);
 
-		for (int i = 0; i < actualPathLength; i++)
-		{
-			glColor3f(1, 0, 0); drawLine(path[i][0], path[i][0] + path[i][1]);
-			glColor3f(0, 1, 0); drawLine(path[i][0], path[i][0] + path[i][2]);
-			glColor3f(0, 0, 1); drawLine(path[i][0], path[i][0] + path[i][3]);
-		}
 
 
 		//////////////////////////////////////////////////////////////////////////
@@ -629,90 +638,10 @@ public:
 
 		//////////////////////////////////////////////////////////////////////////
 		// ------------------- draw bounding box ;
-		glLineWidth(10);
-
-			vec x = E_disp.XA;
-			vec y = E_disp.YA;
-			vec z = E_disp.ZA;
-			vec cen = E_disp.cen;
-
-			vec xf = E_disp.XA_f;
-			vec yf = E_disp.YA_f;
-			vec zf = E_disp.ZA_f;
-			vec cenf = E_disp.cen_f;
 		
-			//cout << "original" << endl;
-			Matrix3 rotA, rotB;
-			rotA = E_disp.rot; rotB = E_disp.rotf;
-			//angleBetweenFrames(rotA, rotB);
-
-			glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
-			glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
-			glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
-
-			glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
-			glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
-			glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
-		
-			////  ------------------ invert to origin ;
-
-			Matrix3 trans = rotA;
-			trans.transpose();
-
-			x = trans * x;y = trans * y;z = trans * z;
-			xf = trans * xf; yf = trans * yf; zf = trans * zf;
-
-			Matrix4 T;
-			T.identity();
-			T.setColumn(3, cen);
-			T.invert();
-			cenf = T * cenf;
-			cen = T * cen;
-			cenf = cen + z.normalise() * 20.85;
-	
-			//cout << "inverted" << endl;
-			rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
-			rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
-			//angleBetweenFrames(rotA, rotB);
-
-			glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
-			glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
-			glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
-
-			glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
-			glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
-			glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
-
-
-			// -------------- forward to tool location
-			EE = getToolLocation(n);
-			trans.setColumn(0, EE.getColumn(0).normalise());
-			trans.setColumn(1, EE.getColumn(1).normalise());
-			trans.setColumn(2, EE.getColumn(2).normalise());
-		
-			x = trans * x; y = trans * y; z = trans * z;
-			xf = trans * xf; yf = trans * yf; zf = trans * zf;
-
-			T.identity();
-			T.setColumn(3, EE.getColumn(3));
-			//cenf += EE.getColumn(3);
-			cen += EE.getColumn(3);
-			cenf = cen - z.normalise() * 20.85;
-
-			glColor3f(1, 0, 0); drawLine(cen, cen + x * 10);
-			glColor3f(0, 1, 0); drawLine(cen, cen + y * 10);
-			glColor3f(0, 0, 1); drawLine(cen, cen + z * 10);
-
-			glColor3f(1, 0, 0); drawLine(cenf, cenf + xf * 10);
-			glColor3f(0, 1, 0); drawLine(cenf, cenf + yf * 10);
-			glColor3f(0, 0, 1); drawLine(cenf, cenf + zf * 10);
-
-			//cout << "forward" << endl;
-			rotA.setColumn(0, x); rotA.setColumn(1, y); rotA.setColumn(2, z);
-			rotB.setColumn(0, xf); rotB.setColumn(1, yf); rotB.setColumn(2, zf);
-			//angleBetweenFrames(rotA, rotB);
-
-		glLineWidth(1);
+		wireFrameOn();
+			drawCube(min, max);
+			wireFrameOff();
 		// ------------------- draw Robot ;
 
 		if (wireFrame)wireFrameOn();
@@ -720,6 +649,8 @@ public:
 		if (wireFrame)wireFrameOff();
 
 		if (showSphere) glutSolidSphere(78, 32, 32);
+
+		
 	}
 
 
