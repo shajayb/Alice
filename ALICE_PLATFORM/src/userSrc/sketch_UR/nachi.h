@@ -177,6 +177,8 @@ public:
 		Matrix4 EE = E.transformMatrix;
 		EE.invert();
 		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];// to tcip
+
+		actualPathLength = 0;
 	}
 
 	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
@@ -212,7 +214,7 @@ public:
 		actualPathLength++;
 		if (actualPathLength > maxPts)actualPathLength = 0;
 	}
-	void readPath(string fileToRead = "data/path.txt", string delimiter = ",")
+	void readPath(string fileToRead = "data/path.txt", string delimiter = "," , float inc = 0)
 	{
 		cout << "reading file for path " << fileToRead << endl;
 
@@ -226,7 +228,7 @@ public:
 			return;
 		}
 
-		actualPathLength = 0;
+		//actualPathLength = 0;
 		while (!fs.eof() && actualPathLength < maxPts)
 		{
 			char str[2000];
@@ -240,7 +242,8 @@ public:
 			if (content.size() >= 9)tcp_y = extractVecFromStringArray(6, content).normalise() * 1;
 			if (content.size() >= 12)tcp_z = extractVecFromStringArray(9, content).normalise() * 1;
 
-			
+			//tcp.x += 5.0;
+			tcp.z += inc;
 			addPoint(tcp);
 		}
 
@@ -254,6 +257,11 @@ public:
 
 	//	checkReach();
 
+	}
+
+	void duplicateLayers( int num = 50)
+	{
+	
 	}
 
 	void copyPathFromGraph(Graph &G)
@@ -368,12 +376,7 @@ public:
 		angleCorrection(rot_prev);
 
 
-		//Nachi_tester.rot[0] = ofClamp(Nachi_tester.rot[0], -170, 170);
-		//Nachi_tester.rot[1] = ofClamp(Nachi_tester.rot[1], -65, 150);
-		//Nachi_tester.rot[2] = ofClamp(Nachi_tester.rot[2], -70, 90);
-		//Nachi_tester.rot[3] = ofClamp(Nachi_tester.rot[3], -150, 150);
-		//Nachi_tester.rot[4] = ofClamp(Nachi_tester.rot[4], -109, 109);
-		//Nachi_tester.rot[5] = ofClamp(Nachi_tester.rot[5], -360, 360);
+	
 
 		cout << " -- current point -- " << currentPointId << endl;
 		vec ax, ay, az;
@@ -512,6 +515,13 @@ public:
 
 			cout << Nachi_tester.rot[5] << " J5_new " << endl;
 		}
+
+		Nachi_tester.rot[0] = ofClamp(Nachi_tester.rot[0], -170, 170);
+		Nachi_tester.rot[1] = ofClamp(Nachi_tester.rot[1], -65, 150);
+		Nachi_tester.rot[2] = ofClamp(Nachi_tester.rot[2], -70, 90);
+		Nachi_tester.rot[3] = ofClamp(Nachi_tester.rot[3], -150, 150);
+		Nachi_tester.rot[4] = ofClamp(Nachi_tester.rot[4], -109, 109);
+		Nachi_tester.rot[5] = ofClamp(Nachi_tester.rot[5], -360, 360);
 	}
 
 	void exportGCode(string fileToWrite = "data/MZ07-01-A.080")
@@ -541,14 +551,14 @@ public:
 			e_x = rotations[i][0];
 			e_y = rotations[i][1];
 			e_z = rotations[i][2];
-			r = rotations[i][3];
+			r =  rotations[i][3];
 			p = rotations[i][4];
 			y = rotations[i][5];
 
 
 			//format as per nachi language
 			//sprintf_s(gcode, "MOVEX A=6,AC=0,SM=0,M1J,P,( %1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f),T=0.1,H=3,MS, CONF=0001", e_x, e_y, e_z, r, p, y);
-			sprintf_s(gcode, "MOVEX A=6,AC=0,SM=0,M1J,P,( %1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f),S=30.0,H=3,MS, CONF=0001", e_x, e_y, e_z, r, p, y);
+			sprintf_s(gcode, "MOVEX A=6,AC=0,SM=0,M1J,P,( %1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f),S=300.0,H=3,MS, CONF=0001", e_x, e_y, e_z, r, p, y);
 
 			// output string to open file
 			myfile_write << gcode << endl;

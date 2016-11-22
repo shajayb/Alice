@@ -32,12 +32,13 @@ public:
 		//---------
 		importer imp = *new importer(fileToImport, 10000, 1.0);
 		imp.readEdges();
+		
 
 		//---------
 		G.reset();
 		for (int i = 0; i < imp.nCnt; i++)G.createVertex(imp.nodes[i].pos);
 		for (int i = 0; i < imp.eCnt; i++)G.createEdge(G.vertices[imp.edges[i].n0], G.vertices[imp.edges[i].n1]);
-		
+
 		//
 		G.boundingbox(minV, maxV);
 
@@ -50,14 +51,14 @@ public:
 		G.boundingbox(minV, maxV);
 
 		trans.identity();
-		trans.translate( vec(40,0,0) - (minV + maxV) * 0.5);
+		trans.translate( vec(45,0,0) - (minV + maxV) * 0.5);
 		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 		minV = minV * trans;
 		maxV = maxV * trans;
 
 		G.boundingbox(minV, maxV);
-		minV -= (maxV - minV).normalise() * 1.5;
-		maxV += (maxV - minV).normalise() * 1.5;
+		minV -= (maxV - minV).normalise() * 2.5;
+		maxV += (maxV - minV).normalise() * 2.5;
 
 		//---------
 
@@ -115,11 +116,11 @@ public:
 			MM.G.createEdge( MM.G.vertices[ A.edges[i].vStr->id], MM.G.vertices[A.edges[i].vEnd->id]);
 	}
 
-	void addCurrentContourGraphToPrintStack( float layersize = 0.1 , float baseOffset = 0.4)
+	void addCurrentContourGraphToPrintStack( float layersize = 0.1 , float baseOffset = 1.0 )
 	{
 		//---------
 		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i].z += currentStackLayer * layersize + baseOffset;
+			MM.G.positions[i].z = currentStackLayer * layersize + baseOffset;
 
 		PrintStack[currentStackLayer] = *new Graph();
 		PrintStack[currentStackLayer].reset();
@@ -157,7 +158,7 @@ public:
 		wireFrameOn();
 
 				////MM.draw();
-		G.draw();
+			G.draw();
 
 			MM.G.computeIslandsAsEdgeAndVertexList();
 			MM.G.drawConnectedEdgeList();

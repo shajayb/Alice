@@ -27,12 +27,19 @@ void setup()
 {
 
 	GS = *new graphStack();
-	GS.readGraphAndCreateDataMesh("data/tree_pts.txt", 1.0);
-
+	GS.readGraphAndCreateDataMesh("data/tree_pts.txt", 1.0);//circular_pts
+	//GS.MM.G.reset();
+	//for (int i = 0; i < GS.G.n_v; i++)GS.MM.G.createVertex( GS.G.positions[i] );
+	//for (int i = 0; i <  GS.G.n_e; i++)GS.MM.G.createEdge( GS.MM.G.vertices[ GS.G.edges[i].vStr->id ], G.vertices[GS.G.edges[i].vStr->id ] );
 	////
 
-	path.readPath();
-
+	//for (int i = 0; i < 50; i++)
+	int i = 0;
+	{
+		path.readPath("data/path.txt", ",", 1.15 + float(i) * 0.1);
+		//path.actualPathLength--;
+	}
+	//path.readPath("data/path.txt",",",2.26);
 	//////////////////////////////////////////////////////////
 
 
@@ -53,7 +60,7 @@ void setup()
 
 	S.addSlider(&GS.threshold, "threshold");
 	S.sliders[6].minVal = 0;
-	S.sliders[6].maxVal = 400;
+	S.sliders[6].maxVal = 1400;
 
 	/////////////////////////////
 
@@ -123,17 +130,17 @@ void draw()
 		 drawString(" w : path.exportGCode();", wid, hts); hts += 25;
 		 drawString(" r : setup();", wid, hts); hts += 25;
 		 drawString(" h : path.home();", wid, hts); hts += 25;
-		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
-		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
-		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
-		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
 		 hts += 25;
 		 drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
 		 drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
 		 drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
 		 drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
 		 drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
+		 drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
+		 drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
 		 drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
+		 drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
+		 drawString("  R : run = !run ", wid, hts); hts += 25;
 	 
 	 
 	restore3d();
@@ -169,10 +176,12 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == ' ')GS.smoothCurrentGraph();
 	if (k == 'c')GS.convertContourToCyclicGraph();
 	if (k == '-')GS.reducePointsOnContourGraph(2);
-	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.05, 0.4);
+	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.1, 1.75);
+	if (k == 'P')GS.currentStackLayer--;
+	if (k == 'O')GS.currentStackLayer = 0;
 	if (k == 'L')GS.ConvertContourStackToPrintPath(path);
 
-	if (k == 'w')GS.writeCurrentGraph();
+	if (k == 'Q')GS.writeCurrentGraph();
 	if (k == 'R')run = !run;
 }
 
