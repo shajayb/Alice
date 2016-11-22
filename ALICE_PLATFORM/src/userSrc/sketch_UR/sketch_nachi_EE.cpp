@@ -31,10 +31,7 @@ void setup()
 
 	GS = *new graphStack();
 	GS.readGraphAndCreateDataMesh("data/tree_pts.txt", 1.0);//circular_pts
-	//GS.MM.G.reset();
-	//for (int i = 0; i < GS.G.n_v; i++)GS.MM.G.createVertex( GS.G.positions[i] );
-	//for (int i = 0; i <  GS.G.n_e; i++)GS.MM.G.createEdge( GS.MM.G.vertices[ GS.G.edges[i].vStr->id ], G.vertices[GS.G.edges[i].vStr->id ] );
-	////
+
 
 	//for (int i = 0; i < 50; i++)
 	int i = 0;
@@ -42,7 +39,7 @@ void setup()
 		path.readPath("data/path.txt", ",", 1.15 + float(i) * 0.1);
 		//path.actualPathLength--;
 	}
-	//path.readPath("data/path.txt",",",2.26);
+
 	//////////////////////////////////////////////////////////
 
 
@@ -100,6 +97,8 @@ void draw()
 		path.draw(false);
 	else
 		GS.draw();
+
+	
 
 
 	//// graph 
