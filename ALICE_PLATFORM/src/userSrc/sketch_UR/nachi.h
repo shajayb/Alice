@@ -76,6 +76,18 @@ public:
 		rot.setColumn(2, ZA); rotf.setColumn(2, ZA_f);
 	}
 
+	void drawAtLocation( Matrix4 &EE , bool wireframe = true)
+	{
+		for (int i = 0; i < M.n_v; i++)M.positions[i] = EE * M.positions[i];// to tcip
+
+		if(wireframe)wireFrameOn();
+			draw();
+		if (wireframe)wireFrameOff();
+
+		EE.invert();
+		for (int i = 0; i < M.n_v; i++)M.positions[i] = EE * M.positions[i];// to tcip
+	}
+
 	void draw()
 	{
 		//Nachi_tester.draw();
@@ -155,8 +167,7 @@ public:
 	int actualPathLength;
 	vec min, max; // to store min - max of path bbox
 
-				  // point related class variables 
-
+	// point related class variables 
 	vec tcp, tcp_x, tcp_y, tcp_z;
 	int currentPointId = 0;
 
@@ -183,41 +194,7 @@ public:
 		taskGraph = *new Graph();
 		taskGraph.reset();
 	}
-
-	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
-
-	void assignDefaultFrame()
-	{
-		tcp = vec(0, 0, 0);
-		tcp_x = vec(-1, 0, 0);
-		tcp_y = vec(0, 1, 0);
-		tcp_z = vec(0, 0, -1);
-	}
-
-	vec extractVecFromStringArray(int id, vector<string> &content)
-	{
-		return vec(atof(content[id].c_str()), atof(content[id + 1].c_str()), atof(content[id + 2].c_str()));
-	}
-
-
-	void angleBetweenFrames( Matrix3 rotA, Matrix3 rotB)
-	{
-		for (int i = 0; i < 3; i++)
-			cout << rotA.getColumn(i).angle(rotB.getColumn(i)) << " ";
-		cout << endl;
-	}
-
-	void addPoint( vec tcp, vec tcp_x = vec(1, 0, 0), vec tcp_y = vec(0, 1, 0), vec tcp_z = vec(0, 0, -1) )
-	{
-
-		path[actualPathLength][0] = tcp;
-		path[actualPathLength][1] = tcp_x * 1;
-		path[actualPathLength][2] = tcp_y * 1;
-		path[actualPathLength][3] = tcp_z * 1;
-		actualPathLength++;
-		if (actualPathLength > maxPts)actualPathLength = 0;
-	}
-	void readPath(string fileToRead = "data/path.txt", string delimiter = "," , float inc = 0)
+	void readPath(string fileToRead = "data/path.txt", string delimiter = ",", float inc = 0)
 	{
 		cout << "reading file for path " << fileToRead << endl;
 
@@ -258,23 +235,23 @@ public:
 
 		getBoundingBox();
 
-	//	checkReach();
+		//	checkReach();
 		copyPathToGraph();
 
 	}
-	void copyPathToGraph()
+	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
+
+	vec extractVecFromStringArray(int id, vector<string> &content)
 	{
-		cout << "copying" << endl;
-
-		for (int i = 0; i < actualPathLength; i++)
-			taskGraph.createVertex(path[i][0]);
-		for (int i = 0; i < actualPathLength; i++)
-			taskGraph.createEdge(taskGraph.vertices[ taskGraph.Mod(i, actualPathLength) ], taskGraph.vertices[ taskGraph.Mod(i + 1, actualPathLength) ]);
-
-		cout << taskGraph.n_v << " -- " << taskGraph.n_e << endl;
-		for (int i = 0; i < actualPathLength; i++)path[i][0].print();
+		return vec(atof(content[id].c_str()), atof(content[id + 1].c_str()), atof(content[id + 2].c_str()));
 	}
-
+	void assignDefaultFrame()
+	{
+		tcp = vec(0, 0, 0);
+		tcp_x = vec(-1, 0, 0);
+		tcp_y = vec(0, 1, 0);
+		tcp_z = vec(0, 0, -1);
+	}
 	void getBoundingBox()
 	{
 		min = vec(pow(10, 10), pow(10, 10), pow(10, 10));
@@ -292,8 +269,29 @@ public:
 			min.z = MIN(tcp.z, min.z);
 		}
 	}
+	void angleBetweenFrames( Matrix3 rotA, Matrix3 rotB)
+	{
+		for (int i = 0; i < 3; i++)
+			cout << rotA.getColumn(i).angle(rotB.getColumn(i)) << " ";
+		cout << endl;
+	}
+	void addPoint( vec tcp, vec tcp_x = vec(1, 0, 0), vec tcp_y = vec(0, 1, 0), vec tcp_z = vec(0, 0, -1) )
+	{
 
-
+		path[actualPathLength][0] = tcp;
+		path[actualPathLength][1] = tcp_x * 1;
+		path[actualPathLength][2] = tcp_y * 1;
+		path[actualPathLength][3] = tcp_z * 1;
+		actualPathLength++;
+		if (actualPathLength > maxPts)actualPathLength = 0;
+	}
+	void copyPathToGraph()
+	{
+		for (int i = 0; i < actualPathLength; i++)
+			taskGraph.createVertex(path[i][0]);
+		for (int i = 0; i < actualPathLength; i++)
+			taskGraph.createEdge(taskGraph.vertices[taskGraph.Mod(i, actualPathLength)], taskGraph.vertices[taskGraph.Mod(i + 1, actualPathLength)]);
+	}
 	void getToolLocation(int id, Matrix4 &TOOL)
 	{
 		TOOL.setColumn(0, path[id][1]); // tcp_x
@@ -301,15 +299,12 @@ public:
 		TOOL.setColumn(2, path[id][3]); // tcp_z
 		TOOL.setColumn(3, path[id][0]); // tcp
 	}
-
 	Matrix4 getToolLocation(int id)
 	{
 		Matrix4 _TOOL;
 		getToolLocation(id, _TOOL);
 		return _TOOL;
 	}
-
-
 	void changeTool(Matrix4 EE, Matrix4 &TOOL, int n)
 	{
 		vec x = E_disp.XA;
@@ -419,7 +414,6 @@ public:
 		checkPathForReachability();
 		cout << " ------------------------------ END - POINT-SPECIFIC   WARNINGS ------------------------------ " << endl;
 	}
-
 	void checkPathForReachability()
 	{
 		Matrix4 TOOL, EE;
@@ -489,7 +483,6 @@ public:
 		}
 
 	}
-
 	void angleCorrection(double * rot_prev)
 	{
 		if (fabs(rot_prev[3] - Nachi_tester.rot[3]) > 180)
@@ -524,7 +517,6 @@ public:
 		Nachi_tester.rot[4] = ofClamp(Nachi_tester.rot[4], -109, 109);
 		Nachi_tester.rot[5] = ofClamp(Nachi_tester.rot[5], -360, 360);
 	}
-
 	void exportGCode(string fileToWrite = "data/MZ07-01-A.080")
 	{
 		int counter = 0;
@@ -587,6 +579,7 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////// DISPLAY METHODS
+
 	void drawFrame(Matrix4 &tool , float sz)
 	{
 		
@@ -597,7 +590,6 @@ public:
 		glColor3f(0, 1, 0); drawLine( tcp, tcp + tcp_y.normalise() * sz);
 		glColor3f(0, 0, 1); drawLine( tcp, tcp + tcp_z.normalise() * sz);
 	}
-
 	void draw(bool wireFrame = true, bool showSphere = false)
 	{
 		// ------------------- taskGraph
@@ -621,27 +613,15 @@ public:
 		//////////////////////////////////////////////////////////////////////////
 		// get TOOL information at current point i
 
-		int n = currentPointId;
-		if (currentPointId > 0 && currentPointId < actualPathLength) n = currentPointId -1;
 		Matrix4 EE =  Nachi_tester.Bars_to_world_matrices[5];
-		
-		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];// to tcip
-
-		wireFrameOn();
-		//E_disp.draw();
-		E.draw();
-		wireFrameOff();
-
-		EE.invert();
-		for (int i = 0; i < E.M.n_v; i++)E.M.positions[i] = EE * E.M.positions[i];
-
+		E.drawAtLocation(EE);
 
 		//////////////////////////////////////////////////////////////////////////
 		// ------------------- draw bounding box ;
 		
 		wireFrameOn();
 			drawCube(min, max);
-			wireFrameOff();
+		wireFrameOff();
 		// ------------------- draw Robot ;
 
 		if (wireFrame)wireFrameOn();
