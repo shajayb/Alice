@@ -17,7 +17,7 @@ public:
 	double threshold;
 	int currentStackLayer;
 	metaMesh MM;
-	bool convertedTocyclic;
+	bool convertedToToroidal;
 	////---------------------------------------------------- CONSTRUCTOR --------------------------------------
 	graphStack( )
 	{
@@ -67,7 +67,7 @@ public:
 
 		//
 		currentStackLayer = 0;
-		convertedTocyclic = false; 
+		convertedToToroidal = false; 
 	}
 
 
@@ -85,10 +85,10 @@ public:
 	{
 		MM.createIsoContourGraph(threshold);
 	}
-	void convertContourToCyclicGraph()
+	void convertContourToToroidalGraph()
 	{
 		MM.convertContourToCyclicGraph();
-		convertedTocyclic = true;
+		convertedToToroidal = true;
 	}
 
 	void smoothCurrentGraph()
@@ -164,7 +164,7 @@ public:
 			MM.G.computeIslandsAsEdgeAndVertexList();
 			MM.G.drawConnectedEdgeList();
 			
-			convertedTocyclic ? glColor3f(1, 0, 0) : glColor3f(0, 0, 0);
+			convertedToToroidal ? glColor3f(1, 0, 0) : glColor3f(0, 0, 0);
 			MM.G.draw();
 
 		wireFrameOff();

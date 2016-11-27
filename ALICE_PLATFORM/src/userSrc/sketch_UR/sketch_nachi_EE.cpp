@@ -174,7 +174,7 @@ void keyPress(unsigned char k, int xm, int ym)
 
 
 	if (k == ' ')GS.smoothCurrentGraph();
-	if (k == 'c')GS.convertContourToCyclicGraph();
+	if (k == 'c')GS.convertContourToToroidalGraph();
 	if (k == '-')GS.reducePointsOnContourGraph(2);
 	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.1, 1.75);
 	if (k == 'P')GS.currentStackLayer--;
