@@ -11,104 +11,146 @@ using namespace std::experimental;
 
 #include"graph.h"
 
+#include "metaMesh.h"
 Graph G;
 
-
-class metaMesh : public Mesh
+struct E
 {
-public:
+	vec t, f;
 
-	Graph G;
-	array<double, MAX_VERTS> scalars;
-	metaMesh()
+	E() {}
+	E(vec &_t, vec &_f)
 	{
-		
-	};
-	metaMesh( Mesh &in)
-	{
-		G = *new Graph();
-		
-		///
-		
-		for (int i = 0; i < in.n_v; i++) positions[i] = in.positions[i];
-		for (int i = 0; i < in.n_v; i++) createVertex(positions[i]);
-		Vertex *f_v[MAX_VALENCE];
-		for (int i = 0; i < in.n_f; i++)
-		{
-			int *face_verts = in.faces[i].faceVertices();
-			for (int j = 0; j < in.faces[i].n_e; j++)f_v[j] = &vertices[face_verts[j]];
-			createFace(f_v, in.faces[i].n_e);
-		}
-
-		for (int i = 0; i < n_f; i++)faces[i].faceVertices();
+		t = _t;
+		f = _f;
 	}
-
-	void assignScalars(string component = "y")
-	{
-		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
-		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
-
-	}
-
-	void createGraph( double threshold)
-	{
-		int a, b;
-		vec diff;
-		double interp;
-		Vertex v;
-		int *edge_vertex_ids = new int[n_e];
-
-		G.reset();
-
-		for (int i = 0; i < n_e; i++)
-		{
-			a = edges[i].vStr->id;
-			b = edges[i].vEnd->id;
-
-			diff = (positions[b] - positions[a]);// .normalise();
-			interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
-			if (interp >= 0.0 && interp <= 1.0)
-			{
-				v = * ( G.createVertex((positions[a] + diff * interp)) );
-				//v.clr = getColour(interp,0,1);
-				edge_vertex_ids[i] = v.id;
-			}
-			else
-				edge_vertex_ids[i] = -1;
-
-		}
-
-
-		////
-
-		int e_id;
-		int e_v_ids[3];
-
-		for (int i = 0; i < n_f; i++)
-		{
-
-			e_v_ids[0] = e_v_ids[1] = e_v_ids[2] = -1;;
-
-			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
-			{
-				e_id = faces[i].edgePtrs[j]->id;
-				e_v_ids[j] = edge_vertex_ids[e_id];
-			}
-
-			
-			if (e_v_ids[0] >= 0 && e_v_ids[1] >= 0)G.createEdge(G.vertices[e_v_ids[0]], G.vertices[e_v_ids[1]]);
-			if (e_v_ids[1] >= 0 && e_v_ids[2] >= 0)G.createEdge(G.vertices[e_v_ids[1]], G.vertices[e_v_ids[2]]);
-			if (e_v_ids[2] >= 0 && e_v_ids[0] >= 0)G.createEdge(G.vertices[e_v_ids[2]], G.vertices[e_v_ids[0]]);
-			
-
-		}
-
-		cout << G.n_e << " " << n_v << endl;
-
-		delete[]edge_vertex_ids;
-	}
-
 };
+
+
+
+//class metaMesh : public Mesh
+//{
+//public:
+//
+//	Graph G;
+//	array<double, 1000> scalars;
+//	metaMesh()
+//	{
+//
+//	};
+//	metaMesh(Mesh &in)
+//	{
+//		G = *new Graph();
+//
+//		///
+//
+//		for (int i = 0; i < in.n_v; i++) positions[i] = in.positions[i];
+//		for (int i = 0; i < in.n_v; i++) createVertex(positions[i]);
+//		Vertex *f_v[MAX_VALENCE];
+//		for (int i = 0; i < in.n_f; i++)
+//		{
+//			int *face_verts = in.faces[i].faceVertices();
+//			for (int j = 0; j < in.faces[i].n_e; j++)f_v[j] = &vertices[face_verts[j]];
+//			createFace(f_v, in.faces[i].n_e);
+//		}
+//
+//		for (int i = 0; i < n_f; i++)faces[i].faceVertices();
+//	}
+//
+//	void assignScalars(string component = "y")
+//	{
+//		for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag();
+//		//(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
+//
+//	}
+//
+//	void createGraph(double threshold)
+//	{
+//		int a, b;
+//		vec diff;
+//		double interp;
+//		Vertex v;
+//		int *edge_vertex_ids = new int[n_e];
+//		for (int i = 0; i < n_e; i++)edge_vertex_ids[i] = -1;
+//
+//
+//		G.n_v = G.n_e = 0;
+//
+//		for (int i = 0; i < n_e; i++)
+//		{
+//			a = edges[i].vStr->id;
+//			b = edges[i].vEnd->id;
+//
+//			diff = (positions[b] - positions[a]);// .normalise();
+//			interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
+//			if (interp >= 0.0 && interp <= 1.0)
+//			{
+//				v = *(G.createVertex((positions[a] + diff * interp)));
+//				edge_vertex_ids[i] = v.id;
+//			}
+//
+//		}
+//
+//		////
+//
+//		int e_id;
+//		int e_v_ids[3];
+//		for (int i = 0; i < n_f; i++)
+//		{
+//
+//			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
+//			{
+//				e_id = faces[i].edgePtrs[j]->id;
+//				e_v_ids[j] = edge_vertex_ids[e_id];
+//			}
+//
+//
+//			//if (e_v_ids[0] >= 0 && e_v_ids[1] >= 0)G.createEdge(vertices[e_v_ids[0]], vertices[e_v_ids[1]]);
+//			if (e_v_ids[1] >= 0 && e_v_ids[2] >= 0)G.createEdge(vertices[e_v_ids[1]], vertices[e_v_ids[2]]);
+//			//if (e_v_ids[2] >= 0 && e_v_ids[0] >= 0)G.createEdge(vertices[e_v_ids[2]], vertices[e_v_ids[0]]);
+//
+//
+//		}
+//
+//		delete[]edge_vertex_ids;
+//	}
+//
+//};
+//
+//
+//
+////
+generator<E> faceEdges(metaMesh &m, double threshold)
+{
+	int a, b;
+	vec ePt[3];
+	bool e[3];
+	vec diff;
+	double interp;
+
+	for (int i = 0; i < m.n_f; i++)
+	{
+
+		for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
+		{
+			a = m.faces[i].edgePtrs[j]->vEnd->id;
+			b = m.faces[i].edgePtrs[j]->vStr->id;
+
+			diff = (m.positions[b] - m.positions[a]);// .normalise();
+			interp = ofMap(threshold, m.scalars[a], m.scalars[b], 0, 1);
+
+			ePt[j] = (interp >= 0.0 && interp <= 1.0) ? (m.positions[a] + diff * interp) : (vec(0, 0, 0));
+			e[j] = (interp >= 0.0 && interp <= 1.0) ? 1 : 0;
+		}
+
+
+		if (e[0] && e[1])yield E(ePt[0], ePt[1]);
+		if (e[1] && e[2])yield E(ePt[1], ePt[2]);
+		if (e[2] && e[0])yield E(ePt[2], ePt[0]);
+
+	}
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,59 +158,19 @@ public:
 SliderGroup S;
 double threshold = 0.5;
 metaMesh M;
-importer OBJ;
+
 
 void setup()
 {
+	S = *new SliderGroup();
+	S.addSlider(&threshold, "threshold");
+	S.sliders[0].attachToVariable(&threshold, -PI, PI);
 
-
-	vec min, max;
 	MeshFactory fac;
-	
-	//Mesh tmp = fac.createFromOBJ("data/in.obj", 10, true, false);
-	
-	OBJ = * new importer("data/in.obj", MAX_VERTS, 1.0);
-	OBJ.read_obj();
-	
-	vec *p = new vec[OBJ.nCnt];
-	for (int i = 0; i < OBJ.nCnt; i++)p[i] = OBJ.nodes[i].pos;
-
-
-	Mesh OBJMesh;
-	Vertex *f_verts[MAX_VALENCE];
-	// ------------------------------------ make vertices 
-
-	for (int i = 0; i < OBJ.nCnt; i++)OBJMesh.createVertex(p[i]);
-
-	// ------------------------------------ make faces ;
-
-	for (int i = 0, strt = 0, num; i < OBJ.fCnt; i++, strt += num)
-	{
-		num = OBJ.faceCounts[i]; // number of vertices per face - tri,quad,nGon ;
-
-							 // --- collect face vertices from global vertex list ;
-		for (int j = strt, f_v_cnt = 0; j < strt + num; j++, f_v_cnt++)
-			f_verts[f_v_cnt] = &OBJMesh.vertices[OBJ.faces[j]];
-
-		OBJMesh.createNGon(f_verts, num, true);
-	}
-
-	// check euler characteristics .
-
-	// recent addition .
-	//for (int i = 0; i < OBJ.n_f; i++)OBJ.faces[i].faceVertices();
-
-
-	//fac.createFromArrays(p, OBJ.nCnt, OBJ.faceCounts, OBJ.fCnt, OBJ.faces, true );
-//	M = metaMesh( tmp );
-	//M.assignScalars();
-//	M.boundingBox(min, max);
-	
-
-	//S = *new SliderGroup();
-	//S.addSlider(&threshold, "threshold");
-	//S.sliders[0].attachToVariable(&threshold,min.z, max.z);
-
+	Mesh tmp = fac.createFromOBJ("data/in.obj", 1, false, false);
+	M = metaMesh(tmp);
+	M.assignScalars();
+	M.createIsoContourGraph(threshold);
 
 }
 
@@ -178,52 +180,36 @@ void update(int value)
 
 }
 
-void timeStats(long &strt, long& end, string str)
-{
-	elapsedTime = end - strt;
-	cout << elapsedTime / 1000.0f << " - " << str << endl;
-}
-
-
 void draw()
 {
 
 	backGround(0.75);
 
-	glLineWidth(1.0);
-	//M.draw(true);
+	M.draw(true);
 
 	glPointSize(5);
 
 	glColor3f(1, 0, 0);
+	//for (double i = 0; i < threshold; i+= threshold * 0.05)
+	for (auto &c : faceEdges(M, threshold))
+	{
+		//drawLine(c.t, c.f);
+		//drawPoint((vec)c.t);
+		//drawPoint((vec)c.f);
 
-		
-		
-	long start, end;
-	start = GetTickCount();
-		
-	//	M.createGraph(threshold);
-		//M.G.draw();
+	}
 
-		
-	for (int i = 0; i < OBJ.nCnt; i++)drawPoint(OBJ.nodes[i].pos);
-
-			//M.G.drawIslands();
-
-		end = GetTickCount();
-		//timeStats(start, end, " graph + islands ");
-
-	//	cout << " -------------------------------------------- " << endl;
-		//
+	M.G.draw();
 
 	glColor3f(0, 0, 0);
-	
 
-	//S.draw();
+
+	S.draw();
 
 }
 void keyPress(unsigned char k, int xm, int ym)
 {
+
 
 }
 
@@ -245,7 +231,6 @@ void mouseMotion(int x, int y)
 		S.performSelection(x, y, HUDSelectOn);
 	}
 }
-
 
 
 

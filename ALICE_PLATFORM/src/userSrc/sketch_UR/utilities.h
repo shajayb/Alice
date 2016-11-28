@@ -154,7 +154,7 @@ void drawSphere(vec &a, vec rotate, vec scale = vec(1, 1, 1), float r = 1.0, flo
 
 	static const GLdouble equation[] = { 0, 0, 1.0, 0.0 };
 	glClipPlane(GL_CLIP_PLANE0, equation);
-	glEnable(GL_CLIP_PLANE0);
+//	glEnable(GL_CLIP_PLANE0);
 
 	resetProjection();
 	enableLight(light_pos);
@@ -172,6 +172,25 @@ void drawSphere(vec &a, vec rotate, vec scale = vec(1, 1, 1), float r = 1.0, flo
 	glDisable(GL_BLEND);
 
 }
+
+struct int2
+{
+	int n;
+	int l;
+
+	int2() {};
+	int2(int _l, int _n)
+	{
+		
+		l = _l;
+		n = _n;
+
+	}
+	bool operator == (int2 &other)
+	{
+		return (other.n == n && other.l == l);
+	}
+};
 
 #define _UTILITIES_
 #endif // !_UTILITIES_

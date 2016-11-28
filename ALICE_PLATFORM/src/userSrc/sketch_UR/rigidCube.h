@@ -15,10 +15,6 @@ public:
 	vec minBB, maxBB;
 
 	//// forces
-	vec *pts;
-	int np;
-	int RES = 10;
-
 	double dt = 0.01;
 	vec cog;
 	vec F, T;
@@ -36,12 +32,10 @@ public:
 
 	rigidCube()
 	{
-		//pts = new vec[RES*RES*RES];
 	}
 
 	~rigidCube()
 	{
-		//if(pts != NULL)delete[] pts;
 	}
 
 	rigidCube( Mesh &M )
@@ -69,24 +63,31 @@ public:
 		///
 		transMatrix.identity();
 
-		Matrix4 T;
-		T.setColumn(0, vec(1, 1, 0).normalise());
-		T.setColumn(1, vec(1, -1, 0).normalise());
-		T.setColumn(2, vec(0, 0, 1));
-		T.setColumn(3, vec(0, 0, 0.5));
-		T.invert();
-		for (int i = 0; i < 8; i++) pos[i] = T * pos[i];
+		Matrix4 Tr;
+		Tr.setColumn(0, vec(1, 1, 0).normalise());
+		Tr.setColumn(1, vec(1, -1, 0).normalise());
+		Tr.setColumn(2, vec(0, 0, 1));
+		Tr.setColumn(3, vec(0, 0, 0.5));
+		Tr.invert();
+		for (int i = 0; i < 8; i++) pos[i] = Tr * pos[i];
 
 		////
 
 		getOBB(minBB, maxBB);
 
-		///
-		pts = new vec[RES*RES*RES];
-		np = RES*RES*RES;
+		////
+		F = P = T = L = w = vec(0, 0, 0);
+
+		inertiaTensor.identity();
+		//inertiaTensor = pow(10,5) * inertiaTensor;
+		Matrix3 rotMatrix;
+		rotMatrix.identity();
+		q = rotMatrixToQuaternion(rotMatrix);// quaternion(0, vec(0, 0, 1));
+
 	}
 
 	//////////////////////////////// COMPUTE -------------------------------------------------------------------------------------------- 
+	
 	void getOBB(vec &mn, vec &mx)
 	{
 		mn = vec(1e12, 1e12, 1e12);
@@ -111,6 +112,98 @@ public:
 			mx.y = MAX(mx.y, ptInOrientedBasis.y);
 			mx.z = MAX(mx.z, ptInOrientedBasis.z);
 		}
+	}
+
+	void resetForces()
+	{
+		F = T = vec(0, 0, 0);
+	}
+
+	void computeGrid(vec *P, int RES)
+	{
+
+		vec x, y, z, c;
+		transMatrix.getBasisVectors(x, y, z, c);
+		x.normalise(); y.normalise(); z.normalise();
+
+		getOBB(minBB, maxBB);
+
+		vec mn = x * minBB.x + y * minBB.y + z * minBB.z;
+		vec mx = x * maxBB.x + y * maxBB.y + z * maxBB.z;
+
+		mn += c;
+		mx += c;
+
+		float xInc, yInc, zInc;
+		vec diff = mx - mn;
+		diff /= float(RES);
+		xInc = diff * x; yInc = diff* y; zInc = diff * z;
+
+		glPointSize(1);
+		glColor3f(.2, .2, .2);
+		int cnt = 0;
+		for (int i = 0; i < RES; i++)
+			for (int j = 0; j < RES; j++)
+				for (int k = 0; k < RES; k++)
+				{
+					vec pt = (x * float(i) * xInc + y * float(j) * yInc + z * float(k) * zInc);
+					pt += mn;
+					P[cnt] = pt;
+					cnt++;
+				}
+		///
+
+	}
+
+	void computeContactsAndForces(rigidCube &R2, vec *P1, vec *P2, int RES)
+	{
+		
+		computeGrid(P1, RES);
+		R2.computeGrid(P2, RES);
+
+		double k, kShear, kFriction, damp, dia;
+		cog = transMatrix.getColumn(3);
+
+		int np = RES*RES*RES;
+		for (int i = 0; i < np; i++)
+		{
+
+			k = 0.55;// pow(10, 3.3);
+			damp = 0.05;
+			dia = 0.1;
+			kShear = 0.01; // pow(10, 1);
+			k = 0.002;
+			
+
+			for (int j = 0; j < np; j++)
+			{
+				vec relPos_ij = P1[i] - P2[j];
+
+				if (relPos_ij * relPos_ij < pow(1e-6, 2))continue;
+				if (relPos_ij * relPos_ij > pow(dia * 0.9, 2))continue;
+
+				vec F_is, F_id, F_it, F_if;
+				vec relVel_ij = vec(0,0, 0);// vel - R.vel;
+				vec relPos_normalised = relPos_ij / relPos_ij.mag(); /// normalise();
+				vec relVel_tan = relVel_ij - relPos_normalised * (relVel_ij * relPos_normalised);
+
+				double dist = dia - relPos_ij.mag();
+				/*F_is = (relPos_normalised)*  k * (1.0 / double(np)) * (1.0 / (dist * dist));*/
+				F_is = (relPos_normalised)*  k * (dist);// *(1.0 / (dist * dist));
+				F_id = relVel_ij * damp;
+				F_it = relVel_tan * kShear;
+
+				vec totalF = F_is + F_id + F_it; // F_is is parallel to relPos_ij , without F_id or F_it, this force will not cause torque
+				/*particles[i].f_is = F_is;
+				particles[i].f_id = F_id;
+				particles[i].f_it = F_it;*/
+
+				F += totalF;
+				T += (P1[i] - cog ).cross(totalF);
+
+			}
+		}
+
 	}
 
 	//////////////////////////////// UTILITIES  -------------------------------------------------------------------------------------------- 
@@ -153,58 +246,15 @@ public:
 	}
 
 	//////////////////////////////// DISPLAY  -------------------------------------------------------------------------------------------- 
-	void reDimensionComputeGrid( int _res)
-	{
-		RES = _res;
-		pts = new vec[RES*RES*RES];
-
-	}
 	
-	void computeContacts( rigidCube &R2 )
+	void drawGrid( vec *P , int n)
 	{
-		computeGrid();
-		R2.computeGrid();
-	}
-	void computeGrid()
-	{
-
-		vec x, y, z, c;
-		transMatrix.getBasisVectors(x, y, z, c);
-		x.normalise(); y.normalise(); z.normalise();
-
-		getOBB(minBB, maxBB);
-
-		vec mn = x * minBB.x + y * minBB.y + z * minBB.z;
-		vec mx = x * maxBB.x + y * maxBB.y + z * maxBB.z;
-
-		mn += c;
-		mx += c;
-
-		float xInc, yInc, zInc;
-		vec diff = mx - mn;
-		diff /= float(RES);
-		xInc = diff * x; yInc = diff* y; zInc = diff * z;
-
-		glPointSize(1);
-		glColor3f(.2, .2, .2);
-		int cnt = -1;
-		for (int i = 0; i < RES; i++)
-			for (int j = 0; j < RES; j++)
-				for (int k = 0; k < RES; k++)
-				{
-					vec pt = (x * float(i) * xInc + y * float(j) * yInc + z * float(k) * zInc);
-					pt += mn;
-					pts[cnt++] = pt; 
-				}
-		///
-		np = cnt-1;
+		for (int i = 0; i < n; i++)drawSphere(P[i],vec(0,0,0),vec(1,1,1),.02,1.0);
 	}
 
-	void drawGrid()
+	void drawGridAsPoints(vec *P, int n)
 	{
-		//computeGrid();
-		for (int i = 0; i < np; i++)drawPoint(pts[i]);
-
+		for (int i = 0; i < n; i++)drawPoint(P[i]);
 	}
 
 	void drawAxes(float scale = 1.0)
@@ -247,8 +297,13 @@ public:
 			extractFrame();
 			drawAxes(.2);
 		
+		glLineWidth(4.0);
+		glColor3f(1, 0, 0);drawLine(cen, cen + F);
+		glColor3f(0, 1, 0);	drawLine(cen, cen + T);
+
+		glLineWidth(1.0);
 		///
-		drawGrid();
+
 
 	}
 };

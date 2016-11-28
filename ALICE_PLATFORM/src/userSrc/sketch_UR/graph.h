@@ -62,6 +62,17 @@ public:
 		positions = new vec[MAX_VERTS];
 	}
 
+	void constructFromGraph( Graph &G )
+	{
+
+		for (int i = 0; i < G.n_v; i += 1)
+			createVertex(G.positions[i]);
+
+		for (int i = 0; i < G.n_v; i += 1)
+			createEdge( vertices[ G.edges[i].vStr->id ], vertices[ G.edges[i].vEnd->id ]);
+		
+	}
+
 #endif // !_use vector_
 
 	// ------------- ------------- ------------- -------------------------- TOPOLOGY
@@ -258,7 +269,6 @@ public:
 			connected_vertices.push_back(str_Vid);
 		}
 	}
-
 	
 	void smooth_connectedVertices()
 	{
@@ -475,10 +485,10 @@ public:
 
 	vector<bool> fixed;
 
-	void constructFromGraph( Graph &G)
+	void constructFromGraph( Graph &G , int everyNthVert = 1 )
 	{
 		reset();
-		for (int i = 0; i < G.n_v; i++) createVertex(G.positions[i]);
+		for (int i = 0; i < G.n_v; i+= everyNthVert ) createVertex(G.positions[i]);
 		
 		for (int i = 0; i < n_v; i++) createEdge(vertices[Mod(i, n_v)], vertices[Mod(i + 1, n_v)]);
 		fixed.assign(n_v,false);

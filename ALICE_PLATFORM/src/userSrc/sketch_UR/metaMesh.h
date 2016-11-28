@@ -1,3 +1,8 @@
+
+#ifndef _META_MESH_
+#define  _META_MESH_
+
+
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -10,19 +15,20 @@ using namespace std::experimental;
 
 #include "graph.h"
 
-
-#ifndef _META_MESH_
-
-#define  _META_MESH_
-
-
-
 class metaMesh : public Mesh
 {
 public:
 
 	Graph G;
 	array<double, MAX_VERTS> scalars;
+	double dMin = 1e20;
+	double dMax = dMin * -1;
+	//////////////////////////////////////////////////////////////////////////
+	int glPtSize = 1.0;
+	int glLineWd = 1.0;
+
+
+
 	metaMesh()
 	{
 
@@ -35,6 +41,7 @@ public:
 
 		for (int i = 0; i < in.n_v; i++) positions[i] = in.positions[i];
 		for (int i = 0; i < in.n_v; i++) createVertex(positions[i]);
+
 		Vertex *f_v[MAX_VALENCE];
 		for (int i = 0; i < in.n_f; i++)
 		{
@@ -80,7 +87,6 @@ public:
 				fVerts[2] = &M.vertices[(i + 1)*colCnt + j - 1];
 				fVerts[3] = &M.vertices[i*colCnt + j - 1];
 				M.createNGon(fVerts, 4, true);
-
 				/*	fv[0] = &M.vertices[i*colCnt + j];;
 				fv[1] = &M.vertices[i*colCnt + j-1];;
 				fv[2] = &M.vertices[(i+1)*colCnt + j];;
@@ -95,7 +101,7 @@ public:
 		}
 
 
-		for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+		for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();// generates face normals ;
 
 		return metaMesh(M);
 	}
@@ -126,7 +132,7 @@ public:
 		return (p - pt) * (p - pt);// p.distanceTo(pt);
 	}
 
-	void assignScalarsAsLineDistanceField( Graph &G)
+	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0 , bool blend = true )
 	{
 
 		for (int i = 0; i < n_v; i++)
@@ -142,31 +148,41 @@ public:
 				e0 = G.edges[j].vEnd->id;
 				e1 = G.edges[j].vStr->id;
 				float Di = distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt);
-				//dChk = Di;
-				//dChk -= 1.0;
-				dChk += 1.0 / (pow((Di + 0.01), 2.0));
+				
+				if (!blend)
+				{
+					dChk = Di;
+					d = MIN(dChk, d);
+				}
+				else
+				{
+					dChk += 1.0 / (pow((Di + 0.01), 2.0));
+					d = dChk;
+				}
 
-				//d= MIN(dChk, d);
+				
 			}
 
-			d = dChk;
+			//d = dChk;
+			d = ofClamp(d, clampMin, clampMax );
 			scalars[i] = d;
-			//dMin = MIN(dMin, d);
-			//dMax = MAX(dMax, d);
+			
 		}
 	}
 
-	void getMinMaxOfScalarField( double &dMin, double &dMax )
+	void getMinMaxOfScalarField( double &_dMin, double &_dMax )
 	{
-		dMin = 1e10;
-		dMax = dMin * -1;
+		_dMin = 1e20;
+		_dMax = _dMin * -1;
 		
 		for (int i = 0; i < n_v; i++)
 		{
-			dMin = MIN(dMin, scalars[i]);
-			dMax = MAX(dMax, scalars[i]);
+			_dMin = MIN(_dMin, scalars[i]);
+			_dMax = MAX(_dMax, scalars[i]);
 		}
 		
+		dMin = _dMin;
+		dMax = _dMax;
 	}
 
 	void createIsoContourGraph(double threshold)
@@ -228,8 +244,7 @@ public:
 		cout << eCnt << " -- metaMesh Graph " << G.n_v << endl;
 	}
 
-
-	void convertContourToCyclicGraph()
+	void convertContourToToroidalGraph()
 	{
 		if (!G.connected_vertices.size() > 0)return;
 		{
@@ -248,6 +263,30 @@ public:
 			for (int i = 0; i < A.n_v; i += 1)
 				G.createEdge( G.vertices[A.edges[i].vStr->id], G.vertices[A.edges[i].vEnd->id]);
 		}
+	}
+
+	void display(bool drawData = true, bool drawContour = true , bool drawMesh = false )
+	{
+
+		if (drawContour)
+			G.draw();
+
+		if (drawMesh)
+		{
+			wireFrameOn();
+				draw();
+			wireFrameOff();
+		}
+
+		glPointSize(glPtSize);
+		if (drawData)
+		for (int i = 0; i < n_v; i++)
+		{
+			vec4 clr = getColour(scalars[i], dMin, dMax);
+			glColor3f(clr.r, clr.g, clr.b);
+			drawPoint(positions[i]);
+		}
+		glPointSize(1.0);
 	}
 };
 
