@@ -162,16 +162,19 @@ metaMesh M;
 
 void setup()
 {
-	S = *new SliderGroup();
-	S.addSlider(&threshold, "threshold");
-	S.sliders[0].attachToVariable(&threshold, -PI, PI);
+
 
 	MeshFactory fac;
 	Mesh tmp = fac.createFromOBJ("data/in.obj", 1, false, false);
 	M = metaMesh(tmp);
 	M.assignScalars();
 	M.createIsoContourGraph(threshold);
+	double dMn, dMx;
+	M.getMinMaxOfScalarField(dMn, dMx);
 
+	S = *new SliderGroup();
+	S.addSlider(&threshold, "threshold");
+	S.sliders[0].attachToVariable( &threshold, dMn, dMx );
 }
 
 void update(int value)
@@ -185,21 +188,10 @@ void draw()
 
 	backGround(0.75);
 
-	M.draw(true);
+//	M.draw(true);
 
-	glPointSize(5);
-
-	glColor3f(1, 0, 0);
-	//for (double i = 0; i < threshold; i+= threshold * 0.05)
-	for (auto &c : faceEdges(M, threshold))
-	{
-		//drawLine(c.t, c.f);
-		//drawPoint((vec)c.t);
-		//drawPoint((vec)c.f);
-
-	}
-
-	M.G.draw();
+	M.glPtSize = 5;
+	M.display();
 
 	glColor3f(0, 0, 0);
 
@@ -220,6 +212,7 @@ void mousePress(int b, int state, int x, int y)
 	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
 		S.performSelection(x, y, HUDSelectOn);
+		if (HUDSelectOn)M.createIsoContourGraph(threshold);
 		//		B.performSelection(x, y);
 	}
 }
@@ -229,6 +222,7 @@ void mouseMotion(int x, int y)
 	//if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
 		S.performSelection(x, y, HUDSelectOn);
+		if (HUDSelectOn)M.createIsoContourGraph(threshold);
 	}
 }
 
