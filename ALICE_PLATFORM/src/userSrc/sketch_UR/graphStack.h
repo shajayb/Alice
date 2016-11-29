@@ -146,7 +146,7 @@ public:
 
 	////---------------------------------------------------- DISPLAY  --------------------------------------
 
-	void draw()
+	void draw( bool showData = false )
 	{
 		
 		
@@ -167,7 +167,7 @@ public:
 		wireFrameOff();
 
 		//----------------- drawDataGridMesh
-
+		if(showData)
 		for (int i = 0; i < MM.n_v; i++)
 		{
 			vec4 clr = getColour(MM.scalars[i], dMin, dMax);

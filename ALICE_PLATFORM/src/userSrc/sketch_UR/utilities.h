@@ -8,6 +8,18 @@ inline float NORM(float a, float b, float c, float d) { return sqrt(a * a + b * 
 
 
 
+struct E
+{
+	vec t, f;
+
+	E() {}
+	E(vec &_t, vec &_f)
+	{
+		t = _t;
+		f = _f;
+	}
+};
+
 
 class quaternion
 {

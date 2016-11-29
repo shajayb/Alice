@@ -3,7 +3,7 @@
 
 #include "ALICE_DLL.h"
 using namespace Alice;
-
+#include "AL_gl2psUtils.h"
 
 //------------------------------------------------------------------------------- FORWARD DECLARATIONS for functions
 
@@ -137,12 +137,13 @@ void drawCallBack()
 	
 }
 
+int counter = 0;
 void keyPressCallBack(unsigned char k, int xm, int ym)
 {
 	if( k == 'x' )exit(0) ;
 	if( k == 'v' )resetCamera() ;
 	if( k == 't' )topCamera();
-	if( k == 'f' )
+	if( k == 'F' )
 	{
 		numFrames = 1200 ; 
 		int nf = 25 ;
@@ -157,6 +158,43 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 		if( saveF ) cout << " printing screen " << endl ;
 		else cout << " NOT printing screen " << endl ;
 	}
+
+	if (k == 'E')
+	{
+		FILE *fp;
+		int state = GL2PS_OVERFLOW, buffsize = 0;
+
+
+		string file = "";
+		file += "data/out";
+		file += "_";
+		char s[20];
+		itoa(counter, s, 10);
+		file += s;
+		file += ".eps";
+
+		fp = fopen(file.c_str(), "w");
+		printf("Writing 'out.eps'... ");
+
+		while (state == GL2PS_OVERFLOW)
+		{
+			buffsize += winW * winH;
+			gl2psBeginPage("test", "gl2psTestSimple", NULL, GL2PS_EPS, GL2PS_SIMPLE_SORT,
+				GL2PS_USE_CURRENT_VIEWPORT,
+				GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file.c_str());
+
+			draw();
+
+			state = gl2psEndPage();
+		}
+
+		fclose(fp);
+		printf("Done!\n");
+
+		counter++;
+
+	}
+	
 
 	keyPress(k,xm,ym);
 }

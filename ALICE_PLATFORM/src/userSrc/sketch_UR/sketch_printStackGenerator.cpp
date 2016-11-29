@@ -1,3 +1,7 @@
+#define _MAIN_
+
+
+#ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -6,11 +10,14 @@ using namespace ROBOTICS;
 #include "graphStack.h"
 
 
+////////////////////////////////////////////////////////////////////////// GLOBAL VARIABLES ----------------------------------------------------
+////// --- MODEL OBJECTS ----------------------------------------------------
 
 
-pathImporter path;
-graphStack GS;
+
 metaMesh MM;
+graphStack GS;
+pathImporter path;
 Graph G;
 Mesh M;
 
@@ -18,13 +25,20 @@ vec minV, maxV;
 double iter;
 int currentPointId;
 
+bool run = false;
+
+////// --- GUI OBJECTS ----------------------------------------------------
+
 SliderGroup S;
 ButtonGroup B;
-bool showRobot = true;
+bool showRobot = false;
+bool showGraphStackData = false;
 
-char s[200];
-char t[200];
-char jts[400];
+char s[200],t[200], jts[400];
+
+////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
+
+////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
 void setup()
 {
@@ -62,28 +76,27 @@ void setup()
 
 	S.addSlider(&GS.threshold, "threshold");
 	S.sliders[6].minVal = 0;
-	S.sliders[6].maxVal = 150;
+	S.sliders[6].maxVal = 5;
 
 	/////////////////////////////
 
-	B = *new ButtonGroup( vec(50, 450, 0) );
+	B = *new ButtonGroup(vec(50, 450, 0));
 	B.addButton(&showRobot, "showRobot");
+	B.addButton(&showGraphStackData, "showGraphData");
 
-	
 }
 
-bool run = false;
 void update(int value)
 {
 	path.Nachi_tester.ForwardKineMatics(path.Nachi_tester.rot);
 
 	if (run)
 		for (int i = 0; i < 10; i++)GS.smoothCurrentGraph();
-			
+
 
 }
 
-
+////// ---------------------------------------------------- VIEW  ----------------------------------------------------
 
 void draw()
 {
@@ -96,10 +109,10 @@ void draw()
 	B.draw();
 	//// ------------------------ draw the path points / Tool orientations 
 
-	if(showRobot)
+	if (showRobot)
 		path.draw(false);
 	else
-		GS.draw();
+		GS.draw(showGraphStackData);
 
 	//////////////////////////////////////////////////////////
 
@@ -114,36 +127,38 @@ void draw()
 	glColor3f(0, 0, 0);
 	setup2d();
 
-		drawString(s, winW * 0.5, winH - 50);
-		drawString(t, winW * 0.5, winH - 75);
-		drawString(jts, winW * 0.5, winH - 100);
+	drawString(s, winW * 0.5, winH - 50);
+	drawString(t, winW * 0.5, winH - 75);
+	drawString(jts, winW * 0.5, winH - 100);
 
-		int hts = 50;
-		int wid = winW * 0.75;
+	int hts = 50;
+	int wid = winW * 0.75;
 
-		 drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
-		 drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
-		 drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
-		 drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
-		 drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
-		 drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
-		 drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
-		 drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
-		 drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
-		 drawString("  R : run = !run ", wid, hts); hts += 25;
-		 hts += 25;
-		 drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
-		 drawString(" b : path.goToPrev();", wid, hts); hts += 25;
-		 drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
-		 drawString(" w : path.exportGCode();", wid, hts); hts += 25;
-		 drawString(" r : setup();", wid, hts); hts += 25;
-		 drawString(" h : path.home();", wid, hts); hts += 25;
-	 
+	drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
+	drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
+	drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
+	drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
+	drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
+	drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
+	drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
+	drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
+	drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
+	drawString("  R : run = !run ", wid, hts); hts += 25;
+	hts += 25;
+	drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
+	drawString(" b : path.goToPrev();", wid, hts); hts += 25;
+	drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
+	drawString(" w : path.exportGCode();", wid, hts); hts += 25;
+	drawString(" r : setup();", wid, hts); hts += 25;
+	drawString(" h : path.home();", wid, hts); hts += 25;
+
 	restore3d();
 
 
 
 }
+
+////// ---------------------------------------------------- CONTROLLER  ----------------------------------------------------
 
 void keyPress(unsigned char k, int xm, int ym)
 {
@@ -207,3 +222,5 @@ void mouseMotion(int x, int y)
 
 
 
+
+#endif // _MAIN_

@@ -1,3 +1,6 @@
+
+
+#ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -10,7 +13,8 @@ using namespace ROBOTICS;
 #include "graphStack.h"
 
 
-////////////////////////////////////////////////////////////////// GLOBAL VARIABLES  //////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////// GLOBAL VARIABLES ----------------------------------------------------
+////// --- MODEL OBJECTS ----------------------------------------------------
 
 rigidCube RG;
 activeGraph AG;
@@ -18,19 +22,19 @@ vector<activeGraph> AGStack;
 int RES = 6;
 vec *P1 = new vec[RES*RES*RES];
 vec *P2 = new vec[RES*RES*RES];
+bool run = false;
+vector<int2> nbor_RCs;
+int2 strId(0, 0);
+#define rx ofRandom(-20,20)
+
+////// --- GUI OBJECTS ----------------------------------------------------
 
 ButtonGroup B;
 bool showPoints = false;
 bool showSpheres = false;
 
-bool run = false;
-vector<int2> nbor_RCs;
-int2 strId(0, 0);
-
 ////////////////////////////////////////////////////////////////// temporary utility functions //////////////////////////////////////////////////////////////////
 
-
-#define rx ofRandom(-20,20)
 vec getCenterOfRC(int2 id)
 {
 	return AGStack[id.l].RCsOnCurve[id.n].transMatrix.getColumn(3);
@@ -39,7 +43,7 @@ void resetRCForces(int2 id)
 {
 	AGStack[id.l].RCsOnCurve[id.n].resetForces();
 }
-void getNBors( int2 &id , vector<int2> &nBors , double D = 0.5 )
+void getNBors(int2 &id, vector<int2> &nBors, double D = 0.5)
 {
 	nBors.clear();
 	vec cen = getCenterOfRC(id);
@@ -59,13 +63,14 @@ void getNBors( int2 &id , vector<int2> &nBors , double D = 0.5 )
 
 }
 
-////////////////////////////////////////////////////////////////// MAIN PROGRAM //////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
+////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
 void setup()
 {
 	AGStack.clear();
 	RG = *new rigidCube();
-	
+
 	importer imp = *new importer("data/curve.txt", 10000, 1.0);
 	imp.readPts_p5();
 
@@ -73,30 +78,40 @@ void setup()
 	{
 
 		vec *pts = new vec[imp.nCnt];
-		for (int i = 0; i < imp.nCnt; i++)pts[i] = imp.nodes[i].pos + vec(0,0,float(0) * 0.25);
+		for (int i = 0; i < imp.nCnt; i++)pts[i] = imp.nodes[i].pos + vec(0, 0, float(0) * 0.25);
 
 		AG = *new activeGraph();
 		AG.constructFromPoints(pts, imp.nCnt);
 		AG.fixEnds();
 		AG.populateRigidBodies(0.1);
 		AGStack.push_back(AG);
-		
+
 	}
 
 	B = *new ButtonGroup();
-	B.addButton( &showPoints, "showPts" );
-	B.addButton( &showSpheres, "showSpheres" );
+	B.addButton(&showPoints, "showPts");
+	B.addButton(&showSpheres, "showSpheres");
 
 }
 
 void update(int value)
 {
-	if(run)
+	if (run)
 		for (auto &ag : AGStack)
 		{
 			ag.smoothVertices();
 			ag.populateRigidBodies(0.1);
 		}
+}
+
+////// ---------------------------------------------------- VIEW  ----------------------------------------------------
+
+void disp()
+{
+	backGround(0.9);
+	drawGrid(20.0);
+
+	drawRectangle( vec(0, 0, 0), vec(5, 5, 0) );
 }
 
 void draw()
@@ -105,45 +120,39 @@ void draw()
 	backGround(0.9);
 	drawGrid(20.0);
 
-	for (auto &ag : AGStack) 
+	for (auto &ag : AGStack)
 		showPoints ? ag.display(P1, RES) : ag.display();
 
 	//	
-	
+	//for (auto &ag : AGStack)
+	//	for (auto &rc : ag.RCsOnCurve)rc.resetForces();
+
+
+	int2 id = strId;// int2(l, n);
+	nbor_RCs.clear();
+	getNBors(id, nbor_RCs, 0.5);
+
+	resetRCForces(id);
+	for (auto &i : nbor_RCs)resetRCForces(i);
+
+	for (auto nbor : nbor_RCs)
 	{
+		AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], P1, P2, RES);
 
-		//for (auto &ag : AGStack)
-		//	for (auto &rc : ag.RCsOnCurve)rc.resetForces();
-		
-
-		int2 id = strId;// int2(l, n);
-		nbor_RCs.clear();
-		getNBors(id, nbor_RCs, 0.5);
-		
-		resetRCForces(id);
-		for (auto &i : nbor_RCs)resetRCForces(i);
-
-		for (auto nbor : nbor_RCs)
-		{
-			AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], P1, P2, RES);
-
-			AGStack[nbor.l].RCsOnCurve[nbor.n].draw(2, vec4(1, 0, 0, 1));
-			if (showSpheres)AGStack[nbor.l].RCsOnCurve[nbor.n].drawGrid(P2, RES*RES*RES);
-		}
-
-		AGStack[strId.l].RCsOnCurve[strId.n].draw(4, vec4(1, 1, 1, 1));
-		if (showSpheres)AGStack[strId.l].RCsOnCurve[strId.n].drawGrid(P1, RES*RES*RES);
+		AGStack[nbor.l].RCsOnCurve[nbor.n].draw(2, vec4(1, 0, 0, 1));
+		if (showSpheres)AGStack[nbor.l].RCsOnCurve[nbor.n].drawGrid(P2, RES*RES*RES);
 	}
 
-
-
-
+	AGStack[strId.l].RCsOnCurve[strId.n].draw(4, vec4(1, 1, 1, 1));
+	if (showSpheres)AGStack[strId.l].RCsOnCurve[strId.n].drawGrid(P1, RES*RES*RES);
 
 
 	/////
 
 	B.draw();
 }
+
+////// ---------------------------------------------------- CONTROLLER  ----------------------------------------------------
 
 void keyPress(unsigned char k, int xm, int ym)
 {
@@ -180,7 +189,7 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == 'N')strId.n--;
 	if (k == 'L')strId.l--;
 
-	
+
 	if (k == 'q')
 	{
 
@@ -189,7 +198,7 @@ void keyPress(unsigned char k, int xm, int ym)
 		for (auto &ag : AGStack)
 			for (auto &rc : ag.RCsOnCurve)rc.resetForces();
 
-		for (int l = 1; l < AGStack.size(); l++)
+		for (int l = 0; l < AGStack.size(); l++)
 		{
 			for (int n = 0; n < AGStack[0].RCsOnCurve.size(); n++)
 			{
@@ -219,6 +228,9 @@ void keyPress(unsigned char k, int xm, int ym)
 		}
 	}
 
+	
+
+
 }
 
 void mousePress(int b, int state, int x, int y)
@@ -237,3 +249,5 @@ void mouseMotion(int x, int y)
 
 
 
+
+#endif // _MAIN_

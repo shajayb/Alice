@@ -14,6 +14,7 @@ using namespace std;
 using namespace std::experimental;
 
 #include "graph.h"
+#include "utilities.h"
 
 class metaMesh : public Mesh
 {
@@ -106,10 +107,19 @@ public:
 		return metaMesh(M);
 	}
 
-	void assignScalars(string component = "y")
+	void assignScalars(string component = "z")
 	{
+		if(component == "z")
 		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
 																 //(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
+		if (component == "y")
+			for (int i = 0; i < n_v; i++)scalars[i] = positions[i].y;
+
+		if (component == "x")
+			for (int i = 0; i < n_v; i++)scalars[i] = positions[i].x;
+
+		if (component == "c")
+			for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag();;
 
 	}
 
@@ -263,6 +273,53 @@ public:
 			for (int i = 0; i < A.n_v; i += 1)
 				G.createEdge( G.vertices[A.edges[i].vStr->id], G.vertices[A.edges[i].vEnd->id]);
 		}
+	}
+
+
+	generator<E> faceEdges(double threshold)
+	{
+		int a, b;
+		vec ePt[3];
+		bool e[3];
+		vec diff;
+		double interp;
+
+		for (int i = 0; i < n_f; i++)
+		{
+
+			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
+			{
+				a = faces[i].edgePtrs[j]->vEnd->id;
+				b = faces[i].edgePtrs[j]->vStr->id;
+
+				diff = (positions[b] - positions[a]);// .normalise();
+				interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
+
+				ePt[j] = (interp >= 0.0 && interp <= 1.0) ? (positions[a] + diff * interp) : (vec(0, 0, 0));
+				e[j] = (interp >= 0.0 && interp <= 1.0) ? 1 : 0;
+			}
+
+
+			if (e[0] && e[1])yield E(ePt[0], ePt[1]);
+			if (e[1] && e[2])yield E(ePt[1], ePt[2]);
+			if (e[2] && e[0])yield E(ePt[2], ePt[0]);
+
+		}
+	}
+
+	void drawIsoContoursInRange( double threshold, double inc = 0.01 )
+	{
+		glLineWidth(glLineWd);
+		for (double i = 0.0 ; i < threshold; i += threshold * inc)
+			for (auto &c : faceEdges(i))
+			{
+				drawLine(c.t, c.f);
+				drawPoint((vec)c.t);
+				drawPoint((vec)c.f);
+
+			}
+
+		glLineWidth(1.0);
 	}
 
 	void display(bool drawData = true, bool drawContour = true , bool drawMesh = false )
