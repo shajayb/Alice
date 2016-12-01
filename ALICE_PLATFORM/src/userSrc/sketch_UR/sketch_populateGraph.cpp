@@ -19,6 +19,12 @@ using namespace ROBOTICS;
 rigidCube RG;
 activeGraph AG;
 vector<activeGraph> AGStack;
+vector<Graph> displayStack;
+Graph base;
+metaMesh MM;
+Mesh M;
+double dMin, dMax;
+
 int RES = 6;
 vec *P1 = new vec[RES*RES*RES];
 vec *P2 = new vec[RES*RES*RES];
@@ -63,6 +69,52 @@ void getNBors(int2 &id, vector<int2> &nBors, double D = 0.5)
 
 }
 
+
+Mesh createMesh( vector<Graph> &stack )
+{
+	Mesh M;
+
+	int  vertices = stack[0].n_v;
+	int layers = stack.size();
+	vec minV, maxV;
+	/*for (float x = minV.x; x <= maxV.x; x += (maxV.x - minV.x)*0.01)*/
+	for (int i = 0; i < layers; i++)
+		for (int j = 0; j < vertices; j++)
+			M.createVertex(stack[i].positions[j]);
+
+
+	Vertex *fVerts[4];
+	Vertex *fv[3];
+
+	for (int i = 24; i < 25/*layers-1*/; i++)
+	{
+		for (int j = 1; j < vertices-1; j++)
+		{
+			if (j == 0)continue;
+			fVerts[0] = &M.vertices[i*vertices + j];
+			fVerts[1] = &M.vertices[(i + 1)*vertices + j];
+			fVerts[2] = &M.vertices[(i + 1)*vertices + j - 1];
+			fVerts[3] = &M.vertices[i*vertices + j - 1];
+			M.createNGon(fVerts, 4, false);
+			/*	fv[0] = &M.vertices[i*colCnt + j];;
+			fv[1] = &M.vertices[i*colCnt + j-1];;
+			fv[2] = &M.vertices[(i+1)*colCnt + j];;
+			M.createFace(fv, 3);
+
+
+			fv[0] = &M.vertices[(i )*colCnt + j-1];
+			fv[1] = &M.vertices[(i+1)*colCnt + j - 1];;
+			fv[2] = &M.vertices[(i + 1)*colCnt + j];;
+			M.createFace(fv, 3);*/
+		}
+	}
+
+
+	//for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();// generates face normals ;
+
+	return metaMesh(M);
+}
+
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
 ////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
@@ -71,10 +123,80 @@ void setup()
 	AGStack.clear();
 	RG = *new rigidCube();
 
-	importer imp = *new importer("data/curve.txt", 10000, 1.0);
+	//// graph stack
+	displayStack.clear();
+	for (int j = 0; j < 65; j++)
+	{
+
+		string file = "";
+		file += "data/graph";
+		file += "_";
+		char s[20];
+		itoa(j, s, 10);
+		file += s;
+		file += ".txt";
+		importer imp = *new importer(file, 10000, 1.0);
+		imp.readPts_p5();
+		
+		Graph G;
+		G.reset();
+		for (int i = 0; i < imp.nCnt; i++) G.createVertex( imp.nodes[i].pos + vec(0,0, 0.1 * float(j)) );
+		for (int i = 0; i < imp.eCnt; i++) G.createEdge( G.vertices[ imp.edges[i].n0 ], G.vertices[ imp.edges[i].n1 ] );
+		displayStack.push_back(G);
+		//cout << G.n_v << endl;
+	}
+
+
+	//M = createMesh(displayStack);
+
+	/// base graph
+
+	{
+		importer imp = *new importer("data/tree_pts.txt", 10000, 1.0);
+		imp.readEdges();
+
+		//---------
+		base.reset();
+		for (int i = 0; i < imp.nCnt; i++)base.createVertex(imp.nodes[i].pos);
+		for (int i = 0; i < imp.eCnt; i++)base.createEdge(base.vertices[imp.edges[i].n0], base.vertices[imp.edges[i].n1]);
+
+		// ------------ scale to fit 
+		vec minV, maxV;
+		base.boundingbox(minV, maxV);
+
+		Matrix4 trans;
+		double preferedDiag = 50;
+		trans.scale(preferedDiag / (minV.distanceTo(maxV)));
+		trans.translate((minV + maxV) * 0.5);
+		for (int i = 0; i <base.n_v; i++) base.positions[i] = trans * base.positions[i];
+
+		cout << " ACUTAL DIAG " << minV.distanceTo(maxV) << endl;
+		base.boundingbox(minV, maxV);
+
+		trans.identity();
+		trans.translate(vec(45, 0, 0) - (minV + maxV) * 0.5);
+		for (int i = 0; i <base.n_v; i++) base.positions[i] = trans *base.positions[i];
+		minV = minV * trans;
+		maxV = maxV * trans;
+
+		base.boundingbox(minV, maxV);
+		minV -= (maxV - minV).normalise() * 2.5;
+		maxV += (maxV - minV).normalise() * 2.5;
+
+		//
+
+		MM = MM.createFromPlane(minV, maxV, 100);
+		MM.assignScalarsAsLineDistanceField(base, 0, 0.5);
+		MM.getMinMaxOfScalarField(dMin, dMax);
+
+
+	}
+
+
+	// curve from rhino
+	/*importer imp = *new importer("data/curve.txt", 10000, 1.0);
 	imp.readPts_p5();
 
-	//for (int j = 0; j < 3 ; j++)
 	{
 
 		vec *pts = new vec[imp.nCnt];
@@ -86,11 +208,31 @@ void setup()
 		AG.populateRigidBodies(0.1);
 		AGStack.push_back(AG);
 
+	}*/
+	for (int j = displayStack.size() - 5; j < displayStack.size(); j++)
+	{
+		AG = *new activeGraph();
+		AG.constructFromGraph(displayStack[j]);
+		for (int i = 0; i < AG.n_v; i++)AG.positions[i] += vec(0, 0, 10);
+
+		AG.fixEnds();
+		AG.smoothVertices();
+		AG.populateRigidBodies(0.1);
+		AGStack.push_back(AG);
 	}
+
+
+	//////////////////////////////////////////////////////////////////////////
 
 	B = *new ButtonGroup();
 	B.addButton(&showPoints, "showPts");
 	B.addButton(&showSpheres, "showSpheres");
+
+
+	
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 }
 
@@ -118,15 +260,32 @@ void draw()
 {
 
 	backGround(0.9);
-	drawGrid(20.0);
+	drawGrid(20);
+
+	{
+		glColor3f(0, 0, 0);
+		for (auto &g : displayStack)g.draw();
+
+		glColor3f(1, 0, 0);
+		base.draw();
+	}
+
+	{
+		MM.glPtSize = 3.0;
+		wireFrameOn();
+		MM.display(true, true, false);
+		wireFrameOff();
+	}
+
 
 	for (auto &ag : AGStack)
 		showPoints ? ag.display(P1, RES) : ag.display();
-
 	//	
 	//for (auto &ag : AGStack)
 	//	for (auto &rc : ag.RCsOnCurve)rc.resetForces();
-
+	glLineWidth(4);
+	//AGStack[0].draw();
+	glLineWidth(1);
 
 	int2 id = strId;// int2(l, n);
 	nbor_RCs.clear();

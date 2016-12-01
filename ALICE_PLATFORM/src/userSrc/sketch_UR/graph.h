@@ -371,7 +371,7 @@ public:
 		{
 
 			char s[200];
-			sprintf(s, "%1.4f,%1.4f,%1.4f,%i", positions[i].x * scaleBack, positions[i].y * scaleBack, positions[i].z * scaleBack, (vertices[i].n_e == 1) ? 1 : 0);
+			sprintf(s, "%1.4f,%1.4f,%1.4f", positions[i].x * scaleBack, positions[i].y * scaleBack, positions[i].z * scaleBack);//(vertices[i].n_e == 1) ? 1 : 0
 
 			myfile << s << endl;
 		}
@@ -407,7 +407,7 @@ public:
 			char s[200];
 			itoa(i, s, 10);
 			//drawString(s, positions[i]+ vec(0,0,.1));
-			drawPoint(positions[i]);
+		//	drawPoint(positions[i]);
 		}
 		glPointSize(1);
 

@@ -340,7 +340,9 @@ public:
 		for (int i = 0; i < n_v; i++)
 		{
 			vec4 clr = getColour(scalars[i], dMin, dMax);
+			glLineWidth(5);
 			glColor3f(clr.r, clr.g, clr.b);
+			//drawLine(positions[i], positions[i]*1.001);;// 
 			drawPoint(positions[i]);
 		}
 		glPointSize(1.0);

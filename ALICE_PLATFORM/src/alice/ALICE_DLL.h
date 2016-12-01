@@ -16,7 +16,8 @@ using namespace std;
 #include <map>
 #include <set>
 //#include "isoSurfaceConstants.h"
-
+#include "gl2ps.h"
+#include "AL_gl2psUtils.h"
 
 #ifdef DLL_EXPORT
 #  define DLL_API __declspec(dllexport)
@@ -113,8 +114,8 @@ struct vec4
 
 #define C_DIST 100.001 
 #define C_CHARGE 1 
-#define C_DAMP 10.1 
-#define COLOUMB ( 1 * pow(1.0f,2.0f) )  
+#define C_DAMP 0.1 
+#define COLOUMB ( 1 * pow(100.0f,2.0f) )  
 
 #define MAX_PARTICLES 5500 
 #define MAX_SPRINGS 5500 
@@ -1363,7 +1364,7 @@ namespace Alice
 		// --------------- 
 		int id ;
 		//Edge *edges ;
-		Edge *edgePtrs[MAX_VALENCE] ; // array of pinters to edges of the mesh ;
+		Edge *edgePtrs[MAX_VALENCE] ; // array of pointers to edges of the mesh ;
 		Face *vF[MAX_VALENCE] ;
 		int n_e ;
 		vec norm ;

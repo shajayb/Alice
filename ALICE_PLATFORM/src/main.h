@@ -179,7 +179,7 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 		while (state == GL2PS_OVERFLOW)
 		{
 			buffsize += winW * winH;
-			gl2psBeginPage("test", "gl2psTestSimple", NULL, GL2PS_EPS, GL2PS_SIMPLE_SORT,
+			gl2psBeginPage("test", "gl2psTestSimple", NULL, GL2PS_EPS, GL2PS_NO_SORT,
 				GL2PS_USE_CURRENT_VIEWPORT,
 				GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file.c_str());
 
@@ -248,6 +248,7 @@ int main(int argc,char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_POINT_SMOOTH);
+
 
 	setup();
 	startTime = GetTickCount();

@@ -29,8 +29,9 @@ void AL_glDisable_lineStipple()
 	gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
-void AL_drawString(float angle, const char *string, float x, float y)
+void AL_drawString( const char *string, float x, float y)
 {
+	float angle = 0.0;
 	unsigned int i;
 	const char *fonts[] =
 	{ "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic",

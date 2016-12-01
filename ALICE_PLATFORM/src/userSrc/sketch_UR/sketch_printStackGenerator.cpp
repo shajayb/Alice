@@ -1,5 +1,5 @@
-#define _MAIN_
 
+#define _MAIN_
 
 #ifdef _MAIN_
 #include "main.h"
@@ -26,7 +26,7 @@ double iter;
 int currentPointId;
 
 bool run = false;
-
+int rCnt = 0;
 ////// --- GUI OBJECTS ----------------------------------------------------
 
 SliderGroup S;
@@ -91,7 +91,15 @@ void update(int value)
 	path.Nachi_tester.ForwardKineMatics(path.Nachi_tester.rot);
 
 	if (run)
+	{
 		for (int i = 0; i < 10; i++)GS.smoothCurrentGraph();
+		
+		rCnt++;
+		if (rCnt % 3 == 0)GS.writeCurrentGraph();
+
+		if (rCnt == 200 * 2 )run = !run;
+	}
+		
 
 
 }
@@ -110,7 +118,10 @@ void draw()
 	//// ------------------------ draw the path points / Tool orientations 
 
 	if (showRobot)
+	{
 		path.draw(false);
+		for (auto &g : GS.PrintStack) g.draw();
+	}
 	else
 		GS.draw(showGraphStackData);
 
@@ -127,30 +138,30 @@ void draw()
 	glColor3f(0, 0, 0);
 	setup2d();
 
-	drawString(s, winW * 0.5, winH - 50);
-	drawString(t, winW * 0.5, winH - 75);
-	drawString(jts, winW * 0.5, winH - 100);
+	AL_drawString(s, winW * 0.5, winH - 50);
+	AL_drawString(t, winW * 0.5, winH - 75);
+	AL_drawString(jts, winW * 0.5, winH - 100);
 
 	int hts = 50;
 	int wid = winW * 0.75;
 
-	drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
-	drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
-	drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
-	drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
-	drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
-	drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
-	drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
-	drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
-	drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
-	drawString("  R : run = !run ", wid, hts); hts += 25;
+	AL_drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
+	AL_drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
+	AL_drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
+	AL_drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
+	AL_drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
+	AL_drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
+	AL_drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
+	AL_drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
+	AL_drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
+	AL_drawString("  R : run = !run ", wid, hts); hts += 25;
 	hts += 25;
-	drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
-	drawString(" b : path.goToPrev();", wid, hts); hts += 25;
-	drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
-	drawString(" w : path.exportGCode();", wid, hts); hts += 25;
-	drawString(" r : setup();", wid, hts); hts += 25;
-	drawString(" h : path.home();", wid, hts); hts += 25;
+	AL_drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
+	AL_drawString(" b : path.goToPrev();", wid, hts); hts += 25;
+	AL_drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
+	AL_drawString(" w : path.exportGCode();", wid, hts); hts += 25;
+	AL_drawString(" r : setup();", wid, hts); hts += 25;
+	AL_drawString(" h : path.home();", wid, hts); hts += 25;
 
 	restore3d();
 

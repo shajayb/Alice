@@ -1,5 +1,4 @@
 
-
 #ifdef _MAIN_
 
 #include "main.h"
@@ -96,6 +95,7 @@ void update(int value)
 ////// ---------------------------------------------------- VIEW  ----------------------------------------------------
 
 void draw()
+
 {
 
 	backGround(0.75);
@@ -109,8 +109,10 @@ void draw()
 
 	MM.glPtSize = 3.0;
 	wireFrameOn();
-	MM.display(true, true, false);
+		MM.display(true, true, false);
 	wireFrameOff();
+
+
 
 }
 

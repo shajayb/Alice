@@ -27,7 +27,7 @@ public:
 		gravity = down.mag();
 	}
 
-	virtual void calcCustomForces_post(PARTICLE *p)
+	/*virtual void calcCustomForces_post(PARTICLE *p)
 	{
 		for (int i = 0; i < np; i++)
 			for (int j = 0; j < np; j++)
@@ -46,7 +46,7 @@ public:
 				}
 
 			}
-	}
+	}*/
 
 
 };

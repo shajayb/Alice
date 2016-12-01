@@ -173,7 +173,7 @@ void drawSphere(vec &a, vec rotate, vec scale = vec(1, 1, 1), float r = 1.0, flo
 	restore3d();
 
 	glColor4f(1.0, 0.0, 0.5, alpha);
-	glutSolidSphere(r, 32, 32);
+	glutSolidSphere(r, 3, 3);
 
 
 	glPopMatrix();

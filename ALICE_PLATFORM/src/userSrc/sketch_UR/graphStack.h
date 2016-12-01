@@ -19,6 +19,7 @@ public:
 	int currentStackLayer;
 	metaMesh MM;
 	bool convertedToToroidal;
+	int filecnt = 0;
 	////---------------------------------------------------- CONSTRUCTOR --------------------------------------
 	graphStack( )
 	{
@@ -141,7 +142,16 @@ public:
 
 	void writeCurrentGraph()
 	{
-		MM.G.writeGraph(1.0);
+		string file = "";
+		file += "data/graph";
+		file += "_";
+		char s[20];
+		itoa(filecnt, s, 10);
+		file += s;
+		file += ".txt";
+
+		MM.G.writeGraph(1.0,file);
+		filecnt++;
 	}
 
 	////---------------------------------------------------- DISPLAY  --------------------------------------
@@ -162,6 +172,7 @@ public:
 			convertedToToroidal ? glColor3f(1, 0, 0) : glColor3f(0, 0, 0);
 			MM.G.draw();
 
+
 			/// ------------------------- TODO : clean this section
 
 		wireFrameOff();
@@ -178,6 +189,7 @@ public:
 		//----------------- drawDataGridMesh
 
 		glColor3f(1, 0, 0);
+		
 		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();
 
 		//draw stats
@@ -186,9 +198,9 @@ public:
 
 		setup2d();
 
-			drawString(s, vec(winW * 0.5, 50, 0));
+		AL_drawString(s, winW * 0.5, 50);
 			sprintf_s(s, " num points in stack : %i", MM.G.n_v * currentStackLayer);
-			drawString(s, vec(winW * 0.5, 75, 0));
+		AL_drawString(s, winW * 0.5, 75);
 
 		restore3d();
 	}

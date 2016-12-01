@@ -254,7 +254,8 @@ public:
 
 	void drawGridAsPoints(vec *P, int n)
 	{
-		for (int i = 0; i < n; i++)drawPoint(P[i]);
+		glPointSize(3);
+		for (int i = 0; i < n; i++)drawLine(P[i], P[i]*1.0001); // drawPoint(P[i]);
 	}
 
 	void drawAxes(float scale = 1.0)

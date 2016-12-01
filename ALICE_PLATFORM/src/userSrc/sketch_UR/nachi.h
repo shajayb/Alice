@@ -84,9 +84,9 @@ public:
 	{
 		for (int i = 0; i < M.n_v; i++)M.positions[i] = EE * M.positions[i];// to tcip
 
-		if (wireframe)wireFrameOn();
+		//if (wireframe)wireFrameOn();
 		draw();
-		if (wireframe)wireFrameOff();
+		//if (wireframe)wireFrameOff();
 
 		EE.invert();
 		for (int i = 0; i < M.n_v; i++)M.positions[i] = EE * M.positions[i];// to tcip
@@ -95,7 +95,7 @@ public:
 	void draw()
 	{
 		//Nachi_tester.draw();
-		M.draw();
+		M.draw(true);
 		//int i = 1 + 4 ;
 		//char c[200];
 		//sprintf(c, "%i ", i);
@@ -583,7 +583,40 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////// DISPLAY METHODS
+	void drawHistograms( int j ,vec cen = vec (50, winH - 50,0), float r = 5.0)
+	{
+		AL_glLineWidth(1);
+		
+		float mn, mx;
+		mn = 1e10;
+		mx = mn * -1;
+		for (int i = 0; i < actualPathLength - 1; i++)
+		{
+			mn = MIN(mn, rotations[i][j]);
+			mx = MAX(mn, rotations[i][j]);
+		}
+		
+		setup2d();
 
+
+
+		//glBegin(GL_LINES);
+			for (int i = 0; i < actualPathLength - 1; i+= 10 )
+			{
+				double ang = ((PI * 2.0 / actualPathLength) * float(i)) * 1.0;
+				vec4 clr = getColour(rotations[i][j], mn, mx);
+				double d = ofMap(rotations[i][j], mn, mx, 0, r);
+				d = ofClamp(d,0, r);
+				glColor3f(clr.r, clr.g, clr.b);
+				drawLine(cen, cen + (vec(sin(ang), cos(ang), 0).normalise() * d));
+				vec radial = cen + vec(sin(ang), cos(ang), 0).normalise() * d;
+				//glVertex2f(cen.x, cen.y);
+				//glVertex2f(radial.x, radial.y);
+			}
+		//glEnd();
+
+		restore3d();
+	}
 	void drawFrame(Matrix4 &tool, float sz)
 	{
 
@@ -629,11 +662,13 @@ public:
 		// ------------------- draw Robot ;
 
 		if (wireFrame)wireFrameOn();
-		Nachi_tester.draw(true); // updates AO render points ;
+			Nachi_tester.draw(false); // updates AO render points ;
 		if (wireFrame)wireFrameOff();
 
 		if (showSphere) glutSolidSphere(78, 32, 32);
 
+		for (int i = 0; i < 6; i++)
+			drawHistograms(i, vec( i*200 + 150 , winH - 300,0),75);
 
 	}
 

@@ -1,3 +1,6 @@
+
+
+#ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -7,10 +10,10 @@ using namespace ROBOTICS;
 #include<experimental/generator> 
 using namespace std;
 using namespace std::experimental;
-
 #include "graph.h"
 #include "newPhysics.h"
 
+////////////////////////////////////////////////////////////////////////// TEMPORARY CLASS DEFINITIONS
 
 #define numFrames 500
 class circle
@@ -33,7 +36,7 @@ public:
 			int n = phy.makeParticle(vec(x, y, 0) + cen, 1.0, false);
 			particles.push_back(n);
 			phy.p[n].v = (phy.p[n].p - cen).normalise() * 5.0;
-			if (i > 0)phy.makeSpring(n, n - 1, 0.1);
+			//if (i > 0)phy.makeSpring(n, n - 1, 0.1);
 		}
 	}
 
@@ -59,11 +62,12 @@ public:
 
 	}
 
-	void draw(newPhysics &phy)
+	void draw(newPhysics &phy , bool showStack = false)
 	{
 		for (int i = 1; i < particles.size(); i++)drawLine(phy.p[particles[i]].p, phy.p[particles[i - 1]].p);
 		//for (int i = 0; i < trailCnt; i++)drawPoint(trail[i]);
 
+		if(showStack)
 		for (int i = 0; i < frame * 64; i += 64)
 			for (int j = i; j < i + particles.size(); j++)
 			{
@@ -91,14 +95,22 @@ public:
 
 };
 
+////////////////////////////////////////////////////////////////////////// GLOBALS
 
-/////////////////////////////
 
 newPhysics phy;
 vector<circle>circles;
 int j = 0;
 Graph G;
 importer imp;
+
+bool importFromFile = false;
+bool showstack = false;
+
+ButtonGroup B;
+
+
+////////////////////////////////////////////////////////////////////////// MAIN PROGRAM //
 
 void setup()
 {
@@ -112,10 +124,11 @@ void setup()
 		float x = 20 * sin(float(i) * 2.0 * PI / 6);
 		float y = 20 * cos(float(i) * 2.0 * PI / 6);
 
-		//circles.push_back(circle(vec(x, y, 0), 1, phy));
+		if(!importFromFile)circles.push_back(circle(vec(x, y, 0), 1, phy));
 	}
 
-	//circles.push_back(circle(vec(0,0, 0), 20, phy));
+	//////////////////////////////////////////////////////////////////////////
+
 	imp = *new importer("data/inPts.txt", 100000, 1.0);
 	imp.readPts_p5();
 
@@ -137,14 +150,25 @@ void setup()
 	for (int i = 0; i < imp.nCnt; i++)
 	{
 		G.positions[i].z = 0;
-		//circles.push_back(circle(G.positions[i], ofRandom(1, 5), phy));
+		if (importFromFile)circles.push_back(circle(G.positions[i], ofRandom(1, 5), phy));
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	B = *new ButtonGroup(vec(50, 350, 0));
+	B.addButton(&importFromFile, "importFile");
+	B.addButton(&showstack, "showStack");
+
+	//////////////////////////////////////////////////////////////////////////
+
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void update(int value)
 {
 
-	phy.UpdateParticles(0.15, 2);
+	phy.UpdateParticles(0.1, 2);
 
 	for (auto &cir : circles)
 		for (auto &cir2 : circles)
@@ -159,14 +183,20 @@ void update(int value)
 void draw()
 {
 
-	backGround(0.75);
+	backGround(0.95);
 
-	phy.display();
+	//phy.display();
 	//G.draw();
-	for (auto &cir : circles)cir.draw(phy);
+
+	glColor3f(0, 0, 0);
+	glEnable(GL_LINE_SMOOTH);
+	glLineWidth(2);
+	for (auto &cir : circles)cir.draw(phy, showstack);
+	glLineWidth(1);
+
+
+	B.draw();
 }
-
-
 
 void keyPress(unsigned char k, int xm, int ym)
 {
@@ -190,7 +220,10 @@ void keyPress(unsigned char k, int xm, int ym)
 
 void mousePress(int b, int state, int x, int y)
 {
-
+	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
+	{
+		B.performSelection(x, y);
+	}
 }
 
 void mouseMotion(int x, int y)
@@ -198,3 +231,5 @@ void mouseMotion(int x, int y)
 
 }
 
+
+#endif // _MAIN_
