@@ -3,7 +3,7 @@
 
 #include "ALICE_DLL.h"
 using namespace Alice;
-
+#include "AL_gl2psUtils.h"
 
 //------------------------------------------------------------------------------- FORWARD DECLARATIONS for functions
 
@@ -14,7 +14,7 @@ void setup() ;
 void mousePress(int b,int s,int x,int y) ;
 void mouseMotion( int x, int y ) ;
 bool HUDSelectOn = false;
-
+bool updateCam = true;
 
 float  					gTotalTimeElapsed 	= 0;
 int 					gTotalFrames		= 0;
@@ -95,6 +95,7 @@ void updateCallBack( int value )
 	FPS = 1000.0f / float(time) ;
 }
 
+
 void drawCallBack()
 {
 	
@@ -114,9 +115,9 @@ void drawCallBack()
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0 );*/
 
 
-	updateCamera() ;
+	if(updateCam)updateCamera() ;
 	glColor3f(1,1,1);
-	//drawGrid( gridSz );	
+	drawGrid( gridSz );	
 
 	draw() ;
 
@@ -137,12 +138,14 @@ void drawCallBack()
 	
 }
 
+int counter = 0;
 void keyPressCallBack(unsigned char k, int xm, int ym)
 {
-	if( k == 'x' )exit(0) ;
-	if( k == 'v' )resetCamera() ;
-	if( k == 't' )topCamera();
-	if( k == 'f' )
+	
+	if( k == 'X' )exit(0) ;
+	if( k == 'V' )resetCamera() ;
+	if( k == 'T' )topCamera();
+	if( k == 'F' )
 	{
 		numFrames = 1200 ; 
 		int nf = 25 ;
@@ -158,27 +161,64 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 		else cout << " NOT printing screen " << endl ;
 	}
 
+	if (k == 'E')
+	{
+		FILE *fp;
+		int state = GL2PS_OVERFLOW, buffsize = 0;
+
+
+		string file = "";
+		file += "data/out";
+		file += "_";
+		char s[20];
+		itoa(counter, s, 10);
+		file += s;
+		file += ".eps";
+
+		fp = fopen(file.c_str(), "w");
+		printf("Writing 'out.eps'... ");
+
+		while (state == GL2PS_OVERFLOW)
+		{
+			buffsize += winW * winH;
+			gl2psBeginPage("test", "gl2psTestSimple", NULL, GL2PS_EPS, GL2PS_NO_SORT,
+				GL2PS_USE_CURRENT_VIEWPORT,
+				GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file.c_str());
+
+			draw();
+
+			state = gl2psEndPage();
+		}
+
+		fclose(fp);
+		printf("Done!\n");
+
+		counter++;
+
+	}
+	
+
 	keyPress(k,xm,ym);
 }
 
 void mousePressCallBack(int b,int s,int x,int y)
 {
 
-
 	 mousePress( b, s, x, y) ;
-	 Mouse( b, s, x, y) ;
+	 if(updateCam)Mouse( b, s, x, y) ;
 }
 
 void motionCallBack( int x, int y )
 {
 	mouseMotion(x,y);
-	if(!HUDSelectOn)Motion( x, y) ;
+	if(!HUDSelectOn && updateCam)Motion( x, y) ;
 }
 
 string inFile = "";
 int main(int argc,char** argv)
 {
 	
+
 	if (argc > 1)inFile = argv[1];
 
 	glutInit(&argc,argv);
@@ -210,6 +250,7 @@ int main(int argc,char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_POINT_SMOOTH);
+
 
 	setup();
 	startTime = GetTickCount();

@@ -1,4 +1,8 @@
 
+#ifndef _NACHI_
+
+#define _NACHI_
+
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -13,15 +17,15 @@ public:
 	Robot_Symmetric Nachi_tester;
 	vec XA_f, YA_f, ZA_f;
 	vec XA, YA, ZA;
-	vec cen,cen_f;
+	vec cen, cen_f;
 	Matrix3 rot, rotf;
 	Matrix4 transformMatrix;
 
 	EndEffector() {};
-	EndEffector(string file )
+	EndEffector(string file)
 	{
 		MeshFactory fac;
-		M = fac.createFromOBJ( file, 1, false, false);
+		M = fac.createFromOBJ(file, 1, false, false);
 		invertMeshToLocal();
 
 		int i, j, k;
@@ -41,7 +45,7 @@ public:
 		vec zAxis = xAxis.cross(yAxis);
 		Matrix4 T;
 		T.setColumn(0, xAxis.normalise() * -1);
-		T.setColumn(1, yAxis.normalise()* 1);
+		T.setColumn(1, yAxis.normalise() * 1);
 		T.setColumn(2, zAxis.normalise()* -1);
 		T.setColumn(3, cen);
 		T.invert();
@@ -54,35 +58,35 @@ public:
 		Nachi_tester.ForwardKineMatics(Nachi_tester.rot);
 
 		transformMatrix = Nachi_tester.Bars_to_world_matrices[5];
-	
+
 		XA_f = transformMatrix.getColumn(0).normalise();
 		YA_f = transformMatrix.getColumn(1).normalise();
 		ZA_f = transformMatrix.getColumn(2).normalise();
 		cen_f = transformMatrix.getColumn(3);
 
 		cen = (M.positions[1] + M.positions[5]) * 0.5;
-		
+
 		YA = M.positions[5] - M.positions[7];
 		XA = M.positions[1] - M.positions[7];
 		//XA *= -1;
 		ZA = YA.cross(XA);
-		
+
 		XA.normalise();
 		YA.normalise();
 		ZA.normalise();
 
 		rot.setColumn(0, XA); rotf.setColumn(0, XA_f);
-		rot.setColumn(1,YA);  rotf.setColumn(1, YA_f);
+		rot.setColumn(1, YA);  rotf.setColumn(1, YA_f);
 		rot.setColumn(2, ZA); rotf.setColumn(2, ZA_f);
 	}
 
-	void drawAtLocation( Matrix4 &EE , bool wireframe = true)
+	void drawAtLocation(Matrix4 &EE, bool wireframe = true)
 	{
 		for (int i = 0; i < M.n_v; i++)M.positions[i] = EE * M.positions[i];// to tcip
 
-		if(wireframe)wireFrameOn();
-			draw();
-		if (wireframe)wireFrameOff();
+		//if (wireframe)wireFrameOn();
+		draw();
+		//if (wireframe)wireFrameOff();
 
 		EE.invert();
 		for (int i = 0; i < M.n_v; i++)M.positions[i] = EE * M.positions[i];// to tcip
@@ -91,7 +95,7 @@ public:
 	void draw()
 	{
 		//Nachi_tester.draw();
-		M.draw();
+		M.draw(true);
 		//int i = 1 + 4 ;
 		//char c[200];
 		//sprintf(c, "%i ", i);
@@ -269,13 +273,13 @@ public:
 			min.z = MIN(tcp.z, min.z);
 		}
 	}
-	void angleBetweenFrames( Matrix3 rotA, Matrix3 rotB)
+	void angleBetweenFrames(Matrix3 rotA, Matrix3 rotB)
 	{
 		for (int i = 0; i < 3; i++)
 			cout << rotA.getColumn(i).angle(rotB.getColumn(i)) << " ";
 		cout << endl;
 	}
-	void addPoint( vec tcp, vec tcp_x = vec(1, 0, 0), vec tcp_y = vec(0, 1, 0), vec tcp_z = vec(0, 0, -1) )
+	void addPoint(vec tcp, vec tcp_x = vec(1, 0, 0), vec tcp_y = vec(0, 1, 0), vec tcp_z = vec(0, 0, -1))
 	{
 
 		path[actualPathLength][0] = tcp;
@@ -366,13 +370,13 @@ public:
 
 		Nachi_tester.inverseKinematics_analytical(TOOL, false);
 
-		angleCorrection(rot_prev);
+		//angleCorrection(rot_prev);
 
 		vec pt = Nachi_tester.ForwardKineMatics(Nachi_tester.rot);
 
 		cout << rot_prev[3] - Nachi_tester.rot[3] << " J3 diff " << endl;
 		cout << rot_prev[3] << " J3_prev " << endl;
-	
+
 
 		cout << " -- current point -- " << currentPointId << endl;
 		vec ax, ay, az;
@@ -472,9 +476,9 @@ public:
 			if (fabs(az.angle(TOOL.getColumn(2))) > 1e-04) printf(" point id %i axis az & tcp_z do not match within tolernace \n", i);
 
 			// test if current TOOL orientation axes are ortho-normal / perpendicular to each other
-			if (TOOL.getColumn(0)*TOOL.getColumn(1) >1e-04)printf(" point id %i axis x & y are not ortho-normal \n", i);
-			if (TOOL.getColumn(1)*TOOL.getColumn(2) >1e-04)printf(" point id %i axis y & z are not ortho-normal \n", i);
-			if (TOOL.getColumn(2)*TOOL.getColumn(0) >1e-04)printf(" point id %i axis z & x are not ortho-normal \n", i);
+			if (TOOL.getColumn(0)*TOOL.getColumn(1) > 1e-04)printf(" point id %i axis x & y are not ortho-normal \n", i);
+			if (TOOL.getColumn(1)*TOOL.getColumn(2) > 1e-04)printf(" point id %i axis y & z are not ortho-normal \n", i);
+			if (TOOL.getColumn(2)*TOOL.getColumn(0) > 1e-04)printf(" point id %i axis z & x are not ortho-normal \n", i);
 
 			// store corresponding rotations at each point along path
 			// for later use such as gcode export & graph-generation etc.
@@ -510,12 +514,12 @@ public:
 			cout << Nachi_tester.rot[5] << " J5_new " << endl;
 		}
 
-		Nachi_tester.rot[0] = ofClamp(Nachi_tester.rot[0], -170, 170);
+		/*Nachi_tester.rot[0] = ofClamp(Nachi_tester.rot[0], -170, 170);
 		Nachi_tester.rot[1] = ofClamp(Nachi_tester.rot[1], -65, 150);
 		Nachi_tester.rot[2] = ofClamp(Nachi_tester.rot[2], -70, 90);
 		Nachi_tester.rot[3] = ofClamp(Nachi_tester.rot[3], -150, 150);
 		Nachi_tester.rot[4] = ofClamp(Nachi_tester.rot[4], -109, 109);
-		Nachi_tester.rot[5] = ofClamp(Nachi_tester.rot[5], -360, 360);
+		Nachi_tester.rot[5] = ofClamp(Nachi_tester.rot[5], -360, 360);*/
 	}
 	void exportGCode(string fileToWrite = "data/MZ07-01-A.080")
 	{
@@ -544,7 +548,7 @@ public:
 			e_x = rotations[i][0];
 			e_y = rotations[i][1];
 			e_z = rotations[i][2];
-			r =  rotations[i][3];
+			r = rotations[i][3];
 			p = rotations[i][4];
 			y = rotations[i][5];
 
@@ -564,12 +568,12 @@ public:
 				char s[20];
 				itoa(counter, s, 10);
 				file += s;
-				
+
 				//- open file
 				myfile_write.open(file, ios::out);
-					if (myfile_write.fail())cout << " error in opening file  " << fileToWrite << endl;
+				if (myfile_write.fail())cout << " error in opening file  " << fileToWrite << endl;
 
-					counter++;
+				counter++;
 			}
 		}
 
@@ -579,21 +583,54 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////// DISPLAY METHODS
-
-	void drawFrame(Matrix4 &tool , float sz)
+	void drawHistograms( int j ,vec cen = vec (50, winH - 50,0), float r = 5.0)
 	{
+		AL_glLineWidth(1);
 		
+		float mn, mx;
+		mn = 1e10;
+		mx = mn * -1;
+		for (int i = 0; i < actualPathLength - 1; i++)
+		{
+			mn = MIN(mn, rotations[i][j]);
+			mx = MAX(mn, rotations[i][j]);
+		}
+		
+		setup2d();
+
+
+
+		//glBegin(GL_LINES);
+			for (int i = 0; i < actualPathLength - 1; i+= 10 )
+			{
+				double ang = ((PI * 2.0 / actualPathLength) * float(i)) * 1.0;
+				vec4 clr = getColour(rotations[i][j], mn, mx);
+				double d = ofMap(rotations[i][j], mn, mx, 0, r);
+				d = ofClamp(d,0, r);
+				glColor3f(clr.r, clr.g, clr.b);
+				drawLine(cen, cen + (vec(sin(ang), cos(ang), 0).normalise() * d));
+				vec radial = cen + vec(sin(ang), cos(ang), 0).normalise() * d;
+				//glVertex2f(cen.x, cen.y);
+				//glVertex2f(radial.x, radial.y);
+			}
+		//glEnd();
+
+		restore3d();
+	}
+	void drawFrame(Matrix4 &tool, float sz)
+	{
+
 		tcp = tool.getColumn(3);
 		tcp_x = tool.getColumn(0); tcp_y = tool.getColumn(1); tcp_z = tool.getColumn(2);
 
-		glColor3f(1, 0, 0); drawLine( tcp, tcp + tcp_x.normalise() * sz );
-		glColor3f(0, 1, 0); drawLine( tcp, tcp + tcp_y.normalise() * sz);
-		glColor3f(0, 0, 1); drawLine( tcp, tcp + tcp_z.normalise() * sz);
+		glColor3f(1, 0, 0); drawLine(tcp, tcp + tcp_x.normalise() * sz);
+		glColor3f(0, 1, 0); drawLine(tcp, tcp + tcp_y.normalise() * sz);
+		glColor3f(0, 0, 1); drawLine(tcp, tcp + tcp_z.normalise() * sz);
 	}
 	void draw(bool wireFrame = true, bool showSphere = false)
 	{
 		// ------------------- taskGraph
-		taskGraph.draw();
+		//taskGraph.draw();
 
 		// ------------------- TCP locations
 		glPointSize(3);
@@ -605,33 +642,37 @@ public:
 		glPointSize(1);
 
 		// ------------------- TCP orientation axes
-		
-		for (int i = 0; i < actualPathLength; i++)drawFrame(getToolLocation(i),.1);
+
+		for (int i = 0; i < actualPathLength; i++)drawFrame(getToolLocation(i), .1);
 
 
 
 		//////////////////////////////////////////////////////////////////////////
 		// get TOOL information at current point i
 
-		Matrix4 EE =  Nachi_tester.Bars_to_world_matrices[5];
+		Matrix4 EE = Nachi_tester.Bars_to_world_matrices[5];
 		E.drawAtLocation(EE);
 
 		//////////////////////////////////////////////////////////////////////////
 		// ------------------- draw bounding box ;
-		
+
 		wireFrameOn();
-			drawCube(min, max);
+		drawCube(min, max);
 		wireFrameOff();
 		// ------------------- draw Robot ;
 
 		if (wireFrame)wireFrameOn();
-			Nachi_tester.draw(true); // updates AO render points ;
+			Nachi_tester.draw(false); // updates AO render points ;
 		if (wireFrame)wireFrameOff();
 
 		if (showSphere) glutSolidSphere(78, 32, 32);
 
-		
+		for (int i = 0; i < 6; i++)
+			drawHistograms(i, vec( i*200 + 150 , winH - 300,0),75);
+
 	}
 
 
 };
+#endif // !_NACHI_
+

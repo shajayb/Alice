@@ -1,3 +1,6 @@
+#ifndef _NEW_PHYSICS_
+#define _NEW_PHYSICS_
+
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -24,7 +27,7 @@ public:
 		gravity = down.mag();
 	}
 
-	virtual void calcCustomForces_post(PARTICLE *p)
+	/*virtual void calcCustomForces_post(PARTICLE *p)
 	{
 		for (int i = 0; i < np; i++)
 			for (int j = 0; j < np; j++)
@@ -41,64 +44,14 @@ public:
 					if (!p[i].fixed)p[i].f += (f * 1) / d;
 					if (!p[j].fixed)p[j].f -= (f * 1) / d;
 				}
-			
+
 			}
-	}
+	}*/
 
 
 };
 
 
 
-/*
+#endif // !_NEW_PHYSICS_
 
-Class name
-{
-public :
-	//------------------------------------- class variables / properties
-	// vec A,P,V, ;
-	//vector<int> IDs
-	//float distance, length
-
-	//------------------------------------- constructors / setup methods
-	name()
-	{
-			for( int i = 0 ; i < 100 ; i++)IDS.push_back(i) ;
-	}
-
-	void setup()
-	{
-	}
-
-	void initiliase()
-	{
-	}
-	//------------------------------------- update / compute methods
-
-	void computeNearestNeighbors()
-	{
-	}
-
-	void calculateForces()
-	{
-	}
-
-	void updateParticlePositions()
-	{
-	}
-
-	//------------------------------------- display / draw methods
-
-	void draw()
-	{
-			drawPoint(A);
-			drawLine(A,B);
-	}
-
-	void drawStats()
-	{
-	}
-};
-
-
-*/

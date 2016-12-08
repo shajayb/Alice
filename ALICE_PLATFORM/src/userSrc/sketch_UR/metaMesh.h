@@ -1,3 +1,8 @@
+
+#ifndef _META_MESH_
+#define  _META_MESH_
+
+
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -9,13 +14,7 @@ using namespace std;
 using namespace std::experimental;
 
 #include "graph.h"
-
-
-#ifndef _META_MESH_
-
-#define  _META_MESH_
-
-
+#include "utilities.h"
 
 class metaMesh : public Mesh
 {
@@ -23,6 +22,14 @@ public:
 
 	Graph G;
 	array<double, MAX_VERTS> scalars;
+	double dMin = 1e20;
+	double dMax = dMin * -1;
+	//////////////////////////////////////////////////////////////////////////
+	int glPtSize = 1.0;
+	int glLineWd = 1.0;
+
+
+
 	metaMesh()
 	{
 
@@ -35,6 +42,7 @@ public:
 
 		for (int i = 0; i < in.n_v; i++) positions[i] = in.positions[i];
 		for (int i = 0; i < in.n_v; i++) createVertex(positions[i]);
+
 		Vertex *f_v[MAX_VALENCE];
 		for (int i = 0; i < in.n_f; i++)
 		{
@@ -80,7 +88,6 @@ public:
 				fVerts[2] = &M.vertices[(i + 1)*colCnt + j - 1];
 				fVerts[3] = &M.vertices[i*colCnt + j - 1];
 				M.createNGon(fVerts, 4, true);
-
 				/*	fv[0] = &M.vertices[i*colCnt + j];;
 				fv[1] = &M.vertices[i*colCnt + j-1];;
 				fv[2] = &M.vertices[(i+1)*colCnt + j];;
@@ -95,15 +102,24 @@ public:
 		}
 
 
-		for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+		for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();// generates face normals ;
 
 		return metaMesh(M);
 	}
 
-	void assignScalars(string component = "y")
+	void assignScalars(string component = "z")
 	{
+		if(component == "z")
 		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
 																 //(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
+		if (component == "y")
+			for (int i = 0; i < n_v; i++)scalars[i] = positions[i].y;
+
+		if (component == "x")
+			for (int i = 0; i < n_v; i++)scalars[i] = positions[i].x;
+
+		if (component == "c")
+			for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag();;
 
 	}
 
@@ -126,7 +142,7 @@ public:
 		return (p - pt) * (p - pt);// p.distanceTo(pt);
 	}
 
-	void assignScalarsAsLineDistanceField( Graph &G)
+	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0 , bool blend = true )
 	{
 
 		for (int i = 0; i < n_v; i++)
@@ -142,31 +158,41 @@ public:
 				e0 = G.edges[j].vEnd->id;
 				e1 = G.edges[j].vStr->id;
 				float Di = distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt);
-				//dChk = Di;
-				//dChk -= 1.0;
-				dChk += 1.0 / (pow((Di + 0.01), 2.0));
+				
+				if (!blend)
+				{
+					dChk = Di;
+					d = MIN(dChk, d);
+				}
+				else
+				{
+					dChk += 1.0 / (pow((Di + 0.01), 2.0));
+					d = dChk;
+				}
 
-				//d= MIN(dChk, d);
+				
 			}
 
-			d = dChk;
+			//d = dChk;
+			d = ofClamp(d, clampMin, clampMax );
 			scalars[i] = d;
-			//dMin = MIN(dMin, d);
-			//dMax = MAX(dMax, d);
+			
 		}
 	}
 
-	void getMinMaxOfScalarField( double &dMin, double &dMax )
+	void getMinMaxOfScalarField( double &_dMin, double &_dMax )
 	{
-		dMin = 1e10;
-		dMax = dMin * -1;
+		_dMin = 1e20;
+		_dMax = _dMin * -1;
 		
 		for (int i = 0; i < n_v; i++)
 		{
-			dMin = MIN(dMin, scalars[i]);
-			dMax = MAX(dMax, scalars[i]);
+			_dMin = MIN(_dMin, scalars[i]);
+			_dMax = MAX(_dMax, scalars[i]);
 		}
 		
+		dMin = _dMin;
+		dMax = _dMax;
 	}
 
 	void createIsoContourGraph(double threshold)
@@ -228,8 +254,7 @@ public:
 		cout << eCnt << " -- metaMesh Graph " << G.n_v << endl;
 	}
 
-
-	void convertContourToCyclicGraph()
+	void convertContourToToroidalGraph()
 	{
 		if (!G.connected_vertices.size() > 0)return;
 		{
@@ -248,6 +273,79 @@ public:
 			for (int i = 0; i < A.n_v; i += 1)
 				G.createEdge( G.vertices[A.edges[i].vStr->id], G.vertices[A.edges[i].vEnd->id]);
 		}
+	}
+
+
+	generator<E> faceEdges(double threshold)
+	{
+		int a, b;
+		vec ePt[3];
+		bool e[3];
+		vec diff;
+		double interp;
+
+		for (int i = 0; i < n_f; i++)
+		{
+
+			for (int j = 0; j < 3 /*m.faces[i].n_e*/; j++)
+			{
+				a = faces[i].edgePtrs[j]->vEnd->id;
+				b = faces[i].edgePtrs[j]->vStr->id;
+
+				diff = (positions[b] - positions[a]);// .normalise();
+				interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
+
+				ePt[j] = (interp >= 0.0 && interp <= 1.0) ? (positions[a] + diff * interp) : (vec(0, 0, 0));
+				e[j] = (interp >= 0.0 && interp <= 1.0) ? 1 : 0;
+			}
+
+
+			if (e[0] && e[1])yield E(ePt[0], ePt[1]);
+			if (e[1] && e[2])yield E(ePt[1], ePt[2]);
+			if (e[2] && e[0])yield E(ePt[2], ePt[0]);
+
+		}
+	}
+
+	void drawIsoContoursInRange( double threshold, double inc = 0.01 )
+	{
+		glLineWidth(glLineWd);
+		for (double i = 0.0 ; i < threshold; i += threshold * inc)
+			for (auto &c : faceEdges(i))
+			{
+				drawLine(c.t, c.f);
+				drawPoint((vec)c.t);
+				drawPoint((vec)c.f);
+
+			}
+
+		glLineWidth(1.0);
+	}
+
+	void display(bool drawData = true, bool drawContour = true , bool drawMesh = false )
+	{
+
+		if (drawContour)
+			G.draw();
+
+		if (drawMesh)
+		{
+			wireFrameOn();
+				draw();
+			wireFrameOff();
+		}
+
+		glPointSize(glPtSize);
+		if (drawData)
+		for (int i = 0; i < n_v; i++)
+		{
+			vec4 clr = getColour(scalars[i], dMin, dMax);
+			glLineWidth(5);
+			glColor3f(clr.r, clr.g, clr.b);
+			//drawLine(positions[i], positions[i]*1.001);;// 
+			drawPoint(positions[i]);
+		}
+		glPointSize(1.0);
 	}
 };
 

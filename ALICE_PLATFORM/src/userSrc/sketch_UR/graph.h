@@ -4,7 +4,7 @@
 
 #include "nvec.h"
 //#include "matrices.h"
-#define _use_vector_
+//#define _use_vector_
 //#define _push_back_
 
 class Graph
@@ -13,6 +13,11 @@ class Graph
 public:
 	// ------------- topology 
 	
+	/// islands
+	vector<int> connected_edges;
+	vector<int> connected_vertices;
+	array<bool, MAX_EDGES> eChecked;
+	array<bool, MAX_EDGES> eAdded;
 
 
 #ifdef _use_vector_
@@ -25,11 +30,6 @@ public:
 
 	vector<vec>positions;
 	
-	/// islands
-	vector<int> connected_edges;
-	vector<int> connected_vertices;
-	array<bool, MAX_EDGES> eChecked;
-	array<bool, MAX_EDGES> eAdded;
 
 	// ------------- ------------- ------------- -------------------------- CONSTRUCTORS  ;
 	Graph()
@@ -39,6 +39,8 @@ public:
 		vertices.reserve(MAX_VERTS);
 		edges.reserve(MAX_EDGES);
 		positions.reserve(MAX_VERTS);
+
+		cout << "graph arrays reserved" << endl;
 	}
 
 #else
@@ -58,6 +60,17 @@ public:
 		vertices = new Vertex[MAX_VERTS];
 		edges = new Edge[MAX_EDGES];
 		positions = new vec[MAX_VERTS];
+	}
+
+	void constructFromGraph( Graph &G )
+	{
+
+		for (int i = 0; i < G.n_v; i += 1)
+			createVertex(G.positions[i]);
+
+		for (int i = 0; i < G.n_v; i += 1)
+			createEdge( vertices[ G.edges[i].vStr->id ], vertices[ G.edges[i].vEnd->id ]);
+		
 	}
 
 #endif // !_use vector_
@@ -256,7 +269,7 @@ public:
 			connected_vertices.push_back(str_Vid);
 		}
 	}
-
+	
 	void smooth_connectedVertices()
 	{
 		if (!connected_vertices.size() > 0)return;
@@ -265,7 +278,7 @@ public:
 		for (int i = 0; i < n; i += 1)
 		{
 			int Vi = connected_vertices[Mod(i, n)];
-			int Vi_minus = connected_vertices[Mod(i - 1, n)];
+			int Vi_minus = connected_vertices[Mod(i + 1, n)];
 			int Vi_plus = connected_vertices[Mod(i + 1, n)];
 			positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
 		}
@@ -358,7 +371,7 @@ public:
 		{
 
 			char s[200];
-			sprintf(s, "%1.4f,%1.4f,%1.4f,%i", positions[i].x * scaleBack, positions[i].y * scaleBack, positions[i].z * scaleBack, (vertices[i].n_e == 1) ? 1 : 0);
+			sprintf(s, "%1.4f,%1.4f,%1.4f", positions[i].x * scaleBack, positions[i].y * scaleBack, positions[i].z * scaleBack);//(vertices[i].n_e == 1) ? 1 : 0
 
 			myfile << s << endl;
 		}
@@ -394,7 +407,7 @@ public:
 			char s[200];
 			itoa(i, s, 10);
 			//drawString(s, positions[i]+ vec(0,0,.1));
-			drawPoint(positions[i]);
+		//	drawPoint(positions[i]);
 		}
 		glPointSize(1);
 
@@ -462,16 +475,105 @@ public:
 	}
 
 
-
-
-
-
-
-
-
-
-
 };
 
+
+
+class toroidalGraph : public Graph
+{
+public:
+
+	vector<bool> fixed;
+
+	void constructFromGraph( Graph &G , int everyNthVert = 1 )
+	{
+		reset();
+		for (int i = 0; i < G.n_v; i+= everyNthVert ) createVertex(G.positions[i]);
+		
+		for (int i = 0; i < n_v; i++) createEdge(vertices[Mod(i, n_v)], vertices[Mod(i + 1, n_v)]);
+		fixed.assign(n_v,false);
+	}
+
+	void constructFromPoints( vec *positions, int n)
+	{
+
+		reset();
+		for (int i = 0; i < n; i++) createVertex(positions[i]);
+		fixed.assign(n_v, false);
+
+		for (int i = 0; i < n_v; i++) createEdge(vertices[Mod(i, n_v)], vertices[Mod(i + 1, n_v)]);
+	}
+
+	void fixEnds()
+	{
+		fixed[0] = fixed[n_v - 1] = true;
+	}
+
+
+	void smoothVertices()
+	{
+		//if (!vertices.size() > 0)return;
+		int n = n_v;
+
+		for (int i = 0; i < n; i += 1)
+			if(!fixed[i])
+			{
+
+				int Vi = Mod(i, n);
+				int Vi_minus = Mod(i - 1, n);
+				int Vi_plus = Mod(i + 1, n);
+				positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
+			}
+	}
+
+	void moveEachPointTowardNext( double dist = 0.1 )
+	{
+		for (int i = 0; i < n_v; i++)
+			if (!fixed[i])
+			{
+				vec ed = (positions[Mod(i + 1, n_v)] - positions[i]);
+				double d = ed.mag();
+				
+				if( d < dist )positions[i] += (positions[Mod(i + 1, n_v)] - positions[i]).normalise() * 0.1;
+			}
+	}
+
+	void getMinMaxEdgeLength( double &minL, double &maxL)
+	{
+		
+		minL = 1e12; maxL = minL * -1.0;
+		vec ed;
+		for (int i = 0; i < n_e; i++)
+		{
+			if (fixed[edges[i].vEnd->id] && fixed[edges[i].vStr->id])continue;
+
+			ed = positions[edges[i].vEnd->id] - positions[edges[i].vStr->id];
+			double d = ed * ed;
+			
+			minL = MIN(minL, d);
+			maxL = MAX(maxL, d);
+		}
+	}
+
+	void display()
+	{
+		double minL, maxL;
+		
+		vec ed;
+		getMinMaxEdgeLength(minL, maxL);
+		//printf("%1.4f, %1.4f \n", minL, maxL);
+		
+		for (int i = 0; i < n_e; i++)
+		{
+			if (fixed[edges[i].vEnd->id] && fixed[edges[i].vStr->id])continue;
+
+			ed = positions[edges[i].vEnd->id] - positions[edges[i].vStr->id];
+			vec4 clr = getColour(ed * ed, minL, minL * 1.1 );
+			glColor3f(clr.r, clr.g, clr.b);
+			drawLine( positions[ edges[i].vEnd->id ],  positions[ edges[i].vStr->id ] );
+
+		}
+	}
+};
 
 #endif
