@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_empty.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_graphOffset.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>

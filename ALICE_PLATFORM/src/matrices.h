@@ -179,9 +179,9 @@ public:
 	friend Vector4 operator*(const Vector4& vec, const Matrix4& m); // pre-multiplication
 	friend std::ostream& operator<<(std::ostream& os, const Matrix4& m);
 
-protected:
+//protected:
 
-private:
+//private:
 	float       getCofactor(float m0, float m1, float m2,
 		float m3, float m4, float m5,
 		float m6, float m7, float m8);
