@@ -160,6 +160,7 @@ public:
 	Matrix4&    scale(float scale);                     // uniform scale
 	Matrix4&    scale(float sx, float sy, float sz);    // scale by (sx, sy, sz) on each axis
 
+	Matrix4& setDiag(float s);
 	// operators
 	Matrix4     operator+(const Matrix4& rhs) const;    // add rhs
 	Matrix4     operator-(const Matrix4& rhs) const;    // subtract rhs
@@ -180,9 +181,9 @@ public:
 	friend Vector4 operator*(const Vector4& vec, const Matrix4& m); // pre-multiplication
 	friend std::ostream& operator<<(std::ostream& os, const Matrix4& m);
 
-protected:
+//protected:
 
-private:
+//private:
 	float       getCofactor(float m0, float m1, float m2,
 		float m3, float m4, float m5,
 		float m6, float m7, float m8);
@@ -1327,6 +1328,14 @@ Matrix4& Matrix4::scale(float x, float y, float z)
 	m[0] = m[0] * x;   m[1] = m[1] * x;   m[2] = m[2] * x;   m[3] = m[3] * x;
 	m[4] = m[4] * y;   m[5] = m[5] * y;   m[6] = m[6] * y;   m[7] = m[7] * y;
 	m[8] = m[8] * z;   m[9] = m[9] * z;   m[10] = m[10] * z;  m[11] = m[11] * z;
+	return *this;
+}
+
+Matrix4& Matrix4::setDiag(float s)
+{
+	m[0] = s;
+	  m[5] = s;   
+	  m[10] =s;  
 	return *this;
 }
 
