@@ -126,7 +126,7 @@ void setup()
 
 	//// graph stack
 	displayStack.clear();
-	for (int j = 0; j < 65; j++)
+	for (int j = 0; j < 35; j++)
 	{
 
 		string file = "";

@@ -1,14 +1,10 @@
-﻿  sketch_libGizmo_test.cpp
-C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+﻿  sketch_nachi_EE.cpp
+  sketch_picking.cpp
+C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\shajay.b\Source\Repos\Alice_Office\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\shajay.b\Source\Repos\Alice_Office\Alice\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
   Generating code
-  15 of 306 functions ( 4.9%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    4 functions had inline decision re-evaluated but remain unchanged
+  218 of 221 functions (98.6%) were compiled, the rest were copied from previous compilation.
+    110 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
-libgizmo.lib(GizmoTransformMove.obj) : warning LNK4099: PDB 'libgizmo.pdb' was not found with 'libgizmo.lib(GizmoTransformMove.obj)' or at 'C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\libgizmo.pdb'; linking object as if no debug info
-libgizmo.lib(GizmoTransformScale.obj) : warning LNK4099: PDB 'libgizmo.pdb' was not found with 'libgizmo.lib(GizmoTransformScale.obj)' or at 'C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\libgizmo.pdb'; linking object as if no debug info
-libgizmo.lib(GizmoTransformRotate.obj) : warning LNK4099: PDB 'libgizmo.pdb' was not found with 'libgizmo.lib(GizmoTransformRotate.obj)' or at 'C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\libgizmo.pdb'; linking object as if no debug info
-libgizmo.lib(GizmoTransformRender.obj) : warning LNK4099: PDB 'libgizmo.pdb' was not found with 'libgizmo.lib(GizmoTransformRender.obj)' or at 'C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\libgizmo.pdb'; linking object as if no debug info
-libgizmo.lib(ZBaseMaths.obj) : warning LNK4099: PDB 'libgizmo.pdb' was not found with 'libgizmo.lib(ZBaseMaths.obj)' or at 'C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\libgizmo.pdb'; linking object as if no debug info
-  ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
-  ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)
+  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice_Office\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
+  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice_Office\Alice\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)

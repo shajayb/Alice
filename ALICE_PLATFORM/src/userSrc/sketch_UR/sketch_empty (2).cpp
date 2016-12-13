@@ -1,4 +1,3 @@
-#ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;
@@ -65,7 +64,7 @@ void setup()
 
 	/////////////////////////////
 
-	B = *new ButtonGroup(vec(50, 450, 0));
+	B = *new ButtonGroup( vec(50, 450, 0) );
 	B.addButton(&showRobot, "showRobot");
 
 }
@@ -77,7 +76,7 @@ void update(int value)
 
 	if (run)
 		for (int i = 0; i < 10; i++)GS.smoothCurrentGraph();
-
+			
 
 }
 
@@ -94,12 +93,12 @@ void draw()
 	B.draw();
 	//// ------------------------ draw the path points / Tool orientations 
 
-	if (showRobot)
+	if(showRobot)
 		path.draw(false);
 	else
 		GS.draw();
 
-
+	
 
 
 	//// graph 
@@ -119,31 +118,31 @@ void draw()
 
 	setup2d();
 
-	drawString(s, winW * 0.5, winH - 50);
-	drawString(t, winW * 0.5, winH - 75);
-	drawString(jts, winW * 0.5, winH - 100);
+		drawString(s, winW * 0.5, winH - 50);
+		drawString(t, winW * 0.5, winH - 75);
+		drawString(jts, winW * 0.5, winH - 100);
 
-	int hts = 50;
-	int wid = winW * 0.75;
-	drawString(" n : path.goToNextPoint();", wid, hts); hts += 25;
-	drawString(" b : path.goToPrev();", wid, hts); hts += 25;
-	drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
-	drawString(" w : path.exportGCode();", wid, hts); hts += 25;
-	drawString(" r : setup();", wid, hts); hts += 25;
-	drawString(" h : path.home();", wid, hts); hts += 25;
-	hts += 25;
-	drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
-	drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
-	drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
-	drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
-	drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
-	drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
-	drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
-	drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
-	drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
-	drawString("  R : run = !run ", wid, hts); hts += 25;
-
-
+		int hts = 50;
+		int wid = winW * 0.75;
+		 drawString(" n : path.goToNextPoint();",wid, hts); hts += 25;
+		 drawString(" b : path.goToPrev();", wid, hts); hts += 25;
+		 drawString(" N : path.currentId = 0;", wid, hts); hts += 25;
+		 drawString(" w : path.exportGCode();", wid, hts); hts += 25;
+		 drawString(" r : setup();", wid, hts); hts += 25;
+		 drawString(" h : path.home();", wid, hts); hts += 25;
+		 hts += 25;
+		 drawString("  SPC :GS.smoothCurrentGraph()", wid, hts); hts += 25;
+		 drawString("  R :smoothIteration toggle;", wid, hts); hts += 25;
+		 drawString("  c :GS.convertContourToCyclicGraph();", wid, hts); hts += 25;;
+		 drawString("  - :GS.reducePointsOnContourGraph(2);", wid, hts); hts += 25;
+		 drawString("  p :GS.addCurrentContourGraphToPrintStack(0.05, 0.4);", wid, hts); hts += 25;
+		 drawString("  P :GS.currentStackLayer--;", wid, hts); hts += 25;
+		 drawString("  O :GS.currentStackLayer = 0", wid, hts); hts += 25;
+		 drawString("  L :GS.ConvertContourStackToPrintPath(path);", wid, hts); hts += 25;
+		 drawString("  Q : GS.writeCurrentGraph(); ", wid, hts); hts += 25;
+		 drawString("  R : run = !run ", wid, hts); hts += 25;
+	 
+	 
 	restore3d();
 
 
@@ -175,7 +174,7 @@ void keyPress(unsigned char k, int xm, int ym)
 
 
 	if (k == ' ')GS.smoothCurrentGraph();
-	if (k == 'c')GS.convertContourToToroidalGraph();
+	if (k == 'c')GS.convertContourToCyclicGraph();
 	if (k == '-')GS.reducePointsOnContourGraph(2);
 	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.1, 1.75);
 	if (k == 'P')GS.currentStackLayer--;
@@ -209,5 +208,3 @@ void mouseMotion(int x, int y)
 
 
 
-
-#endif // DEBUG

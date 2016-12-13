@@ -1,4 +1,6 @@
 
+
+
 #ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
@@ -10,6 +12,8 @@ using namespace ROBOTICS;
 
 ////////////////////////////////////////////////////////////////////////// GLOBAL VARIABLES ----------------------------------------------------
 ////// --- MODEL OBJECTS ----------------------------------------------------
+
+
 
 metaMesh MM;
 graphStack GS;
@@ -23,7 +27,6 @@ int currentPointId;
 
 bool run = false;
 int rCnt = 0;
-
 ////// --- GUI OBJECTS ----------------------------------------------------
 
 SliderGroup S;
