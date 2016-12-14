@@ -18,11 +18,11 @@ void drawVector(vec&a, vec loc, string suffix)
 {
 	setup2d();
 
-	char s[200];
-	sprintf(s, "%1.2f,%1.2f,%1.6f : ", a.x, a.y, a.z);
-	string str = s;
-	str += suffix;
-	drawString(str, loc);
+		char s[200];
+		sprintf(s, "%1.2f,%1.2f,%1.6f : ", a.x, a.y, a.z);
+		string str = s;
+		str += suffix;
+		drawString(str, loc);
 
 	restore3d();
 }
@@ -33,14 +33,14 @@ void drawMatrix(Matrix4 &T, vec str)
 	glColor3f(0, 0, 0);
 	setup2d();
 
-	double width = 4 * 20;
-	double ht = 24;
-	for (int i = 0; i < 4; i++)
-		for (int j = 0; j < 4; j++)
-		{
-			sprintf(s, "%1.2f", T[j * 4 + i]);
-			drawString(s, i * width + str.x, j * ht + str.y);
-		}
+		double width = 4 * 20;
+		double ht = 24;
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+			{
+				sprintf(s, "%1.2f", T[j * 4 + i]);
+				drawString(s, i * width + str.x, j * ht + str.y);
+			}
 
 	restore3d();
 
@@ -57,7 +57,7 @@ vec screenToWorld(int x, int y, double zPlane = 0)
 	double camera_pos[3];
 	GLdouble matModelView[16], matProjection[16];
 	int viewport[4];
-	// get matrixs and viewport:
+	// get matrices and viewport:
 	glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
 	glGetDoublev(GL_PROJECTION_MATRIX, matProjection);
 	glGetIntegerv(GL_VIEWPORT, viewport);
@@ -74,41 +74,65 @@ vec screenToWorld(int x, int y, double zPlane = 0)
 	return vec(camera_pos[0], camera_pos[1], camera_pos[2]);
 }
 
+
+
+
 /*Matrix4*/vec worldToScreen( vec &a , Matrix4 &MV, Matrix4 &P, int *viewport )
 {
 
-	int x, y, w, h;
-	x = viewport[0]; y = viewport[1];
-	w = viewport[2]; h = viewport[3];
 
 	Vector4 inPt(a.x, a.y, a.z, 1.0);
-	Vector4 eyeSpcPt = (MV * inPt);
-	Vector4 clipSpcPt = P * eyeSpcPt;
+	inPt = (MV * inPt); // inPt -> eyeSpace
+	inPt = P * inPt; // eyeSpace -> clipSpace
 
+	// clipSpace -> normalised device coordinates
+	if (fabs(inPt.w) > 1e-04)
+	{
+		float inv = 1.0 / inPt.w;
+		inPt.x *= inv;
+		inPt.y *= inv;
+		inPt.z *= inv;
+	}
+	inPt.y *= -1; // strange inversion needed.
 
-	vec ndcPt(clipSpcPt.x, clipSpcPt.y, clipSpcPt.z);
-	if(fabs(clipSpcPt.w)> 1e-04)
-			ndcPt /= clipSpcPt.w;
-	ndcPt.y *= -1;
-
-	float wx = ofMap(ndcPt.x, -1, 1, x,x+w);
-	float wy = ofMap(ndcPt.y, -1, 1, y, y+h);
-
-	return  vec(wx, wy, 0.0);
+	//NDC -> window coordinates
+	return  vec
+				(
+				ofMap(inPt.x, -1, 1, viewport[0], viewport[0] + viewport[2]), // map ndc.x -> x , x+w
+				ofMap(inPt.y, -1, 1, viewport[1], viewport[1] + viewport[3]), // map ndc.y -> y , y+h
+				0.0
+				);
 
 }
 
+vec worldToScreen(vec &a)
+{
+
+	Matrix4 MV, P;
+	int viewport[4];
+	// get matrices and viewport:
+	glGetFloatv(GL_MODELVIEW_MATRIX, MV.m);
+	glGetFloatv(GL_PROJECTION_MATRIX, P.m);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	MV.transpose();
+	P.transpose();
+
+	return worldToScreen(a, MV, P, viewport);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 int msx, msy;
 vector<vec> clkPts;
 vec camPos_near, camPos_far, ray, pt;
+int const dim = 100000;
+vec pts[dim];
 
 void setup()
 {
 	msx = msy = 0;
 	clkPts.clear();
 
+	for (int i = 0; i < dim; i++)pts[i] = vec( ofRandom(-20, 20), ofRandom(-20, 20), ofRandom(-20, 20));
 }
 
 void draw()
@@ -123,7 +147,7 @@ void draw()
 	Matrix4 MV, P;
 	GLdouble matModelView[16], matProjection[16];
 	int viewport[4];
-	// get matrixs and viewport:
+	// get matrices and viewport:
 	glGetFloatv(GL_MODELVIEW_MATRIX, MV.m);
 	glGetFloatv(GL_PROJECTION_MATRIX, P.m);
 	glGetIntegerv(GL_VIEWPORT, viewport);
@@ -144,9 +168,9 @@ void draw()
 
 	setup2d();
 
-	for (int i = 0; i < 100; i++)
-		drawPoint(worldToScreen(vec(ofRandom(-20, 20), ofRandom(-20, 20), ofRandom(-20, 20)), MV, P, viewport));
-
+	for (int i = 0; i < dim; i++)
+		drawPoint( worldToScreen( pts[i], MV, P, viewport) );
+	
 	restore3d();
 	/////////
 
