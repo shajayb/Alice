@@ -50,6 +50,7 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_metaMeshTester_graphOffset.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_picking.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_populateGraph.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>

@@ -22,6 +22,7 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_imGui_freeGlut.cpp">
       <Filter>ImGui_freeglut</Filter>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_picking.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h" />
