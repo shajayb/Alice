@@ -204,5 +204,136 @@ struct int2
 	}
 };
 
+////////////////////////////////////////////////////////////////////////// interface
+void lineStyle(int lineType)
+{
+	glEnable(GL_LINE_STIPPLE);
+	switch (lineType)
+	{
+	case 0: glLineStipple(2, 0xffff); break;
+	case 1: glLineStipple(2, 0x00ff); break;
+	case 2: glLineStipple(2, 0xffff); break;
+	case 3: glLineStipple(2, 0x0c0f); break;
+	case 4: glLineStipple(2, 0x0c0f); break;
+	case 5: glLineStipple(2, 0xaaaa); break;
+	case 6: glLineStipple(2, 0xaaaa); break;
+	default:glLineStipple(3, 0xaaaa); break;
+	}
+
+}
+
+void drawVector(vec&a, vec loc, string suffix)
+{
+	setup2d();
+
+	char s[200];
+	sprintf(s, "%1.2f,%1.2f,%1.6f : ", a.x, a.y, a.z);
+	string str = s;
+	str += suffix;
+	drawString(str, loc);
+
+	restore3d();
+}
+void drawMatrix(Matrix4 &T, vec str)
+{
+
+	char s[200];
+	glColor3f(0, 0, 0);
+	setup2d();
+
+	double width = 4 * 20;
+	double ht = 24;
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+		{
+			sprintf(s, "%1.2f", T[j * 4 + i]);
+			drawString(s, i * width + str.x, j * ht + str.y);
+		}
+
+	restore3d();
+
+}
+
+vec rayPlaneIntersection(vec P0, vec ray, vec N, float d = 0)
+{
+	double t = -(P0 * N + d) / (ray * N);
+	return P0 + ray * t;
+}
+
+vec screenToCamera(int x, int y, double zPlane = 0)
+{
+	double camera_pos[3];
+	GLdouble matModelView[16], matProjection[16];
+	int viewport[4];
+	// get matrices and viewport:
+	glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
+	glGetDoublev(GL_PROJECTION_MATRIX, matProjection);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	int scrCenX = (viewport[2] - viewport[0]) / 2;
+	int scrCenY = (viewport[3] - viewport[1]) / 2;
+	gluUnProject
+	(
+		scrCenX + x, scrCenY + y, zPlane, //screen coords
+		matModelView, matProjection, viewport, //mvp matrices
+		&camera_pos[0], &camera_pos[1], &camera_pos[2] // return pos
+	);
+
+	return vec(camera_pos[0], camera_pos[1], camera_pos[2]);
+}
+
+vec screenToWorld( vec &inPt)
+{
+	vec camPos_near = screenToCamera(inPt.x, inPt.y, 0.2);
+	vec camPos_far = screenToCamera(inPt.x, inPt.y, 0.9);
+	vec ray = camPos_far - camPos_near;
+	return rayPlaneIntersection(camPos_near, ray, vec(0, 0, 1), 0);
+}
+
+
+vec worldToScreen(vec &a, Matrix4 &MV, Matrix4 &P, int *viewport)
+{
+
+
+	Vector4 inPt(a.x, a.y, a.z, 1.0);
+	inPt = (MV * inPt); // inPt -> eyeSpace
+	inPt = P * inPt; // eyeSpace -> clipSpace
+
+					 // clipSpace -> normalised device coordinates
+	if (fabs(inPt.w) > 1e-04)
+	{
+		float inv = 1.0 / inPt.w;
+		inPt.x *= inv;
+		inPt.y *= inv;
+		inPt.z *= inv;
+	}
+	inPt.y *= -1; // strange inversion needed.
+
+				  //NDC -> window coordinates
+	return  vec
+	(
+		ofMap(inPt.x, -1, 1, viewport[0], viewport[0] + viewport[2]), // map ndc.x -> x , x+w
+		ofMap(inPt.y, -1, 1, viewport[1], viewport[1] + viewport[3]), // map ndc.y -> y , y+h
+		0.0
+	);
+
+}
+
+vec worldToScreen(vec &a)
+{
+
+	Matrix4 MV, P;
+	int viewport[4];
+	// get matrices and viewport:
+	glGetFloatv(GL_MODELVIEW_MATRIX, MV.m);
+	glGetFloatv(GL_PROJECTION_MATRIX, P.m);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	MV.transpose();
+	P.transpose();
+
+	return worldToScreen(a, MV, P, viewport);
+}
+
+
 #define _UTILITIES_
 #endif // !_UTILITIES_

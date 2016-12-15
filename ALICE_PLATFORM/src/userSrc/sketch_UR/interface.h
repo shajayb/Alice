@@ -1,0 +1,118 @@
+
+#ifndef _VIEWER_
+#define _VIEWER_
+
+#include "ALICE_DLL.h"
+#include "utilities.h"
+
+
+class interface
+{
+public:
+
+	int msx, msy;
+	int cur_msx, cur_msy;
+	vec curPt;
+	vec anchorPt;
+
+	vector<vec> clkPts;
+	string keySeq;
+	bool dragging = false;
+
+	interface()
+	{
+		clkPts.clear();
+	}
+
+	bool checkForDuplicates( vec &pt , vector<vec> &pts )
+	{
+		if ( ! clkPts.size() > 0)return false;
+		
+		vector<vec>::reverse_iterator rit = pts.rbegin();
+		for (; rit != pts.rend(); ++rit)
+			if (pt.distanceTo(*rit) < 1e-4)return true;
+		
+		return false;
+	}
+	void mousePress(int b, int state, int x, int y)
+	{
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
+		{
+			cur_msx = msx = x - winW * 0.5;
+			cur_msy = msy = winH * 0.5 - y;
+
+			vec pt = screenToWorld( vec(msx, msy, 0) );
+			anchorPt = pt;
+			if ( !checkForDuplicates(pt, clkPts) ) clkPts.push_back(pt);
+
+
+		}
+	}
+
+	void mouseMotion(int x, int y)
+	{
+		dragging = ( glutGetModifiers() == GLUT_ACTIVE_ALT ) ? true : false ;
+		cur_msx = x - winW * 0.5;
+		cur_msy = winH * 0.5 - y;
+		curPt = screenToWorld(vec(cur_msx, cur_msy, 0));
+
+
+	}
+
+
+	void keyPress(unsigned char k, int xm, int ym)
+	{
+		//printf("ASCII value of %c = %d \n", k, k);
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)keySeq += "ALT_";
+		if (glutGetModifiers() == GLUT_ACTIVE_CTRL)keySeq += "CTRL_";
+
+		keySeq += k;
+		keySeq += ",";
+		
+		if ( k == 13 /*enter*/)keySeq.clear();
+
+		//vector<string> content = splitString(keySeq, ",");
+	}
+
+	void draw()
+	{
+		if (!dragging)return;
+
+		lineStyle(4);
+
+		GLfloat c[4];
+		glGetFloatv(GL_CURRENT_COLOR, c);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4f(0, 0, 0, 0.3);
+
+		
+			setup2d();
+
+				drawCircle(vec(msx + winW*0.5, winH*0.5 - msy, 0), 10, 64);
+				drawString(keySeq, 50, 50);
+			
+				char s[20];
+				sprintf(s, "%i", dragging);
+				drawString(s, 50, 65);
+
+			
+			restore3d();
+
+			//glBegin(GL_LINE_STRIP);
+			//for (auto &p : clkPts) glVertex3f(p.x, p.y, p.z);
+			//glEnd();
+
+			wireFrameOn();
+				drawRectangle(anchorPt, curPt);
+			wireFrameOff();
+		
+		lineStyle(0);
+		glDisable(GL_BLEND);
+		glColor4f(c[0],c[1],c[2],c[3]);
+		
+	}
+};
+
+
+#endif // _INTERFACE_

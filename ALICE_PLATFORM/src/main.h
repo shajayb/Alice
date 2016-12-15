@@ -20,58 +20,8 @@ float  					gTotalTimeElapsed 	= 0;
 int 					gTotalFrames		= 0;
 GLuint 					gTimer;
 
-void init_timer()
-{
-	glGenQueries(1, &gTimer);
-}
-
-void start_timing()
-{
-	glBeginQuery(GL_TIME_ELAPSED, gTimer);
-}
-
-float stop_timing()
-{
-	glEndQuery(GL_TIME_ELAPSED);
-
-	GLint available = GL_FALSE;
-	while (available == GL_FALSE)
-		glGetQueryObjectiv(gTimer, GL_QUERY_RESULT_AVAILABLE, &available);
-
-	GLint result;
-	glGetQueryObjectiv(gTimer, GL_QUERY_RESULT, &result);
-
-	float timeElapsed = result / (1000.0f * 1000.0f * 1000.0f);
-	return timeElapsed;
-}
-
-void displayFPS( float timeElapsed )
-{
-	gTotalFrames++;
-	gTotalTimeElapsed += timeElapsed;
-	float fps = gTotalFrames / gTotalTimeElapsed;
-	char string[1024] = {0};
-	sprintf(string, "FPS: %0.2f FPS", fps);
-	glutSetWindowTitle(string);
-}
 
 
-void lineStyle(int lineType)
-{
-	glEnable(GL_LINE_STIPPLE);
-	switch (lineType)
-	{
-	case 0: glLineStipple(2, 0xffff); break;
-	case 1: glLineStipple(2, 0x00ff); break;
-	case 2: glLineStipple(2, 0xffff); break;
-	case 3: glLineStipple(2, 0x0c0f); break;
-	case 4: glLineStipple(2, 0x0c0f); break;
-	case 5: glLineStipple(2, 0xaaaa); break;
-	case 6: glLineStipple(2, 0xaaaa); break;
-	default:glLineStipple(3, 0xaaaa); break;
-	}
-
-}
 
 //------------------------------------------------------------------------------- CALLBACKS
 float FPS = 0 ;
@@ -253,8 +203,6 @@ int main(int argc,char** argv)
 
 
 	setup();
-	startTime = GetTickCount();
-	init_timer();
 	glutMainLoop();
 
 	
