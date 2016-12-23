@@ -560,7 +560,8 @@ namespace Alice
 		vec operator - (vec other) ;
 		void operator *= (double fac) ;
 		vec operator * (double fac) ;
-		vec operator / (double fac) ;
+		bool vec::operator < (vec &other);
+		vec operator / (double fac);
 		void operator /= (double fac) ;
 		vec operator /= (double &fac) ;
 		double operator *= (vec &other) ;
