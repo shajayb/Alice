@@ -1,7 +1,7 @@
 #ifndef _GRAPH_
 #define _GRAPH_
 
-
+#include "utilities.h"
 #include "nvec.h"
 //#include "matrices.h"
 //#define _use_vector_
