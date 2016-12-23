@@ -2,6 +2,7 @@
 #define _APP 
 
 #include "ALICE_DLL.h"
+
 using namespace Alice;
 #include "AL_gl2psUtils.h"
 
@@ -114,10 +115,10 @@ void drawCallBack()
 	/*else
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0 );*/
 
+	backGround(0.75);
 
 	if(updateCam)updateCamera() ;
-	glColor3f(1,1,1);
-	drawGrid( gridSz );	
+	drawGrid(gridSz);
 
 	draw() ;
 
@@ -127,6 +128,9 @@ void drawCallBack()
 		buffer.endRecord( true , numFrames  ) ; // stop recording, additionally specify save texture to disk, and a max number of frames to save ;
 		buffer.drawTexture( proj_matrix , mv_matrix  ) ; // NOT WORKING draw recorded off-screen texture as image unto current screen
 	}
+
+
+
 
 	glutSwapBuffers();
 	

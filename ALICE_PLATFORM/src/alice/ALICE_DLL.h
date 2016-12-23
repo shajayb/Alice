@@ -688,7 +688,8 @@ namespace Alice
 	DLL_API void DLL_CALL resetCamera() ;
 	DLL_API void DLL_CALL topCamera() ;
 	DLL_API void DLL_CALL perspCamera() ;
-	DLL_API void DLL_CALL setCamera( float z , float rx, float ry, float tx,float ty) ;
+	DLL_API void DLL_CALL setCamera( float z , float rx, float ry, float _tx,float _ty) ;
+	DLL_API void DLL_CALL getCamera(float &z, float &rx, float &ry, float &_tx, float &_ty);
 	DLL_API void DLL_CALL enableLight( GLfloat light_pos[4] ) ;
 	DLL_API void DLL_CALL resetProjection() ;
 	DLL_API void DLL_CALL setup2d()  ;

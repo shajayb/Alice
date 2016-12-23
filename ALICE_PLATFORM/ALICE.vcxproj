@@ -30,6 +30,7 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_graphOffset.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_libGizmo_test.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_nachi_EE.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -219,7 +220,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>src/gl2ps;src/Eigen;src/freeglut;src/alice;src/glew/include;src/;src/userSrc;include;src/external/AntTweakBar/include;src/external/AntTweakBar/src;src/external/glew/include;src/externa/\glew/src;src/external/glfw/src;src/external/glfw/include;src\external\embree\include;src/libQtViewer;%(AdditionalIncludeDirectories);C:\Qt\5.7\msvc2013_64\include\QtCore;C:\Qt\5.7\msvc2013_64\include\QtGui;C:\Qt\5.7\msvc2013_64\include\QtOpenGL;C:\Qt\5.7\msvc2013_64\include\QtXml;C:\Qt\5.7\msvc2013_64\include;C:\Qt\5.7\msvc2013_64\include\ActiveQt;C:\Users\shajay.b\Downloads\libQGLViewer-2.6.3\libQGLViewer-2.6.3\;C:\Qt\5.7\msvc2013_64\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\libGizmo\include;src/gl2ps;src/Eigen;src/freeglut;src/alice;src/glew/include;src/;src/userSrc;include;src/external/AntTweakBar/include;src/external/AntTweakBar/src;src/external/glew/include;src/externa/\glew/src;src/external/glfw/src;src/external/glfw/include;src\external\embree\include;src/libQtViewer;%(AdditionalIncludeDirectories);C:\Qt\5.7\msvc2013_64\include\QtCore;C:\Qt\5.7\msvc2013_64\include\QtGui;C:\Qt\5.7\msvc2013_64\include\QtOpenGL;C:\Qt\5.7\msvc2013_64\include\QtXml;C:\Qt\5.7\msvc2013_64\include;C:\Qt\5.7\msvc2013_64\include\ActiveQt;C:\Users\shajay.b\Downloads\libQGLViewer-2.6.3\libQGLViewer-2.6.3\;C:\Qt\5.7\msvc2013_64\include\QtWidgets</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -229,9 +230,9 @@
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glew32.lib;ALICE_DLL.lib;ALICE_RobotDll.lib;opengl32.lib;gl2ps.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;ALICE_DLL.lib;ALICE_RobotDll.lib;opengl32.lib;gl2ps.lib;libgizmo.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)EXE\$(ProjectName).exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\Users\shajay.b\Downloads\libQGLViewer-2.6.3\libQGLViewer-2.6.3\QGLViewer\;C:\Qt\5.7\msvc2013_64\lib;x64/Release;src/gl2ps;src/;src/glew/lib;src/alice;src/freeglut;src\external\AntTweakBar\lib;src\external\glfw\lib\x64;src\external\glew\lib;src\external\embree\include\embree2;src\external\embree\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>src\libGizmo\lib;C:\Users\shajay.b\Downloads\libQGLViewer-2.6.3\libQGLViewer-2.6.3\QGLViewer\;C:\Qt\5.7\msvc2013_64\lib;x64/Release;src/gl2ps;src/;src/glew/lib;src/alice;src/freeglut;src\external\AntTweakBar\lib;src\external\glfw\lib\x64;src\external\glew\lib;src\external\embree\include\embree2;src\external\embree\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
