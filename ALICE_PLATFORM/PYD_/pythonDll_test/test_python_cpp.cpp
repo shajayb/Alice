@@ -7,6 +7,16 @@ namespace py = pybind11;
 // python functions from C code
 // 
 #include <Python.h>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+#include <pybind11/eval.h>
+
+#include <cstdint>
+#include <vector>
+
+using namespace std;
+using arr = py::array;
+using arr_t = py::array_t<uint16_t, 0>;
 
 class ExamplePythonTypes 
 {
@@ -153,81 +163,146 @@ public:
 	static const int value2;
 };
 
+void printPythonArray(py::array_t<double> array)
+{
+	py:print(array);
+}
+
+struct double3
+{
+	double x[3];
+};
+
+struct float3
+{
+	float x[3];
+};
+
+struct int3
+{
+	int x[3];
+};
+
 int
 main(int argc, char *argv[])
 {
-	PyObject *pName, *pModule, *pDict, *pFunc;
-	PyObject *pArgs, *pValue;
-	int i;
-
-	if (argc < 3) {
-		fprintf(stderr, "Usage: call pythonfile funcname [args]\n");
-		return 1;
-	}
 
 	Py_Initialize();
-	pName = PyUnicode_DecodeFSDefault(argv[1]);
-	/* Error checking of pName left out */
 
-	pModule = PyImport_Import(pName);
-	Py_DECREF(pName);
+		printf(" \n");
+		printf(" \n");
+		printf(" \n");
+		printf(" -   ------------------------------------------------------------------------------------------------------------ \n");
+		printf(" -   ------------------------------------------------------------------------------------------------------------ \n");
+		printf(" -   ------------------------------------------------------------------------------------------------------------ \n");
 
-	if (pModule != NULL) {
-		pFunc = PyObject_GetAttrString(pModule, argv[2]);
-		/* pFunc is a new reference */
+		// calling a python function defined in a python module, and processing the result in C++
+		printf(" -  function calling --------------------------- \n");
+		{
 
-		if (pFunc && PyCallable_Check(pFunc)) {
-			pArgs = PyTuple_New(argc - 3);
-			for (i = 0; i < argc - 3; ++i) {
-				pValue = PyLong_FromLong(atoi(argv[i + 3]));
-				if (!pValue) {
-					Py_DECREF(pArgs);
-					Py_DECREF(pModule);
-					fprintf(stderr, "Cannot convert argument\n");
-					return 1;
+			// get c++ pointer to the function (forceD), defined in module funcTest;
+			py::object func_ptr = py::module::import("funcTest").attr("forceD");
+			// use function pointer to call the function, the RHS is the pointer to the return value of the function.
+			py::object result_py = func_ptr.call();
+			// cast return pointer as appropriate type - in this case an array (numpy)
+			py::array resA = result_py.cast<py::array>();;
+
+			// use pointer to numpy array to access the underlying buffer - info_res.ptr
+			py::buffer_info info_res = resA.request();
+			if ((info_res.ndim != 1))
+						std::cout << "Number of dimensions must be one" << std::endl;
+			else
+			{
+				std::vector<double> ret(info_res.shape[0]);
+				for (unsigned int idx = 0; idx < info_res.shape[0]; idx++)
+					ret[idx] = ((double*)info_res.ptr)[idx];
+
+				for (auto c : ret)printf("%1.2f,\n", c);
+				printf(" ---------------------------------------- \n");
+			}
+
+		}
+
+		//alternatively you can use the derived class of py::function 
+		printf(" -  alternate function calling , with 1D numpy return --------------------------- \n");
+		{
+			//cast function (forceD), defined in module funcTest, as py::function
+			py::function f = py::module::import("funcTest").attr("forceD");
+
+			// use function object to call function, as per argument signature
+			py::object result_py = f();
+			// cast return pointer as appropriate type - in this case an array (numpy)
+			py::array resA = result_py.cast<py::array>();;
+
+			// use pointer to numpy array to access the underlying buffer - info_res.ptr
+			py::buffer_info info_res = resA.request();
+			if ((info_res.ndim != 1))
+				std::cout << "Number of dimensions must be one" << std::endl;
+			else
+			{
+				std::vector<double> ret(info_res.shape[0]);
+				for (unsigned int idx = 0; idx < info_res.shape[0]; idx++)
+					ret[idx] = ((double*)info_res.ptr)[idx];
+
+				for (auto c : ret)printf("%1.2f,\n", c);
+			
+			}
+		}
+
+		printf(" -  numpy 2D array function return --------------------------- \n");
+		// 2D numpy array -> c++ vector<int3> / vector<double3> depending of dtype.kind() : see next ;
+		{
+			//cast function (forceD), defined in module funcTest, as py::function
+			py::function f = py::module::import("funcTest").attr("forceD");
+
+			// use 
+			py::object result_py = f();
+			// cast return pointer as appropriate type - in this case an array (numpy)
+			py::array resA = result_py.cast<py::array>();;
+
+			// use pointer to numpy array to access the underlying buffer - info_res.ptr
+			py::buffer_info info_res = resA.request();
+			if ((info_res.ndim != 2))
+				std::cout << "Number of dimensions must be two" << std::endl;
+			else
+			{
+				std::vector<double3> ret(info_res.shape[0]); // determining the dtype.kind of the returned numpy array is important, else iteration below will fail.
+															// additionally, it appears python dtype = 'f' --> c++ type double 
+				for (unsigned int idx = 0, cnt = 0; idx < info_res.shape[0] * 3; idx += 3, cnt++)
+				{
+					ret[cnt].x[0] = ((double*)info_res.ptr)[idx];
+					ret[cnt].x[1] = ((double*)info_res.ptr)[idx + 1];
+					ret[cnt].x[2] = ((double*)info_res.ptr)[idx + 2];
 				}
-				/* pValue reference stolen here: */
-				PyTuple_SetItem(pArgs, i, pValue);
-			}
-			pValue = PyObject_CallObject(pFunc, pArgs);
-			Py_DECREF(pArgs);
-			if (pValue != NULL) {
-				//printf("Result of call: %ld\n", PyLong_AsLong(pValue));
-				Py_DECREF(pValue);
 
-				ExamplePythonTypes P;
-				py::int_ I;
-				I = *new py::int_(PyLong_AsLong(pValue));
-				
-
-				//
-				py::handle h_PO(pValue); // PyObject_CallObject(pFunc, pArgs);
-				py::object result_py(h_PO, true);
-				py::print(result_py);
-				int res = result_py.cast<int>();
-				std::cout << res << std::endl;
-			}
-			else {
-				Py_DECREF(pFunc);
-				Py_DECREF(pModule);
-				PyErr_Print();
-				fprintf(stderr, "Call failed\n");
-				return 1;
+				for (auto c : ret)printf("%1.2f,%1.2f,%1.2f \n", c.x[0], c.x[1], c.x[2]);
+				printf(" ---------------------------------------- \n");
 			}
 		}
-		else {
-			if (PyErr_Occurred())
-				PyErr_Print();
-			fprintf(stderr, "Cannot find function \"%s\"\n", argv[2]);
+
+		//getting the type of a numpy array
+		printf(" -  type of numpy array --------------------------- \n");
+		{
+			py::function f = py::module::import("funcTest").attr("forceD");
+			py::object result_py = f();
+			// cast return pointer as appropriate type - in this case an array (numpy)
+			py::array resA = result_py.cast<py::array>();;
+			py::dtype dt = resA.dtype();
+			char typ = dt.kind();
+			cout << typ << endl;
 		}
-		Py_XDECREF(pFunc);
-		Py_DECREF(pModule);
-	}
-	else {
-		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
-		return 1;
-	}
+
 	Py_Finalize();
-	return 0;
+	return 1;
+	
+
 }
+
+
+//
+////from http://pybind11.readthedocs.io/en/master/advanced/pycpp/numpy.html
+//auto buf1 = input1.request(), buf2 = input2.request();
+//double *ptr1 = (double *)buf1.ptr,
+//*ptr2 = (double *)buf2.ptr,
+//for (size_t idx = 0; idx < buf1.shape[0]; idx++)
+//	ptr3[idx] = ptr1[idx] + ptr2[idx];

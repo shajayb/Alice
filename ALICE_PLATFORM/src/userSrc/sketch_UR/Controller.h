@@ -1,12 +1,12 @@
 
-#ifndef _VIEWER_
-#define _VIEWER_
+#ifndef _CONTROLLER_
+#define _CONTROLLER_
 
 #include "ALICE_DLL.h"
 #include "utilities.h"
 
 
-class interface
+class CONTROLLER
 {
 public:
 
@@ -18,11 +18,16 @@ public:
 	vector<vec> clkPts;
 	string keySeq;
 	bool dragging = false;
+	bool rightMouseDown = false;
+	bool lefttMouseDown = false;
 
-	interface()
+	long timeAtClick;
+
+	CONTROLLER()
 	{
 		clkPts.clear();
 	}
+
 
 	bool checkForDuplicates( vec &pt , vector<vec> &pts )
 	{
@@ -44,22 +49,19 @@ public:
 			vec pt = screenToWorld( vec(msx, msy, 0) );
 			anchorPt = pt;
 			if ( !checkForDuplicates(pt, clkPts) ) clkPts.push_back(pt);
-
-
 		}
-	}
 
+	}
 	void mouseMotion(int x, int y)
 	{
 		dragging = ( glutGetModifiers() == GLUT_ACTIVE_ALT ) ? true : false ;
+		if (!dragging) return;
+
 		cur_msx = x - winW * 0.5;
 		cur_msy = winH * 0.5 - y;
 		curPt = screenToWorld(vec(cur_msx, cur_msy, 0));
-
-
+		
 	}
-
-
 	void keyPress(unsigned char k, int xm, int ym)
 	{
 		//printf("ASCII value of %c = %d \n", k, k);
@@ -72,8 +74,8 @@ public:
 		if ( k == 13 /*enter*/)keySeq.clear();
 
 		//vector<string> content = splitString(keySeq, ",");
+		cout << keySeq << endl;
 	}
-
 	void draw()
 	{
 		if (!dragging)return;
@@ -115,4 +117,4 @@ public:
 };
 
 
-#endif // _INTERFACE_
+#endif // _CONTROLLER_

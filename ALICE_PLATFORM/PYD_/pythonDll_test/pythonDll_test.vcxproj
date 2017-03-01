@@ -166,13 +166,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Users\bshajay\Source\Repos\pybind11\include\;C:\Users\bshajay\Source\Repos\pybind11\include\pybind11;C:\Python34\include;..\..\src\alice;..\..\src\glew\include;..\..\src\freeglut;..\..\src\gl2ps;C:\Users\bshajay\Source\Repos\pybind11\tests\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\bshajay\Source\Repos\pybind11\include\;C:\Users\bshajay\Source\Repos\pybind11\include\pybind11;C:\Anaconda\include;..\..\src\alice;..\..\src\glew\include;..\..\src\freeglut;..\..\src\gl2ps;C:\Users\bshajay\Source\Repos\pybind11\tests\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>python34.lib;glew32.lib;ALICE_DLL.lib;opengl32.lib;gl2ps.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Python34\libs;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\alice;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\freeglut;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\gl2ps;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\glew\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>python27.lib;glew32.lib;ALICE_DLL.lib;opengl32.lib;gl2ps.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Anaconda\libs;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\alice;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\freeglut;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\gl2ps;C:\Users\bshajay\Source\Repos\Alice\ALICE_PLATFORM\src\glew\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #ifndef _UTILITIES_
 
-#include "main.h"
-
+#include "ALICE_DLL.h"
+#include "matrices.h"
 
 inline float SIGN(float x) { return (x >= 0.0f) ? +1.0f : -1.0f; }
 inline float NORM(float a, float b, float c, float d) { return sqrt(a * a + b * b + c * c + d * d); }
@@ -73,9 +73,17 @@ public:
 	{
 		return quaternion(rot * other.rot - a * other.a, other.a*rot + a * other.rot + a.cross(other.a));
 	}
+
+	bool operator == (quaternion &other)
+	{
+		return ( fabs(rot - other.rot) < 1e-4 && (a - other.a).mag() < 1e-4 );
+	}
+
+	bool operator != (quaternion &other)
+	{
+		return !(fabs(rot - other.rot) < 1e-4 && (a - other.a).mag() < 1e-4);
+	}
 };
-
-
 
 
 quaternion rotMatrixToQuaternion(Matrix3 rotMatrix)
@@ -334,6 +342,9 @@ vec worldToScreen(vec &a)
 	return worldToScreen(a, MV, P, viewport);
 }
 
-
+bool isInRectangle(vec &a, vec &mn, vec &mx)
+{
+	return (mn < a && a < mx);
+}
 #define _UTILITIES_
 #endif // !_UTILITIES_
