@@ -29,7 +29,9 @@ public:
 	vec w;// angular vel;
 	Matrix3 inertiaTensor;
 
-	
+	//
+	int cnt;
+	int numCol;
 	//////////////////////////////// CONSTRUCTORS -------------------------------------------------------------------------------------------- 
 
 	rigidCube()
@@ -130,6 +132,9 @@ public:
 	void resetForces()
 	{
 		F = T = vec(0, 0, 0);
+
+
+
 	}
 
 	void computeGrid(vec *P, int RES)
@@ -152,54 +157,57 @@ public:
 		diff /= float(RES);
 		xInc = diff * x; yInc = diff* y; zInc = diff * z;
 
-		int cnt = 0;
+		cnt = 0;
 		for (int i = 0; i <= RES; i++)
 			for (int j = 0; j <= RES; j++)
 				for (int k = 0; k <= RES; k++)
 				{
+					if (k != 0 && k != RES  && j!=0 && j != RES  && i != 0 && i != RES)continue;
 					vec pt = (x * float(i) * xInc + y * float(j) * yInc + z * float(k) * zInc);
 					pt += mn;
 					P[cnt] = pt;
 					cnt++;
 				}
 
+		////
+		F_grv = vec(0, 0, -1.0);
+		// per particle gravity
+		F_grv /= cnt;
+
+
+	}
+
+	void addSelfWeightAndTorque(vec *P)
+	{
+		for (int i = 0; i < cnt; i++)
+		{
+			if (b_Fgrv)
+			{
+				F += F_grv;
+				T += (P[i] - cog).cross(F_grv);
+			}
+		}
 	}
 
 	void computeContactsAndForces(rigidCube &R2, vec *P1, vec *P2, int RES)
 	{
 		
-	//	computeGrid(P1, RES);
-	//	R2.computeGrid(P2, RES);
-
-		
 
 		cog = transMatrix.getColumn(3);
 
-		int numCol = 0;
+		numCol = 0;
 		vec colScale(1,1,1);
 
-		int np = (RES+1)*(RES + 1)*(RES + 1);
+		int np = cnt;;// (RES + 1)*(RES + 1)*(RES + 1);
+
+
+
 		for (int i = 0; i < np; i++)
 		{
-
-			//
-			//kVelDamp = 0.5;
-			//dia = (1.0 / (RES)) * 1.0;
-			//kTan = -.05; // pow(10, 1);
-			//kAxial = 0.15;
-			//kBearing = 1.0;
-			
-			
+		
 			for (int j = 0; j < np; j++)
 			{
-				if(b_Fgrv)
-				{
-					F_grv = vec(0, 0, -0.0055);
-					F_grv /= np;
-					F += F_grv;
-					T += (P1[i] - cog).cross(F_grv);
-				}
-
+			
 				//////////////////////////////////////////////////////////////////////////
 				vec relPos_ij = P1[i] - P2[j];
 
@@ -230,7 +238,7 @@ public:
 				// normal force;
 				vec normal = transMatrix.getColumn(2);
 				normal.normalise();
-				vec F_n = normal * kBearing / np * (normal * relPos_ij);
+				vec F_n = normal * kBearing *(normal * relPos_ij);
 
 				vec totalF; 
 				if(b_Fis)totalF += F_is;
@@ -243,7 +251,7 @@ public:
 
 				numCol++;
 				/*drawSphere(P1[i], vec(0,0,0),colScale * 0.05, 1, .25);*/
-				drawCircle(P1[i], 0.1, 32);
+				//drawCircle(P1[i], 0.1, 32);
 				//////////////////////////////////////////////////////////////////////////
 				float scale = 0.1;
 				F_n.normalise();
@@ -264,6 +272,8 @@ public:
 
 	void updatePositionAndOrientation()
 	{
+		
+		
 		// ------------- position
 
 		vec delP = F * dt;
@@ -271,7 +281,7 @@ public:
 		vel = P / mass;
 		vec delX = vel * dt;
 		cog += delX;
-		vel *= 0.9;
+		P *= 0.99;
 		// ------------- orientation
 
 		// update angular momentum

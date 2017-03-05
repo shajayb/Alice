@@ -26,8 +26,8 @@ Mesh M;
 double dMin, dMax;
 
 int RES = 6;
-vec *P1 = new vec[RES*RES*RES];
-vec *P2 = new vec[RES*RES*RES];
+vec *PCur = new vec[RES*RES*RES];
+vec *PNext = new vec[RES*RES*RES];
 bool run = false;
 vector<int2> nbor_RCs;
 int2 strId(0, 0);
@@ -279,7 +279,7 @@ void draw()
 
 
 	for (auto &ag : AGStack)
-		showPoints ? ag.display(P1, RES) : ag.display();
+		showPoints ? ag.display(PCur, RES) : ag.display();
 	//	
 	//for (auto &ag : AGStack)
 	//	for (auto &rc : ag.RCsOnCurve)rc.resetForces();
@@ -296,14 +296,14 @@ void draw()
 
 	for (auto nbor : nbor_RCs)
 	{
-		AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], P1, P2, RES);
+		AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], PCur, PNext, RES);
 
 		AGStack[nbor.l].RCsOnCurve[nbor.n].draw(2, vec4(1, 0, 0, 1));
-		if (showSpheres)AGStack[nbor.l].RCsOnCurve[nbor.n].drawGrid(P2, RES*RES*RES);
+		if (showSpheres)AGStack[nbor.l].RCsOnCurve[nbor.n].drawGrid(PNext, RES*RES*RES);
 	}
 
 	AGStack[strId.l].RCsOnCurve[strId.n].draw(4, vec4(1, 1, 1, 1));
-	if (showSpheres)AGStack[strId.l].RCsOnCurve[strId.n].drawGrid(P1, RES*RES*RES);
+	if (showSpheres)AGStack[strId.l].RCsOnCurve[strId.n].drawGrid(PCur, RES*RES*RES);
 
 
 	/////
@@ -339,8 +339,8 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == 'c')
 	{
 		RES++;
-		P1 = new vec[RES*RES*RES];
-		P2 = new vec[RES*RES*RES];
+		PCur = new vec[RES*RES*RES];
+		PNext = new vec[RES*RES*RES];
 	}
 
 	if (k == 'n')strId.n++;
@@ -366,7 +366,7 @@ void keyPress(unsigned char k, int xm, int ym)
 				getNBors(id, nbor_RCs, 0.5);
 
 				for (auto nbor : nbor_RCs)
-					AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], P1, P2, RES);
+					AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], PCur, PNext, RES);
 			}
 		}
 	}
