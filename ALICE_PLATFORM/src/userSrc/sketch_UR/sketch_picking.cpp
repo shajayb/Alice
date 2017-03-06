@@ -24,7 +24,7 @@ bool isInRectangle( vec &a, vec &mn , vec &mx )
 
 interface INTRF;
 
-int const dim = 1000;
+int const dim = 10000;
 vec pts[dim];
 int msx, msy;
 
