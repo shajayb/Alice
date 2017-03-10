@@ -39,6 +39,7 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_contours.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_graham.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_crossSection0.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_imGui_freeGlut.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -57,13 +58,17 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_printStackGenerator.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_rigidCubeSim.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h" />
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\interface.h" />
+    <ClInclude Include="src\userSrc\sketch_UR\Controller.h" />
+    <ClInclude Include="src\userSrc\sketch_UR\interpolate.h" />
+    <ClInclude Include="src\userSrc\sketch_UR\MODEL.h" />
+    <ClInclude Include="src\userSrc\sketch_UR\object.h" />
     <ClInclude Include="src\userSrc\sketch_UR\rigidCube.h" />
     <ClInclude Include="src\userSrc\sketch_UR\utilities.h" />
   </ItemGroup>

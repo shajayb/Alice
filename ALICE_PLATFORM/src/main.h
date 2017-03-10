@@ -2,30 +2,38 @@
 #define _APP 
 
 #include "ALICE_DLL.h"
-
 using namespace Alice;
-#include "AL_gl2psUtils.h"
+
+#include "AL_gl2psUtils.h" // vector screen capture 
+
+#include "ALICE_ROBOT_DLL.h" // robot kinematics
+using namespace ROBOTICS;
+
+#include "CONTROLLER.h" // keyboard and mouse tracker
+#include "MODEL.h"// picking and selection
+
+#include "utilities.h"
 
 //------------------------------------------------------------------------------- FORWARD DECLARATIONS for functions
 
-void keyPress (unsigned char k, int xm, int ym);
+void setup();
+void update(int value);
 void draw() ;
-void update( int value );
-void setup() ;
+void keyPress(unsigned char k, int xm, int ym);
 void mousePress(int b,int s,int x,int y) ;
 void mouseMotion( int x, int y ) ;
+
+//------------------------------------------------------------------------------- APPLICATION VARIABLES
+
+
 bool HUDSelectOn = false;
 bool updateCam = true;
-
-float  					gTotalTimeElapsed 	= 0;
-int 					gTotalFrames		= 0;
-GLuint 					gTimer;
-
-
-
-
+int counter = 0;
+string inFile = "";
+CONTROLLER CONTROLLERS;
+MODEL SCENE;
 //------------------------------------------------------------------------------- CALLBACKS
-float FPS = 0 ;
+
 void updateCallBack( int value )
 {
 	long start = GetTickCount();
@@ -43,59 +51,64 @@ void updateCallBack( int value )
 	elapsedTime = end - startTime ;
 	long time = (end-start) ;
 	if( time < 10 )time = 10 ;
-	FPS = 1000.0f / float(time) ;
-}
 
+}
 
 void drawCallBack()
 {
 	
 	long start = GetTickCount();
 	
-	float currentColor[4];
-	glGetFloatv(GL_CLEAR,currentColor) ;
+		float currentColor[4];
+		glGetFloatv(GL_CLEAR,currentColor) ;
 
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); // background(255) ;
-	if(saveF)
-	{
-		buffer.Init( screenW , screenH ); // specify dimensions of the image file, max : 4000 x 4000 pixels ;	
-		buffer.beginRecord(0.95); // record to offScreen texture , additionally specify a background clr, default is black
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); // background(255) ;
+		if(saveF)
+		{
+			buffer.Init( screenW , screenH ); // specify dimensions of the image file, max : 4000 x 4000 pixels ;	
+			buffer.beginRecord(0.95); // record to offScreen texture , additionally specify a background clr, default is black
 	
-	}
-	/*else
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0 );*/
+		}
+		/*else
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0 );*/
+		//////////////////////////////////////////////////////////////////////////
 
-	backGround(0.75);
+			if(updateCam)updateCamera() ;
+			glColor3f(1,1,1);
+			//drawGrid( gridSz );	
 
-	if(updateCam)updateCamera() ;
-	drawGrid(gridSz);
-
-	draw() ;
-
-	
-	if(saveF)
-	{
-		buffer.endRecord( true , numFrames  ) ; // stop recording, additionally specify save texture to disk, and a max number of frames to save ;
-		buffer.drawTexture( proj_matrix , mv_matrix  ) ; // NOT WORKING draw recorded off-screen texture as image unto current screen
-	}
+			draw() ;
 
 
 
+			SCENE.performWindowSelection(CONTROLLERS);
+			SCENE.draw();
+			CONTROLLERS.draw();
 
-	glutSwapBuffers();
+		//////////////////////////////////////////////////////////////////////////
+
+		if (saveF)
+		{
+			buffer.endRecord(true, numFrames); // stop recording, additionally specify save texture to disk, and a max number of frames to save ;
+			buffer.drawTexture(proj_matrix, mv_matrix); // NOT WORKING draw recorded off-screen texture as image unto current screen
+		}
+
+		glutSwapBuffers();
 	
 	long end = GetTickCount();
 	elapsedTime = end - startTime ;
 	long time = (end-start) ;
 	if( time < 10 )time = 10 ;
-	FPS = 1000.0f / float(time) ;
+
 	
 }
 
-int counter = 0;
 void keyPressCallBack(unsigned char k, int xm, int ym)
 {
-	
+
+	CONTROLLERS.keyPress(k, xm, ym);
+
+	if (k == 'R')setup();
 	if( k == 'X' )exit(0) ;
 	if( k == 'V' )resetCamera() ;
 	if( k == 'T' )topCamera();
@@ -103,8 +116,8 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 	{
 		numFrames = 1200 ; 
 		int nf = 25 ;
-		screenW = winW * 2 ;
-		screenH = winH * 2 ;
+		screenW = winW * 1 ;
+		screenH = winH * 1 ;
 		setPrintScreenAttribs(screenW,screenH,nf,true);
 		
 		saveF = !saveF ;
@@ -151,24 +164,31 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 
 	}
 	
-
+	
 	keyPress(k,xm,ym);
 }
 
 void mousePressCallBack(int b,int s,int x,int y)
 {
 
+	 CONTROLLERS.mousePress(b, s, x, y);
+
 	 mousePress( b, s, x, y) ;
+
+	 updateCam = (glutGetModifiers() == GLUT_ACTIVE_ALT) ? false : true;
 	 if(updateCam)Mouse( b, s, x, y) ;
 }
 
 void motionCallBack( int x, int y )
 {
+
+	CONTROLLERS.mouseMotion(x, y);
+
 	mouseMotion(x,y);
 	if(!HUDSelectOn && updateCam)Motion( x, y) ;
 }
 
-string inFile = "";
+//------------------------------------------------------------------------------- ENTRY POINT 
 int main(int argc,char** argv)
 {
 	
