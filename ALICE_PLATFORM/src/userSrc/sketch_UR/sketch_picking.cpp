@@ -1,5 +1,6 @@
 
 
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -39,7 +40,7 @@ public:
 		
 	}
 
-	void draw()
+	virtual void draw()
 	{
 		display();
 		wireFrameOn();
@@ -78,12 +79,16 @@ void setup()
 
 	MO = *new derivedOBJECT();
 	MO.transformationMatrix.identity();
+	SCENE.addObject(MO);
+
 	MO.transformationMatrix.setColumn(0, vec(1, 1, 0).normalise());
 	MO.transformationMatrix.setColumn(1, vec(1, -1, 0).normalise());
-	MO.transformationMatrix.setColumn(2, vec(0,0,1).normalise());
+	MO.transformationMatrix.setColumn(2, vec(0, 0, 1).normalise());
 	MO.transformationMatrix.transpose();
-	SCENE.addObject(  MO );
+//	SCENE.addObject(  MO );
 
+	cout << SCENE.objectsInScene.size() << endl;
+	for (auto obj : SCENE.objectsInScene)cout << obj << endl;
 	
 }
 

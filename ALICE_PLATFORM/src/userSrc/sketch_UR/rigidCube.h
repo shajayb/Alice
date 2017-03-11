@@ -4,6 +4,7 @@
 #include "matrices.h"
 #include "utilities.h"
 
+
 class rigidCube
 {
 public:
@@ -137,7 +138,22 @@ public:
 
 	}
 
-	void computeGrid(vec *P, int RES)
+	void divideFaceIntoGrid( vec &fmn,vec axis1_diff, vec axis2_diff, int RES, vec *P)
+	{
+
+		for (int i = 0; i <= RES; i++)
+		{
+			for (int j = 0; j <= RES; j++)
+			{
+				vec pt = axis1_diff * i + axis2_diff * j;
+				pt +=fmn;
+				P[cnt] = pt;
+				cnt++;
+			}
+		}
+	}
+
+	int computeGrid(vec *P, int RES)
 	{
 
 		vec x, y, z, c;
@@ -158,22 +174,34 @@ public:
 		xInc = diff * x; yInc = diff* y; zInc = diff * z;
 
 		cnt = 0;
-		for (int i = 0; i <= RES; i++)
-			for (int j = 0; j <= RES; j++)
-				for (int k = 0; k <= RES; k++)
-				{
-					if (k != 0 && k != RES  && j!=0 && j != RES  && i != 0 && i != RES)continue;
-					vec pt = (x * float(i) * xInc + y * float(j) * yInc + z * float(k) * zInc);
-					pt += mn;
-					P[cnt] = pt;
-					cnt++;
-				}
+		//for (int i = 0; i <= RES; i+= RES)
+		//	for (int j = 0; j <= RES; j+= RES)
+		//		for (int k = 0; k <= RES; k+= RES)
+		//		{
+		//			//if (k != 0 && k != RES  && j!=0 && j != RES  && i != 0 && i != RES)continue;
+		//			{
+		//				vec pt = (x * float(i) * xInc + y * float(j) * yInc + z * float(k) * zInc);
+		//				pt += mn;
+		//				P[cnt] = pt;
+		//				cnt++;
+		//			}
+		//		}
+
+		divideFaceIntoGrid(/*vec &fmn*/mn, x*xInc, y*yInc, RES, P);
+		divideFaceIntoGrid(/*vec &fmn*/mn, x*xInc, z*zInc, RES, P);
+		divideFaceIntoGrid(/*vec &fmn*/mn, y*yInc, z*zInc, RES, P);
+
+		divideFaceIntoGrid(/*vec &fmn*/mx, x*-xInc, y*-yInc, RES, P);
+		divideFaceIntoGrid(/*vec &fmn*/mx, x*-xInc, z*-zInc, RES, P);
+		divideFaceIntoGrid(/*vec &fmn*/mx, y*-yInc, z*-zInc, RES, P);
+
 
 		////
 		F_grv = vec(0, 0, -1.0);
 		// per particle gravity
 		F_grv /= cnt;
 
+		return cnt;
 
 	}
 
@@ -189,7 +217,42 @@ public:
 		}
 	}
 
-	void computeContactsAndForces(rigidCube &R2, vec *P1, vec *P2, int RES)
+	int computeconvexHull( int face, vec *P1, vec *P2, int RES, vec *ptsConvex, stack<vec> &S)
+	{
+		int np = cnt;
+		numCol = 0;
+			for (int i = face * (RES + 1) * (RES + 1); i < (face + 1) * (RES + 1) * (RES + 1); i += 1)
+			{
+
+				bool colliding = false;
+				for (int j = 0; j < np; j++)
+				{
+					vec relPos_ij = P1[i] - P2[j];
+
+					if (relPos_ij * relPos_ij > pow(dia * 0.9, 2))continue;
+					if (relPos_ij * relPos_ij < pow(1e-6, 2))continue;
+						
+					colliding = true;
+					break;
+				}
+
+				if (colliding)
+				{
+					ptsConvex[numCol] = P1[i];
+					numCol++;
+				}
+			}
+
+			if (numCol > 0)convexHull(ptsConvex, numCol, S);
+		
+			return numCol;
+	}
+
+	vec NormalforcesOnConvexHull[50];
+	vec TangentforcesOnConvexHull[50];
+	float wtsOnConvex[50];
+	stack<vec> Scopy; //!! REMOVE
+	void computeContactsAndForces(rigidCube &R2, vec *P1, vec *P2, int RES, vec *ptsConvex , stack<vec> &S)
 	{
 		
 
@@ -200,74 +263,96 @@ public:
 
 		int np = cnt;;// (RES + 1)*(RES + 1)*(RES + 1);
 
+		int face = 0;
 
-
-		for (int i = 0; i < np; i++)
+		for (int face = 0; face < 6; face += 1)
 		{
-		
-			for (int j = 0; j < np; j++)
-			{
+			computeconvexHull(face, P1, P2, RES, ptsConvex, S);
+			for (int i = 0; i < S.size(); i++)NormalforcesOnConvexHull[i] = TangentforcesOnConvexHull[i] = vec(0, 0, 0);
 			
-				//////////////////////////////////////////////////////////////////////////
-				vec relPos_ij = P1[i] - P2[j];
 
-				double dist; 
-				if (relPos_ij * relPos_ij > pow(dia * 0.9, 2))continue;
-				if (relPos_ij * relPos_ij < pow(1e-6, 2))
+
+			for (int i = face * (RES+1) * (RES + 1); i < (face + 1) * (RES + 1) * (RES + 1); i += 1) // points on face i
+			{
+
+
+				for (int j = 0; j < np; j++) // points in rigidCube 2
 				{
-					#define rx ofRandom(-1,1)
-					relPos_ij = vec(rx,rx,rx).normalise();
-					drawSphere(P1[i], vec(0, 0, 0), colScale * 0.05, 1, .25);
-					continue;
+					
+					//////////////////////////////////////////////////////////////////////////
+					vec relPos_ij = P1[i] - P2[j];
+
+					double dist;
+					if (relPos_ij * relPos_ij > pow(dia * 0.9, 2))continue;
+					if (relPos_ij * relPos_ij < pow(1e-6, 2))continue;
+				
+
+					dist = dia - relPos_ij.mag();
+
+					vec relVel_ij = R2.vel - vel;
+					vec relPos_normalised = relPos_ij / relPos_ij.mag(); /// normalise();
+					vec relVel_tan = relVel_ij - relPos_normalised * (relVel_ij * relPos_normalised);
+
+
+					/*F_is = (relPos_normalised)*  k * (1.0 / double(np)) * (1.0 / (dist * dist));*/
+					F_is = (relPos_normalised)*  kAxial * (dist);// *(1.0 / (dist * dist));
+					F_id = relVel_ij * kVelDamp;
+					F_it = relVel_tan * kTan;
+
+					// normal force;
+					vec normal = transMatrix.getColumn(2);
+					normal.normalise();
+					vec F_n = normal * kBearing *(normal * relPos_ij);
+
+					vec totalF;
+					if (b_Fis)totalF += F_is;
+					if (b_Fid)totalF += F_id;
+					if (b_Fit)totalF += F_it;
+					if (b_Fn)totalF += F_n; // F_is is parallel to relPos_ij , without F_id or F_it, this force will not cause torque
+
+					F += totalF;
+					T += (P1[i] - cog).cross(totalF);
+
+					//lumping
+					//barycentric(P1[i], ptsConvex, S.size(), wtsOnConvex);
+					//float sum = 0;
+
+					
+					vec normalComp = normal * ((totalF- F_n) * normal);
+					vec tanComp = (totalF - F_n) - normalComp;
+					for (int k = 0; k < S.size(); k++)NormalforcesOnConvexHull[k] += (normalComp);// *wtsOnConvex[k];
+					for (int k = 0; k < S.size(); k++)TangentforcesOnConvexHull[k] += (tanComp);// *wtsOnConvex[k];
+
+					/*drawSphere(P1[i], vec(0,0,0),colScale * 0.05, 1, .25);*/
+					//drawCircle(P1[i], 0.1, 32);
+					//////////////////////////////////////////////////////////////////////////
+					float scale = 0.1;
+					/*F_n.normalise();
+					F_it.normalise();
+					F_is.normalise();
+					F_id.normalise();
+					glColor3f(1,0,0);   if(b_Fn)drawLine(P1[i], P1[i] + F_n * scale);
+					glColor3f(0, 1, 0); if (b_Fit) drawLine(P1[i], P1[i] + F_it * scale);
+					glColor3f(0, 0, 1); if (b_Fis)drawLine(P1[i], P1[i] + F_is * scale);
+					glColor3f(1, 1, 0); if (b_Fid)drawLine(P1[i], P1[i] + F_id * scale);
+
+					glColor3f(0,0, 0); drawLine(P1[i], P2[j]);*/
+
 				}
 
-
-				dist = dia - relPos_ij.mag();
-
-	
-				vec relVel_ij = R2.vel - vel;
-				vec relPos_normalised = relPos_ij / relPos_ij.mag(); /// normalise();
-				vec relVel_tan = relVel_ij - relPos_normalised * (relVel_ij * relPos_normalised);
-
-				
-				/*F_is = (relPos_normalised)*  k * (1.0 / double(np)) * (1.0 / (dist * dist));*/
-				F_is = (relPos_normalised)*  kAxial * (dist);// *(1.0 / (dist * dist));
-				F_id = relVel_ij * kVelDamp;
-				F_it = relVel_tan * kTan;
-
-				// normal force;
-				vec normal = transMatrix.getColumn(2);
-				normal.normalise();
-				vec F_n = normal * kBearing *(normal * relPos_ij);
-
-				vec totalF; 
-				if(b_Fis)totalF += F_is;
-				if (b_Fid)totalF += F_id;
-				if (b_Fit)totalF += F_it;
-				if (b_Fn)totalF += F_n; // F_is is parallel to relPos_ij , without F_id or F_it, this force will not cause torque
-
-				F += totalF;
-				T += (P1[i] - cog ).cross(totalF);
-
-				numCol++;
-				/*drawSphere(P1[i], vec(0,0,0),colScale * 0.05, 1, .25);*/
-				//drawCircle(P1[i], 0.1, 32);
-				//////////////////////////////////////////////////////////////////////////
-				float scale = 0.1;
-				F_n.normalise();
-				F_it.normalise();
-				F_is.normalise();
-				F_id.normalise();
-				glColor3f(1,0,0);   if(b_Fn)drawLine(P1[i], P1[i] + F_n * scale);
-				glColor3f(0, 1, 0); if (b_Fit) drawLine(P1[i], P1[i] + F_it * scale);
-				glColor3f(0, 0, 1); if (b_Fis)drawLine(P1[i], P1[i] + F_is * scale);
-				glColor3f(1, 1, 0); if (b_Fid)drawLine(P1[i], P1[i] + F_id * scale);
-
-				glColor3f(0,0, 0); drawLine(P1[i], P2[j]);
 			}
 
+			for (int k = 0; k < S.size(); k++) drawLine(ptsConvex[k], ptsConvex[k] + NormalforcesOnConvexHull[k]);
+			for (int k = 0; k < S.size(); k++) drawLine(ptsConvex[k], ptsConvex[k] + TangentforcesOnConvexHull[k]);
+
+			drawConvexHull(S,Scopy); // this empties the stack, i.e S.size() = = , after this call.
+			drawConvexHull_withMetadata(Scopy, NormalforcesOnConvexHull,S,vec4(0,0,1,1) );
+			drawConvexHull_withMetadata(S, TangentforcesOnConvexHull, vec4(1, 0, 0, 1));
+			
+
+			//for (int n = 0; n < numCol; n++)drawPoint(ptsConvex[n]);
 		}
-		//cout << numCol << endl;
+		
 	}
 
 	void updatePositionAndOrientation()
@@ -450,8 +535,8 @@ public:
 		glPointSize(1);
 
 		glLineWidth(4.0);
-		glColor3f(1, 0, 0);drawLine(cen, cen + F);
-		glColor3f(0, 1, 0);	drawLine(cen, cen + T);
+		//glColor3f(1, 0, 0);drawLine(cen, cen + F);
+		//glColor3f(0, 1, 0);	drawLine(cen, cen + T);
 
 		glLineWidth(1.0);
 		///

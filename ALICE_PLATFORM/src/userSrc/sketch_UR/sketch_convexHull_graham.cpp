@@ -1,4 +1,4 @@
-#define _MAIN_
+
 
 #ifdef _MAIN_
 
@@ -85,9 +85,10 @@ void keyPress(unsigned char k, int xm, int ym)
 {
 	float inc = PI * 2.0 / float(RES);
 
-	//for (int i = 0; i < RES; i++)
-	//	points[i] = vec( sin(inc*i), cos(i*inc),0).normalise() * rx;
-	Matrix3 trans;
+	for (int i = 0; i < RES; i++)
+		points[i] = vec(sin(inc*i), cos(i*inc), 0).normalise() * rx;
+
+	/*Matrix3 trans;
 	vec x(rx, rx, 0); x.normalise();
 	vec z(0, 0, 1); z.normalise();
 	vec y = x.cross(z).normalise();
@@ -99,7 +100,7 @@ void keyPress(unsigned char k, int xm, int ym)
 			vec P = vec(i * 1, j * 1, 0);
 			P = trans * P;
 			points[i*RES + j] = P;
-		}
+		}*/
 
 }
 

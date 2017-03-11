@@ -1,3 +1,4 @@
+#define _MAIN_
 
 
 #ifdef _MAIN_
@@ -20,9 +21,16 @@ using namespace std::experimental;
 Mesh M;
 vector<rigidCube> RBodies;
 vector<rigidCube> RSBodies;
-int nr = 8; int nrs = 6;
+int nr = 5; int nrs = 5;
 vec *PCur,*PNext;
+
+
+
+stack<vec> stk ;
 int RES = 8;
+#define RES_DEF 8
+vec PConvex[(RES_DEF + 1)*(RES_DEF + 1)  *    (RES_DEF + 1) * (RES_DEF + 1)];
+int nCol;
 //Matrix4 T;
 bool run = false;
 ButtonGroup B;
@@ -30,6 +38,8 @@ SliderGroup S;
 Interpolator matProp;
 
 float simTime = 0;
+
+#define rx ofRandom(-1,1)
 //////////////////////////////////////////////////////////////////////////
 
 void setup()
@@ -85,7 +95,7 @@ void setup()
 		//
 		for (int i = 0; i < RSBodies.size(); i++)
 		{
-			x = vec(1, 0, 0).normalise();;// vec(0.25, 1, 1).normalise();
+			x = vec(1, rx, 0.0).normalise();;// vec(0.25, 1, 1).normalise();
 			z = vec(0, 0, -1).normalise();
 			y = x.cross(z).normalise();
 			z = x.cross(y).normalise();
@@ -93,7 +103,7 @@ void setup()
 			transM.setColumn(0, x);
 			transM.setColumn(1, y);
 			transM.setColumn(2, z);
-			transM.setColumn(3, vec( i * 1.05 + 0.65, 0.15, 1.1));
+			transM.setColumn(3, vec( i * 1.05 + 0.65, 0.55, 1.1));
 
 			RSBodies[i].setInitialTransformation(transM);
 		}
@@ -135,19 +145,19 @@ void setup()
 
 	S = *new SliderGroup(vec(50, 850, 0));
 	S.addSlider(&RSBodies[0].kBearing, "kBearing");
-	S.sliders[0].minVal = 0; S.sliders[0].maxVal = 5 * 5.2;
+	S.sliders[0].minVal = 0; S.sliders[0].maxVal = 1.0 / (RES*RES); // 5 * 5.2;
 	
 	S.addSlider(&RSBodies[0].kAxial, "kAxial");
-	S.sliders[1].minVal = 0 ; S.sliders[1].maxVal = 10 * 1.2;
+	S.sliders[1].minVal = 0; S.sliders[1].maxVal = 2.0 / (RES*RES); //  10 * 1.2;
 
 	S.addSlider(&RSBodies[0].kTan, "kTan");
-	S.sliders[2].minVal = 0; S.sliders[2].maxVal = 1;
+	S.sliders[2].minVal = 0; S.sliders[2].maxVal = 1.0 / (RES*RES);
 
 	S.addSlider(&RSBodies[0].kVelDamp, "kVelDamp");
-	S.sliders[3].minVal = 0; S.sliders[3].maxVal = 1;
+	S.sliders[3].minVal = 0; S.sliders[3].maxVal = 1.0 / (RES*RES);
 
 	S.addSlider(&RSBodies[0].dia, "collisionDia");
-	S.sliders[4].minVal = 0; S.sliders[4].maxVal = 1;
+	S.sliders[4].minVal = 0; S.sliders[4].maxVal = 1.0; // 
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -163,6 +173,9 @@ void setup()
 	matProp.dataMin = 0.0;
 	matProp.dataMax = 1.0;
 	simTime = 0.0;
+	
+
+
 }
 
 
@@ -176,11 +189,13 @@ void update(int value)
 
 	simTime+= RSBodies[0].dt * 30;
 	
-
-	//RC2.kBearing = ofMap(parameter, 0, 1, S.sliders[0].minVal, S.sliders[0].maxVal);
-	//RSBodies[0].kAxial =   ofMap(parameter, 0, 1, S.sliders[1].minVal, S.sliders[1].maxVal);
-	//RC2.kTan =     ofMap(parameter, 0, 1, S.sliders[2].minVal, S.sliders[2].maxVal);
-	//RC2.kVelDamp = ofMap(parameter, 0, 1, S.sliders[3].minVal, S.sliders[3].maxVal);
+	for (int i = 0; i < RSBodies.size(); i++)
+	{
+		RSBodies[i].kBearing = ofMap(parameter, 0, 1, S.sliders[0].minVal, S.sliders[0].maxVal);
+		RSBodies[i].kAxial = ofMap(parameter, 0, 1, S.sliders[1].minVal, S.sliders[1].maxVal);
+		RSBodies[i].kTan = ofMap(parameter, 0, 1, S.sliders[2].minVal, S.sliders[2].maxVal);
+		RSBodies[i].kVelDamp = ofMap(parameter, 0, 1, S.sliders[3].minVal, S.sliders[3].maxVal);
+	}
 
 }
 
@@ -190,22 +205,32 @@ void draw()
 
 	backGround(0.75);
 
+
+	glPushMatrix();
+	glScalef(20, 20, 20);
+
 	if(run)
 		keyPress('n', 0, 0);
 
-	for (int i = 0; i < RBodies.size(); i++)
+
 	{
-		RBodies[i].computeGrid(PCur, RES);
-		RBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
-		RBodies[i].draw(2, vec4(0.5, 0.5, 0.5, 1.0), false);
+		for (int i = 0; i < RBodies.size(); i++)
+		{
+			RBodies[i].computeGrid(PCur, RES);
+			//RBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
+			RBodies[i].draw(2, vec4(0.5, 0.5, 0.5, 1.0), false);
+		}
+
+		for (int i = 0; i < RSBodies.size(); i++)
+		{
+			RSBodies[i].computeGrid(PCur, RES);
+			//	RSBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
+			RSBodies[i].draw(2, vec4(0.5, 0.5, 0.5, 1.0), false);
+		}
 	}
 
-	for (int i = 0; i < RSBodies.size(); i++)
-	{
-		RSBodies[i].computeGrid(PCur, RES);
-		RSBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
-		RSBodies[i].draw(2, vec4(0.5, 0.5, 0.5, 1.0), false);
-	}
+	glPopMatrix();
+
 	//////////////////////////////////////////////////////////////////////////
 
 	B.draw();
@@ -245,6 +270,8 @@ void mouseMotion(int x, int y)
 	{
 		S.performSelection(x, y, HUDSelectOn);
 		matProp.performselection( x,  y, HUDSelectOn);
+
+		for (int i = 0; i < RSBodies.size(); i++) RSBodies[i].dia = RSBodies[0].dia;
 	}
 }
 
@@ -265,36 +292,45 @@ void keyPress(unsigned char k, int xm, int ym)
 
 			for (int i = 0; i < RSBodies.size(); i++)
 			{
-				RSBodies[i].computeGrid(PCur, RES);
+				int np = RSBodies[i].computeGrid(PCur, RES);
 				RSBodies[i].addSelfWeightAndTorque(PCur);
 
 				for (int n = 0; n < RBodies.size(); n++)
 				{
+					
+					if (RSBodies[i].cog.distanceTo(RBodies[n].cog) > 5)continue;
 					RBodies[n].computeGrid(PNext, RES);
-					RSBodies[i].computeContactsAndForces(RBodies[n], PCur, PNext, RES);
+					RSBodies[i].computeContactsAndForces(RBodies[n], PCur, PNext, RES, PConvex, stk);
+			
 				}
-
 				
 			}
 
 			//
-			for (int i = 0; i < RSBodies.size(); i++)
-			{
-				RSBodies[i].computeGrid(PCur, RES);
-				RSBodies[i].addSelfWeightAndTorque(PCur);
+			//for (int i = 0; i < RSBodies.size(); i++)
+			//{
+			//	RSBodies[i].computeGrid(PCur, RES);
 
-				for (int n = 0; n < RSBodies.size(); n++)
-				{
-					if (i == n)continue;
-					RSBodies[n].computeGrid(PNext, RES);
-					RSBodies[i].computeContactsAndForces(RSBodies[n], PCur, PNext, RES);
-				}
+			//	for (int n = i; n < RSBodies.size(); n++)
+			//	{
+			//		if (i == n)continue;
+			//		
+			//		RSBodies[n].computeGrid(PNext, RES);
+			//		//RSBodies[i].computeContactsAndForces(RSBodies[n], PCur, PNext, RES,PConvex, stk);
 
-			}
+			//	}
 
-			for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].updatePositionAndOrientation();
+			//}
+
+			/*for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].updatePositionAndOrientation();*/
 		}
+
+
+
+		
 	}
+
+	if( k == 'N')for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].updatePositionAndOrientation();
 }
 
 
@@ -302,3 +338,4 @@ void keyPress(unsigned char k, int xm, int ym)
 
 
 #endif // _MAIN_
+

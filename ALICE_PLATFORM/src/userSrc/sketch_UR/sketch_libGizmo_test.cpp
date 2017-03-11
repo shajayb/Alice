@@ -1,5 +1,4 @@
 
-
 #ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
@@ -154,6 +153,11 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	Gz->SetEditMatrix(objectMatrix);
 	Gz->SetScreenDimension(winW, winH);
+
+	if (k == 'p')
+	{
+		Gz->SetEditMatrix(objectMatrix);
+	}
 }
 
 void mousePress(int b, int state, int x, int y)
@@ -167,6 +171,7 @@ void mousePress(int b, int state, int x, int y)
 		Gz->OnMouseUp(x, y);
 		updateCam = true;
 	}
+
 	
 }
 

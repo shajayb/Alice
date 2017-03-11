@@ -396,10 +396,10 @@ int distSq(vec p1, vec p2)
 // 2 --> Counterclockwise
 int orientation(vec p, vec q, vec r)
 {
-	int val = (q.y - p.y) * (r.x - q.x) -
+	double val = (q.y - p.y) * (r.x - q.x) -
 		(q.x - p.x) * (r.y - q.y);
 
-	if (val == 0) return 0;  // colinear
+	if (fabs(val) < 1e-8) return 0;  // colinear
 	return (val > 0) ? 1 : 2; // clock or counterclock wise
 }
 
@@ -421,6 +421,7 @@ int compare(const void *vp1, const void *vp2)
 // Prints convex hull of a set of n points.
 void convexHull(vec points[], int n, stack<vec> &S)
 {
+	
 	// Find the bottommost point
 	int ymin = points[0].y, min = 0;
 	for (int i = 1; i < n; i++)
@@ -454,15 +455,14 @@ void convexHull(vec points[], int n, stack<vec> &S)
 	{
 		// Keep removing i while angle of i and i+1 is same
 		// with respect to p0
-		while (i < n - 1 && orientation(p0, points[i],
-			points[i + 1]) == 0)
-			i++;
+		while (i < n - 1 && orientation(p0, points[i],points[i + 1]) == 0)i++;
 
 
 		points[m] = points[i];
 		m++;  // Update size of modified array
 	}
 
+//	cout << " CHULL " << m << " " << n << endl;
 	// If modified array of points has less than 3 points,
 	// convex hull is not possible
 	if (m < 3) return;
@@ -482,9 +482,10 @@ void convexHull(vec points[], int n, stack<vec> &S)
 		// Keep removing top while the angle formed by
 		// points next-to-top, top, and points[i] makes
 		// a non-left turn
-
+		vec prev;
 		while (orientation(S.size() > 1 ? nextToTop(S) : vec(0, 0, 0), S.size() > 0 ? S.top() : vec(0, 0, 0), points[i]) != 2)
 			S.pop();
+
 		S.push(points[i]);
 	}
 
@@ -497,8 +498,10 @@ void convexHull(vec points[], int n, stack<vec> &S)
 	//}
 }
 
-void drawConvexHull( stack<vec> &S)
+void drawConvexHull( stack<vec> &S, vec4 clr = vec4(1, 1, 1, 1))
 {
+	glColor3f(clr.r, clr.g, clr.b);
+
 	glLineWidth(5);
 	glBegin(GL_LINE_STRIP);
 
@@ -522,5 +525,108 @@ void drawConvexHull( stack<vec> &S)
 	glEnd();
 	glLineWidth(1);
 }
+
+void drawConvexHull(stack<vec> &S, stack<vec> &copy , vec4 clr = vec4(1, 1, 1, 1))
+{
+	glColor3f(clr.r, clr.g, clr.b);
+
+	glLineWidth(5);
+	glBegin(GL_LINE_STRIP);
+
+	int cnt = 0;
+	vec bottomPt;
+	while (!S.empty())
+	{
+		vec p = S.top();
+		if (cnt == 0)
+		{
+			bottomPt = p;
+			cnt++;
+		}
+		glVertex3f(p.x, p.y, p.z);
+
+		copy.push(S.top());
+		S.pop();
+
+	}
+
+	glVertex3f(bottomPt.x, bottomPt.y, bottomPt.z);
+	glEnd();
+	glLineWidth(1);
+}
+
+void drawConvexHull_withMetadata(stack<vec> &S , vec *metaData, vec4 clr = vec4(1, 1, 1, 1))
+{
+	
+	glLineWidth(5);
+	glColor3f(clr.r, clr.g, clr.b);
+
+	int cnt = 0;
+	vec bottomPt;
+	while (!S.empty())
+	{
+		vec p = S.top();
+		drawLine(p, p + metaData[cnt]);
+		S.pop();
+		cnt++;
+	}
+
+
+	glLineWidth(1);
+}
+
+void drawConvexHull_withMetadata(stack<vec> &S, vec *metaData, stack<vec> &copy , vec4 clr = vec4(1,1,1,1) )
+{
+	glLineWidth(5);
+
+	
+	glColor3f(clr.r, clr.g, clr.b);
+	int cnt = 0;
+	vec bottomPt;
+	while (!S.empty())
+	{
+		vec p = S.top();
+		drawLine(p, p + metaData[cnt]);
+		copy.push(S.top());
+		S.pop();
+		cnt++;
+	}
+
+
+	glLineWidth(1);
+}
+////////////////////////////////////////////////////////////////////////// 
+// barycentric coordinates
+
+void barycentric(vec &p, vec *q, int n, float *w )
+{
+	int j, prev, next;
+	float weightSum = 0.f;
+
+	// For each vertex q[j] of Q:
+
+	//   Grab the previous and next q's and compute the barycentric weight
+
+	for (j = 0; j < n; j++)
+	{
+		prev = (j + n - 1) % n;
+		next = (j + 1) % n;
+
+		float lenSq = (p - q[j]) * (p - q[j]);
+		if (fabs(lenSq) < 1e-8)lenSq = 1e-4;
+
+		w[j] = (cotangent(p, q[j], q[prev]) + cotangent(p, q[j], q[next])) / lenSq;
+		weightSum += w[j];
+	}
+
+	// Normalize the weights
+	if(fabs(weightSum) > 0 )
+		for (j = 0; j < n; j++)w[j] /= weightSum;
+		
+}
+
+
 #define _UTILITIES_
 #endif // !_UTILITIES_
+
+
