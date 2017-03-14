@@ -143,6 +143,7 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 		file += ".eps";
 
 		fp = fopen(file.c_str(), "w");
+		cout << file.c_str() << endl;
 		printf("Writing 'out.eps'... ");
 
 		while (state == GL2PS_OVERFLOW)
@@ -153,6 +154,12 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 				GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, file.c_str());
 
 			draw();
+
+
+
+			SCENE.performWindowSelection(CONTROLLERS);
+			SCENE.draw();
+			CONTROLLERS.draw();
 
 			state = gl2psEndPage();
 		}

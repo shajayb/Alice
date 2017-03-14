@@ -1,7 +1,6 @@
 
-
-
 #ifdef _MAIN_
+
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
 using namespace ROBOTICS;

@@ -1,6 +1,5 @@
 
 
-
 #ifdef _MAIN_
 
 #include "main.h"
@@ -87,8 +86,7 @@ void setup()
 	MO.transformationMatrix.transpose();
 //	SCENE.addObject(  MO );
 
-	cout << SCENE.objectsInScene.size() << endl;
-	for (auto obj : SCENE.objectsInScene)cout << obj << endl;
+	
 	
 }
 
@@ -99,7 +97,10 @@ void draw()
 	double ht_plus = 20;
 
 	backGround(0.75);
+	glColor3f(1,0,0);
 	drawGrid(20);
+
+	
 
 }
 
