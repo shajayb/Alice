@@ -196,34 +196,34 @@ main(int argc, char *argv[])
 		printf(" -   ------------------------------------------------------------------------------------------------------------ \n");
 		printf(" -   ------------------------------------------------------------------------------------------------------------ \n");
 
-		// calling a python function defined in a python module, and processing the result in C++
-		printf(" -  function calling --------------------------- \n");
-		{
+		//// calling a python function defined in a python module, and processing the result in C++
+		//printf(" -  function calling --------------------------- \n");
+		//{
 
-			// get c++ pointer to the function (forceD), defined in module funcTest;
-			py::object func_ptr = py::module::import("funcTest").attr("forceD");
-			// use function pointer to call the function, the RHS is the pointer to the return value of the function.
-			py::object result_py = func_ptr.call();
-			// cast return pointer as appropriate type - in this case an array (numpy)
-			py::array resA = result_py.cast<py::array>();;
+		//	// get c++ pointer to the function (forceD), defined in module funcTest;
+		//	py::object func_ptr = py::module::import("funcTest").attr("forceD");
+		//	// use function pointer to call the function, the RHS is the pointer to the return value of the function.
+		//	py::object result_py = func_ptr.call();
+		//	// cast return pointer as appropriate type - in this case an array (numpy)
+		//	py::array resA = result_py.cast<py::array>();;
 
-			// use pointer to numpy array to access the underlying buffer - info_res.ptr
-			py::buffer_info info_res = resA.request();
-			if ((info_res.ndim != 1))
-						std::cout << "Number of dimensions must be one" << std::endl;
-			else
-			{
-				std::vector<double> ret(info_res.shape[0]);
-				for (unsigned int idx = 0; idx < info_res.shape[0]; idx++)
-					ret[idx] = ((double*)info_res.ptr)[idx];
+		//	// use pointer to numpy array to access the underlying buffer - info_res.ptr
+		//	py::buffer_info info_res = resA.request();
+		//	if ((info_res.ndim != 1))
+		//				std::cout << "Number of dimensions must be one" << std::endl;
+		//	else
+		//	{
+		//		std::vector<double> ret(info_res.shape[0]);
+		//		for (unsigned int idx = 0; idx < info_res.shape[0]; idx++)
+		//			ret[idx] = ((double*)info_res.ptr)[idx];
 
-				for (auto c : ret)printf("%1.2f,\n", c);
-				printf(" ---------------------------------------- \n");
-			}
+		//		for (auto c : ret)printf("%1.2f,\n", c);
+		//		printf(" ---------------------------------------- \n");
+		//	}
 
-		}
+		//}
 
-		//alternatively you can use the derived class of py::function 
+		////alternatively you can use the derived class of py::function 
 		printf(" -  alternate function calling , with 1D numpy return --------------------------- \n");
 		{
 			//cast function (forceD), defined in module funcTest, as py::function
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 		{
 			py::function f = py::module::import("funcTest").attr("forceD");
 			py::object result_py = f();
-			// cast return pointer as appropriate type - in this case an array (numpy)
+			//// cast return pointer as appropriate type - in this case an array (numpy)
 			py::array resA = result_py.cast<py::array>();;
 			py::dtype dt = resA.dtype();
 			char typ = dt.kind();

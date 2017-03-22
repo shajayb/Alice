@@ -1,6 +1,3 @@
-#define _MAIN_
-
-
 #ifdef _MAIN_
 
 #include "main.h"
@@ -11,6 +8,11 @@
 #include <memory>
 #include<time.h>
 #include<experimental/generator> 
+#include<experimental/generator> 
+using namespace std;
+using namespace std::experimental;
+
+#include "graph.h"
 
 using namespace std;
 using namespace std::experimental;
@@ -39,14 +41,42 @@ Interpolator matProp;
 
 float simTime = 0;
 
+Graph G_RB;
+Graph G_RBS;
+
+
 #define rx ofRandom(-1,1)
 //////////////////////////////////////////////////////////////////////////
 
 void setup()
 {
 
+	{
+		importer imp = *new importer("data/tree_pts.txt", 10000, 1.0);
+		imp.readEdges();
+		//---------
+		G_RB.reset();
+		for (int i = 0; i < imp.nCnt; i++)G_RB.createVertex(imp.nodes[i].pos);
+		for (int i = 0; i < imp.eCnt; i++)G_RB.createEdge(G_RB.vertices[imp.edges[i].n0], G_RB.vertices[imp.edges[i].n1]);
+	}
+
+	{
+		importer imp = *new importer("data/tree_pts_1.txt", 10000, 1.0);
+		imp.readEdges();
+		//---------
+		G_RBS.reset();
+		for (int i = 0; i < imp.nCnt; i++)G_RBS.createVertex(imp.nodes[i].pos);
+		for (int i = 0; i < imp.eCnt; i++)G_RBS.createEdge(G_RBS.vertices[imp.edges[i].n0], G_RBS.vertices[imp.edges[i].n1]);
+	}
+
+	// ------------ scale to fit 
+	//G.boundingbox(minV, maxV);
+
+	//
+
 	MeshFactory fac;
 	M = fac.createPlatonic(1.0 / sqrt(2), 6);
+	
 
 	Matrix4 Tr;
 	vec x, y, z;
@@ -60,7 +90,7 @@ void setup()
 	Tr.setColumn(3, vec(0, 0, 0.5));
 	Tr.invert();
 	for (int i = 0; i < 8; i++) M.positions[i] = Tr * M.positions[i];
-	
+	M.writeOBJ("test.obj", "", M.positions, false);
 	//////////////////////////////////////////////////////////////////////////
 	Matrix4 transM;
 	float sc[3];
@@ -69,7 +99,7 @@ void setup()
 	{
 		RBodies.clear();
 
-		for (int i = 0; i < nr ; i++)RBodies.push_back(*new rigidCube(M));
+		for (int i = 0; i < 1/*G_RB.n_e */; i++)RBodies.push_back(*new rigidCube(M));
 
 
 		for (int i = 0; i < RBodies.size(); i++)RBodies[i].setScale(sc);
@@ -77,39 +107,56 @@ void setup()
 
 		for (int i = 0; i < RBodies.size(); i++)
 		{
-			transM.identity();
-			transM.setColumn(3, vec(1.0 * i, 0,0));
-			RBodies[i].setInitialTransformation(transM);
+			vec ed = (G_RB.positions[G_RB.edges[i].vEnd->id] - G_RB.positions[G_RB.edges[i].vStr->id]);
+			
+			vec cen = (G_RB.positions[G_RB.edges[i].vStr->id] + G_RB.positions[G_RB.edges[i].vEnd->id]) * 0.5;
+			
+
+			float Scale[3];
+			Scale[0] = ed.mag();
+			ed.normalise();
+			Scale[0] = Scale[1] = 1.;  Scale[2] = .9;
+
+			vec x, y, z;
+			x = ed; y = ed.cross(vec(0, 0, 1)).normalise(); z = vec(0, 0, 1);
+			RBodies[i].setTransformation(x,y,z, cen + y*0.5);
+			RBodies[i].setScale(Scale);
+			RBodies[i].transform();
 		}
 		
 	}
 
-	////----
+	//////----
 	{
 		RSBodies.clear();
-		for (int i = 0; i < nrs; i++)RSBodies.push_back(*new rigidCube(M));
+
+		for (int i = 0; i < 1/*G_RBS.n_e*/; i++)RSBodies.push_back(*new rigidCube(M));
+
 
 		for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].setScale(sc);
 		for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].transform();
 
-		//
 		for (int i = 0; i < RSBodies.size(); i++)
 		{
-			x = vec(1, rx, 0.0).normalise();;// vec(0.25, 1, 1).normalise();
-			z = vec(0, 0, -1).normalise();
-			y = x.cross(z).normalise();
-			z = x.cross(y).normalise();
+			vec ed = (G_RBS.positions[G_RBS.edges[i].vEnd->id] - G_RBS.positions[G_RBS.edges[i].vStr->id]);
 
-			transM.setColumn(0, x);
-			transM.setColumn(1, y);
-			transM.setColumn(2, z);
-			transM.setColumn(3, vec( i * 1.05 + 0.65, 0.55, 1.1));
+			vec cen = (G_RBS.positions[G_RBS.edges[i].vStr->id] + G_RBS.positions[G_RBS.edges[i].vEnd->id]) * 0.5;
 
-			RSBodies[i].setInitialTransformation(transM);
+
+			float Scale[3];
+			Scale[0] = ed.mag();
+			ed.normalise();
+			Scale[0] = Scale[1] = 1;  Scale[2] = .9;
+
+			vec x, y, z;
+			x = ed; y = ed.cross(vec(0, 0, 1)).normalise(); z = vec(0, 0, 1);
+			RSBodies[i].setTransformation(x, y, z, cen + y*0.5);
+
+			RSBodies[i].setScale(Scale);
+			RSBodies[i].transform();
 		}
+
 	}
-	
-	//
 
 	////----
 
@@ -120,11 +167,11 @@ void setup()
 	//// ---- 
 
 	B = *new ButtonGroup(vec(50, 350, 0));
-	B.addButton(&RSBodies[0].b_Fn,  "normal force");
+	B.addButton(&RSBodies[0].b_Fn, "normal force");
 	B.addButton(&RSBodies[0].b_Fis, "axial");
 	B.addButton(&RSBodies[0].b_Fit, "tangential");
 	B.addButton(&RSBodies[0].b_Fid, "damp");
-	B.addButton(&RSBodies[0].b_Fgrv,"grav");
+	B.addButton(&RSBodies[0].b_Fgrv, "grav");
 
 	for (int i = 0; i < RSBodies.size(); i++)
 	{
@@ -175,6 +222,12 @@ void setup()
 	simTime = 0.0;
 	
 
+	//
+
+
+
+
+
 
 }
 
@@ -203,11 +256,11 @@ void update(int value)
 void draw()
 {
 
-	backGround(0.75);
+	backGround(1.0);
 
 
 	glPushMatrix();
-	glScalef(20, 20, 20);
+	glScalef(20,20,20);
 
 	if(run)
 		keyPress('n', 0, 0);
@@ -217,17 +270,23 @@ void draw()
 		for (int i = 0; i < RBodies.size(); i++)
 		{
 			RBodies[i].computeGrid(PCur, RES);
-			//RBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
+			RBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
 			RBodies[i].draw(2, vec4(0.5, 0.5, 0.5, 1.0), false);
 		}
 
 		for (int i = 0; i < RSBodies.size(); i++)
 		{
 			RSBodies[i].computeGrid(PCur, RES);
-			//	RSBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
+			RSBodies[i].drawGridAsPoints(PCur, (RES + 1)*(RES + 1)*(RES + 1));;
 			RSBodies[i].draw(2, vec4(0.5, 0.5, 0.5, 1.0), false);
 		}
 	}
+
+	glLineWidth(5.0);
+	glColor3f(1.0, 0.0, 0.5);
+	G_RB.draw();
+	G_RBS.draw();
+	glLineWidth(1.0);
 
 	glPopMatrix();
 
@@ -237,17 +296,9 @@ void draw()
 	S.draw();
 	matProp.draw();
 
-	drawVector(RSBodies[0].T, vec(50, 1100, 0), "T");
-	drawVector(RSBodies[0].F, vec(50, 1125, 0), "F");
-	drawVector(RSBodies[0].F_grv * RSBodies[0].cnt , vec(50, 1075, 0), "F_grv");
-	setup2d();
-		char s[200];
-		sprintf(s, "%i col", RSBodies[0].numCol);
-		drawString(s, 50, 1150);
 
-		sprintf(s, "%i cnt", RSBodies[0].cnt);
-		drawString(s, 50, 1175);
-	restore3d();
+
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,12 +337,12 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	if (k == 'n')
 	{
-		for (int it = 0; it < 1; it++)
-		{
+
 			for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].resetForces();
 
 			for (int i = 0; i < RSBodies.size(); i++)
 			{
+				
 				int np = RSBodies[i].computeGrid(PCur, RES);
 				RSBodies[i].addSelfWeightAndTorque(PCur);
 
@@ -307,23 +358,24 @@ void keyPress(unsigned char k, int xm, int ym)
 			}
 
 			//
-			//for (int i = 0; i < RSBodies.size(); i++)
-			//{
-			//	RSBodies[i].computeGrid(PCur, RES);
+			for (int i = 0; i < RSBodies.size(); i++)
+			{
+				//int i = 0;
+				RSBodies[i].computeGrid(PCur, RES);
 
-			//	for (int n = i; n < RSBodies.size(); n++)
-			//	{
-			//		if (i == n)continue;
-			//		
-			//		RSBodies[n].computeGrid(PNext, RES);
-			//		//RSBodies[i].computeContactsAndForces(RSBodies[n], PCur, PNext, RES,PConvex, stk);
+				for (int n = 0; n < RSBodies.size(); n++)
+				{
+					if (i == n)continue;
+					if (RSBodies[i].cog.distanceTo(RSBodies[n].cog) > 5)continue;
 
-			//	}
+					RSBodies[n].computeGrid(PNext, RES);
+					RSBodies[i].computeContactsAndForces(RSBodies[n], PCur, PNext, RES,PConvex, stk);
 
-			//}
+				}
 
-			/*for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].updatePositionAndOrientation();*/
-		}
+			}
+
+			//for (int i = 0; i < RSBodies.size(); i++)RSBodies[i].updatePositionAndOrientation();
 
 
 

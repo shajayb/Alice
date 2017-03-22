@@ -625,6 +625,102 @@ void barycentric(vec &p, vec *q, int n, float *w )
 		
 }
 
+void Intersect_segment2d(double *x, double *y, double &u, double &v)
+{
+	double denom = ((y[3] - y[2]) * (x[1] - x[0])) - ((x[3] - x[2]) * (y[1] - y[0]));
+	if (fabs(denom) < 1e-04)
+	{
+		u = v = -0.0; 
+		return; // lines are parallel
+	}
+	u = ((x[3] - x[2]) * (y[0] - y[2])) - ((y[3] - y[2]) * (x[0] - x[2]));
+	u /= denom;// ((y[3] - y[2]) * (x[1] - x[0])) - ((x[3] - x[2]) * (y[1] - y[0]));
+
+	v = ((x[1] - x[0]) * (y[0] - y[2])) - ((y[1] - y[0]) * (x[0] - x[2]));
+	v /= denom;// ((y[3] - y[2]) * (x[1] - x[0])) - ((x[3] - x[2]) * (y[1] - y[0]));
+}
+
+vec Intersect_linesegments( vec *pts, vec &normal , double &u, double &v,bool project = true )
+{
+	double x[4], y[4];
+	for (int i = 0; i < 4; i++)
+	{
+		if(project)pts[i] = pts[i] - normal * (pts[i] * normal); // project to face i
+		x[i] = pts[i].x;
+		y[i] = pts[i].y;
+
+	}
+
+	Intersect_segment2d(x, y, u, v);
+	return pts[0] + (pts[1]-pts[0])* u; 
+}
+
+vec Intersect_linesegments(vec *pts, double &u, double &v, bool project = true) // pts is of length 4
+{
+	vec normal = (pts[1] - pts[0]).cross(pts[3] - pts[2]).normalise();
+	return Intersect_linesegments( pts, normal, u,v, project) ;
+}
+
+vec pointInNewBasis( vec inPt , vec &u, vec &v, vec &n, vec &c)
+{
+	vec rpt = inPt;
+	rpt -= c; // translate
+	rpt = vec(rpt*u, rpt*v, rpt * n); // project to bases to get coordinates
+	return rpt;
+}
+
+vec pointInNewBasis(vec inPt,Matrix4 T)
+{
+	vec bases[4];
+	for (int i = 0; i < 4; i++)bases[i] = T.getColumn(i);
+
+	return pointInNewBasis(inPt, bases[0], bases[1], bases[2], bases[3]);;
+}
+
+bool pointInPolygon(vec &pt,vec *pts , int n)
+{
+	float *wts = new float[n];
+	barycentric(pt, pts, n, wts);
+	
+	double sum = 0.0;
+	for (int i = 0; i < n; i++)sum += wts[i];
+
+	vec rpt;
+	for (int i = 0; i < n; i++) rpt += pts[i] * wts[i]; // this is a weird test , as the barycentric weights seem to add up to 1, even if p is outside.
+
+	return ((pt - rpt)*(pt - rpt) <  pow(1e-4,2) ) ? true : false;
+}
+
+void drawString_tmp(string &s, vec pt)
+{
+
+	unsigned int i;
+	glRasterPos3f(pt.x, pt.y, pt.z);
+
+	for (i = 0; i < s.length(); i++)
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+}
+
+void drawString_tmp(double a, vec pt)
+{
+	char c[200];
+	sprintf(c, "%1.8f ", a);
+	string s = "";
+	s += c;
+
+	drawString_tmp(s, pt);
+}
+
+void drawString_tmp(int a, vec pt)
+{
+	char c[200];
+	sprintf(c, "%i ", a);
+	string s = "";
+	s += c;
+
+	drawString_tmp(s, pt);
+}
+
 
 #define _UTILITIES_
 #endif // !_UTILITIES_

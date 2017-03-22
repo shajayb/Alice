@@ -1,5 +1,6 @@
 
 
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -20,17 +21,18 @@ bool run = false;
 
 SliderGroup S;
 ButtonGroup B;
-bool blendPrev, blend;
+bool blendPrev, blend, blend1;
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
-
+string file = "data/tree_pts.txt";
+string file1 = "data/tree_pts_1.txt";
 ////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
 void setup()
 {
 
 
-	importer imp = *new importer("data/tree_pts.txt", 10000, 1.0);
+	importer imp = *new importer(file, 10000, 1.0);
 	imp.readEdges();
 
 
@@ -81,7 +83,8 @@ void setup()
 
 	blend = blendPrev = true;
 	B = *new ButtonGroup(vec(50, 350, 0));
-	B.addButton(&blend, "blend");
+	B.addButton(&blend, "v1");
+	B.addButton(&blend1, "v2");
 
 
 }
@@ -99,10 +102,10 @@ void draw()
 
 {
 
-	backGround(0.75);
-	drawGrid(20.0);
+	backGround(0.9);
+	//drawGrid(20.0);
 
-
+	glLineWidth(1.0);
 	S.draw();
 	B.draw();
 
@@ -121,9 +124,13 @@ void draw()
 
 void keyPress(unsigned char k, int xm, int ym)
 {
-	if (k == 'R')setup();
+	if (k == 'R')
+	{
+		swap(file, file1);
+		setup();
+	}
 
-
+	
 }
 
 void mousePress(int b, int state, int x, int y)
@@ -135,9 +142,9 @@ void mousePress(int b, int state, int x, int y)
 		if (HUDSelectOn)MM.createIsoContourGraph(threshold);
 		B.performSelection(x, y);
 
-		if (blend != blendPrev)
+		//if (blend != blendPrev)
 		{
-			MM.assignScalarsAsLineDistanceField(G, 0, 0.5, blend);
+			MM.assignScalarsAsLineDistanceField(G, 0, 0.5, blend,blend1);
 			MM.getMinMaxOfScalarField(dMin, dMax);
 			MM.createIsoContourGraph(threshold);
 			blendPrev = blend;

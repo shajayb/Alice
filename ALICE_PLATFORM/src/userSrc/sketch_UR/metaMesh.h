@@ -119,7 +119,7 @@ public:
 			for (int i = 0; i < n_v; i++)scalars[i] = positions[i].x;
 
 		if (component == "c")
-			for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getMeanCurvatureGradient(positions).mag();;
+			for (int i = 0; i < n_v; i++)scalars[i] = vertices[i].getAngleGradient(positions).mag();;
 
 	}
 
@@ -142,7 +142,7 @@ public:
 		return (p - pt) * (p - pt);// p.distanceTo(pt);
 	}
 
-	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0 , bool blend = true )
+	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0 , bool v1 = true , bool v2 = true)
 	{
 
 		for (int i = 0; i < n_v; i++)
@@ -157,14 +157,28 @@ public:
 				int e0, e1;
 				e0 = G.edges[j].vEnd->id;
 				e1 = G.edges[j].vStr->id;
-				float Di = distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt);
+				float Di = 0;
 				
-				if (!blend)
+				if(v1) Di += distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt) * 10;
+
+				
+				vec ed = (G.positions[e1] - G.positions[e0]);
+				float edL = ed.mag();
+				ed.normalise();
+
+				if(v2)
+				for (int n = 0; n < 10; n++)
+				{
+					vec pt = G.positions[e0] + ed * (edL * n / 10.0);
+					Di += pt.distanceTo(positions[i]) * 1.0;
+				}
+
+				/*if (!blend)
 				{
 					dChk = Di;
 					d = MIN(dChk, d);
-				}
-				else
+				}*/
+				//else
 				{
 					dChk += 1.0 / (pow((Di + 0.01), 2.0));
 					d = dChk;

@@ -407,7 +407,8 @@ public:
 			char s[200];
 			itoa(i, s, 10);
 			//drawString(s, positions[i]+ vec(0,0,.1));
-		//	drawPoint(positions[i]);
+			drawPoint(positions[i]);
+			//drawR(positions[i], 0.05, 32);
 		}
 		glPointSize(1);
 

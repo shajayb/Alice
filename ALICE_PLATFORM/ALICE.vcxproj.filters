@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_libGizmo_test.cpp" />
     <ClCompile Include="..\..\imgui\imgui.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
@@ -32,9 +31,61 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_printStackGenerator.cpp">
       <Filter>PhD_R02</Filter>
     </ClCompile>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_picking.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_rigidCubeSim.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_graham.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_graham.cpp">
+      <Filter>PhD_R03</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_libGizmo_test.cpp">
+      <Filter>PhD_R03</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_picking.cpp">
+      <Filter>PhD_R03</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_rigidCubeSim.cpp">
+      <Filter>PhD_R03</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_tests.cpp">
+      <Filter>PhD_R03</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_rbe_test.cpp" />
+    <ClCompile Include="src\alglib\optimization.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\alglibinternal.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\linalg.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\alglibmisc.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\ap.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\dataanalysis.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\diffequations.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\fasttransforms.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\integration.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\interpolation.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\solvers.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\specialfunctions.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\statistics.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
@@ -63,6 +114,12 @@
     </Filter>
     <Filter Include="PhD_R02">
       <UniqueIdentifier>{9cfc3cfe-bee8-43cb-9631-9ef9821d6bf7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PhD_R03">
+      <UniqueIdentifier>{27356728-6b20-44bb-9630-523829ab05bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="algLib">
+      <UniqueIdentifier>{86505d70-40b7-4f3c-95be-9e8ec63c9a1b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -33,6 +33,14 @@ public:
 	//
 	int cnt;
 	int numCol;
+
+	//
+	vec NormalforcesOnConvexHull[50];
+	vec TangentforcesOnConvexHull[50];
+	float wtsOnConvex[50];
+	stack<vec> Scopy; //!! REMOVE
+	vec ptConvex[20];
+
 	//////////////////////////////// CONSTRUCTORS -------------------------------------------------------------------------------------------- 
 
 	rigidCube()
@@ -43,46 +51,31 @@ public:
 	{
 	}
 
+	rigidCube( float radius , int sides = 6 )
+	{
+		MeshFactory fac;
+		Mesh M = fac.createPlatonic( radius / sqrt(2), sides);
+		Matrix4 transM;
+
+		getTopology(M);
+		getInvertRotateToAABB(M,transM);// cube needs to be rotated back to align with cardinal axes
+
+		for (int i = 0; i < 8; i++) M.positions[i] = transM * M.positions[i];
+		for (int i = 0; i < 8; i++) pos[i] =  M.positions[i];
+		
+		
+		setInitialTransformation(transMatrix);
+		transMatrix = transM.identity();
+	}
+
 	rigidCube( Mesh &M )
 	{
 
-		for (int i = 0; i < 8; i++)pos[i] = M.positions[i];
-
-		int eCnt = 0;
-		int *fv;
-
-		for (int i = 0; i < M.n_f; i++)
-		{
-			int n = M.faces[i].n_e;
-			// = new int[n];
-			fv = M.faces[i].faceVertices();
-
-			for (int j = 0; j < n; j++)
-			{
-				faces[eCnt] = fv[j];
-				eCnt++;
-			}
-			cout << endl;
-		}
+		getTopology(M);
 
 		///
 		transMatrix.identity();
-
-
-
-		////
-
-		getOBB(minBB, maxBB);
-
-		////
-		F = P = T = L = w = vel = vec(0, 0, 0);
-
-		inertiaTensor.identity();
-		//inertiaTensor = pow(10,5) * inertiaTensor;
-		Matrix3 rotMatrix;
-		rotMatrix.identity();
-		q = rotMatrixToQuaternion(rotMatrix);// quaternion(0, vec(0, 0, 1));
-
+		setInitialTransformation(transMatrix);
 	}
 
 	void setInitialTransformation( Matrix4 &trans)
@@ -103,7 +96,7 @@ public:
 	}
 
 	//////////////////////////////// COMPUTE -------------------------------------------------------------------------------------------- 
-	
+
 	void getOBB(vec &mn, vec &mx)
 	{
 		mn = vec(1e12, 1e12, 1e12);
@@ -129,7 +122,6 @@ public:
 			mx.z = MAX(mx.z, ptInOrientedBasis.z);
 		}
 	}
-
 	void resetForces()
 	{
 		F = T = vec(0, 0, 0);
@@ -137,7 +129,6 @@ public:
 
 
 	}
-
 	void divideFaceIntoGrid( vec &fmn,vec axis1_diff, vec axis2_diff, int RES, vec *P)
 	{
 
@@ -152,7 +143,6 @@ public:
 			}
 		}
 	}
-
 	int computeGrid(vec *P, int RES)
 	{
 
@@ -204,7 +194,6 @@ public:
 		return cnt;
 
 	}
-
 	void addSelfWeightAndTorque(vec *P)
 	{
 		for (int i = 0; i < cnt; i++)
@@ -216,9 +205,14 @@ public:
 			}
 		}
 	}
-
 	int computeconvexHull( int face, vec *P1, vec *P2, int RES, vec *ptsConvex, stack<vec> &S)
 	{
+		
+		//transMatrix.getBasisVectors(XA, YA, ZA, cen);
+		//vec v1, v2;
+		//getBasisOfFace(face, v1, v2);
+		//v1.normalise(); v2.normalise();
+
 		int np = cnt;
 		numCol = 0;
 			for (int i = face * (RES + 1) * (RES + 1); i < (face + 1) * (RES + 1) * (RES + 1); i += 1)
@@ -238,7 +232,7 @@ public:
 
 				if (colliding)
 				{
-					ptsConvex[numCol] = P1[i];
+					ptsConvex[numCol] = P1[i]; // v1 * (P1[i] * v1) + v2 * (P1[i] * v2);
 					numCol++;
 				}
 			}
@@ -247,11 +241,6 @@ public:
 		
 			return numCol;
 	}
-
-	vec NormalforcesOnConvexHull[50];
-	vec TangentforcesOnConvexHull[50];
-	float wtsOnConvex[50];
-	stack<vec> Scopy; //!! REMOVE
 	void computeContactsAndForces(rigidCube &R2, vec *P1, vec *P2, int RES, vec *ptsConvex , stack<vec> &S)
 	{
 		
@@ -267,10 +256,11 @@ public:
 
 		for (int face = 0; face < 6; face += 1)
 		{
+
 			computeconvexHull(face, P1, P2, RES, ptsConvex, S);
 			for (int i = 0; i < S.size(); i++)NormalforcesOnConvexHull[i] = TangentforcesOnConvexHull[i] = vec(0, 0, 0);
 			
-
+		
 
 			for (int i = face * (RES+1) * (RES + 1); i < (face + 1) * (RES + 1) * (RES + 1); i += 1) // points on face i
 			{
@@ -286,7 +276,7 @@ public:
 					if (relPos_ij * relPos_ij > pow(dia * 0.9, 2))continue;
 					if (relPos_ij * relPos_ij < pow(1e-6, 2))continue;
 				
-
+					
 					dist = dia - relPos_ij.mag();
 
 					vec relVel_ij = R2.vel - vel;
@@ -314,47 +304,50 @@ public:
 					T += (P1[i] - cog).cross(totalF);
 
 					//lumping
-					//barycentric(P1[i], ptsConvex, S.size(), wtsOnConvex);
+					barycentric(P1[i], ptsConvex, S.size(), wtsOnConvex);
 					//float sum = 0;
 
 					
 					vec normalComp = normal * ((totalF- F_n) * normal);
 					vec tanComp = (totalF - F_n) - normalComp;
-					for (int k = 0; k < S.size(); k++)NormalforcesOnConvexHull[k] += (normalComp);// *wtsOnConvex[k];
-					for (int k = 0; k < S.size(); k++)TangentforcesOnConvexHull[k] += (tanComp);// *wtsOnConvex[k];
+					for (int k = 0; k < S.size(); k++)NormalforcesOnConvexHull[k] += (normalComp) * wtsOnConvex[k] * 0.01;
+					for (int k = 0; k < S.size(); k++)TangentforcesOnConvexHull[k] += (tanComp) * wtsOnConvex[k] * 0.01;
 
 					/*drawSphere(P1[i], vec(0,0,0),colScale * 0.05, 1, .25);*/
 					//drawCircle(P1[i], 0.1, 32);
 					//////////////////////////////////////////////////////////////////////////
 					float scale = 0.1;
-					/*F_n.normalise();
+					F_n.normalise();
 					F_it.normalise();
 					F_is.normalise();
 					F_id.normalise();
-					glColor3f(1,0,0);   if(b_Fn)drawLine(P1[i], P1[i] + F_n * scale);
-					glColor3f(0, 1, 0); if (b_Fit) drawLine(P1[i], P1[i] + F_it * scale);
-					glColor3f(0, 0, 1); if (b_Fis)drawLine(P1[i], P1[i] + F_is * scale);
-					glColor3f(1, 1, 0); if (b_Fid)drawLine(P1[i], P1[i] + F_id * scale);
+					
+					//if( i == face * (RES + 1) * (RES + 1) + RES  * RES * 0.5 )
+					{
+						/*glColor3f(1, 0, 0);   if (b_Fn && F_n.mag() > 0.1)drawLine(P1[i], P1[i] + F_n * scale);
+						glColor3f(0, 1, 0); if (b_Fit  && F_it.mag() > 0.1) drawLine(P1[i], P1[i] + F_it * scale);
+						glColor3f(0, 0, 1); if (b_Fis && F_is.mag() > 0.1)drawLine(P1[i], P1[i] + F_is * scale);
+						glColor3f(1, 1, 0); if (b_Fid && F_id.mag() > 0.1)drawLine(P1[i], P1[i] + F_id * scale);*/
 
-					glColor3f(0,0, 0); drawLine(P1[i], P2[j]);*/
+						glColor3f(0, 0, 0); drawLine(P1[i], P2[j]);
+					}
 
 				}
 
 			}
 
-			for (int k = 0; k < S.size(); k++) drawLine(ptsConvex[k], ptsConvex[k] + NormalforcesOnConvexHull[k]);
-			for (int k = 0; k < S.size(); k++) drawLine(ptsConvex[k], ptsConvex[k] + TangentforcesOnConvexHull[k]);
+			/*for (int k = 0; k < S.size(); k++) drawLine(ptsConvex[k], ptsConvex[k] + NormalforcesOnConvexHull[k]);
+			for (int k = 0; k < S.size(); k++) drawLine(ptsConvex[k], ptsConvex[k] + TangentforcesOnConvexHull[k]);*/
 
-			drawConvexHull(S,Scopy); // this empties the stack, i.e S.size() = = , after this call.
-			drawConvexHull_withMetadata(Scopy, NormalforcesOnConvexHull,S,vec4(0,0,1,1) );
-			drawConvexHull_withMetadata(S, TangentforcesOnConvexHull, vec4(1, 0, 0, 1));
+			drawConvexHull(S, Scopy,vec4(.25, .25, 0.,1.)); // this empties the stack, i.e S.size() = = , after this call.
+			//drawConvexHull_withMetadata(Scopy, NormalforcesOnConvexHull,S,vec4(0,0,1,1) );
+			//drawConvexHull_withMetadata(S, TangentforcesOnConvexHull, vec4(1, 0, 0, 1));
 			
-
-			//for (int n = 0; n < numCol; n++)drawPoint(ptsConvex[n]);
+			glColor3f(0.1, 0, 0.1);
+			for (int n = 0; n < numCol; n++)drawLine(ptsConvex[n], ptsConvex[n]); // for eps out
 		}
 		
 	}
-
 	void updatePositionAndOrientation()
 	{
 		
@@ -410,13 +403,223 @@ public:
 
 		transform();
 	}
-	//////////////////////////////// UTILITIES  -------------------------------------------------------------------------------------------- 
 
+	double tol = 0.1;
+	int hullCnt = 0;
+	void addPtsToConvexHull( vec &pt)
+	{
+		ptConvex[hullCnt] = pt;
+		hullCnt++;
+	}
+
+	bool isFacetoFace( rigidCube &r2, int i, int j)
+	{
+		extractFrame();
+
+		// -----------------------------------------  get face i data;
+		vec u, v, n,c;Matrix4 transFace;
+		getTransformationToFace(i, transFace);
+		transFace.getBasisVectors(u, v, n, c);
+
+		// ----------------------------------------- ---- cast face J from global unto frame of face I
+		// return false if all points are NOT within tolerance along normal direction.
+		//  iterate through pts of face j
+		i *= 4; j *= 4; // pts are ordered in sets of 4, corresponding to each face;
+		vec pts_faceJ[4], pts_faceI[4];
+		for (int o = j, cnt = 0; o < j + 4; o++, cnt++)
+			if ( pointInNewBasis(r2.pos[r2.faces[o]],u,v,n,c).z > tol)return false;
+
+		// -----------------------------------------  collect facePts_I,facePts_J,
+		for (int o = j, cnt = 0; o < j + 4; o++, cnt++)pts_faceJ[cnt] = r2.pos[ r2.faces[o] ];
+		for (int o = 0; o < 4; o++)pts_faceJ[o] = (pts_faceJ[o] - n * (pts_faceJ[o] * n)) + c; // project facePts_J to plane of facePts_j;
+		for (int o = i, cnt = 0; o < i + 4; o++, cnt++)pts_faceI[cnt] = pos[faces[o]];
+
+		//glLineWidth(5);
+		//glColor3f(1, 0, 0); for (int p = 0; p < 4; p++)drawLine(pts_faceI[p], pts_faceI[(p + 1) % 4]);
+		//glColor3f(0, 0, 1); for (int p = 0; p < 4; p++)drawLine(pts_faceJ[p], pts_faceJ[(p + 1) % 4]);
+		//glLineWidth(1);
+
+		// ----------------------------------------- computer convex hull of edge-edge intersections and pointsInPolygons;
+		vec segmentEndPoints[4];
+		for (int i = 0; i < Scopy.size(); i++)Scopy.pop();// clear stack
+	
+		hullCnt = 0;
+
+		for (int a = 0; a < 4; a++)
+		{
+
+			segmentEndPoints[0] = pts_faceI[a];
+			segmentEndPoints[1] = pts_faceI[(a + 1) % 4];
+
+			if (pointInPolygon(pts_faceI[a], pts_faceJ, 4))addPtsToConvexHull(pts_faceI[a]);// if Vb_i is PIP( face_Bj) , add Vb_j to convex hull
+			
+			for (int b = 0; b < 4; b++)
+			{
+				segmentEndPoints[2] = pts_faceJ[b];
+				segmentEndPoints[3] = pts_faceJ[(b + 1) % 4];
+				CheckAndAddToConvexHull(segmentEndPoints,pts_faceJ, pts_faceI); // if edges intersect, add intersection pt to convex hull
+
+				//{
+				//	glLineWidth(5);
+				//	glColor3f(1, 0, 0);drawLine(segmentEndPoints[0], segmentEndPoints[1]);
+				//	glColor3f(0, 0, 1);drawLine(segmentEndPoints[2], segmentEndPoints[3]);
+				//	glLineWidth(1);
+				//}
+				
+				if (pointInPolygon(pts_faceJ[b], pts_faceI, 4))addPtsToConvexHull(pts_faceJ[b]);// if Vb_j is PIP( face_Bi) , add Vb_j to convex hull
+			}
+
+		}
+
+		//draw
+		ComputeConvexHull(transFace);
+		glLineWidth(5); 
+			DrawConvexHull(); 
+		glLineWidth(1);
+
+
+		return true;
+	}
+
+	void ComputeConvexHull(Matrix4 &T)
+	{
+		if (!(hullCnt > 0))return;
+
+		for (int i = 0; i < hullCnt; i++)ptConvex[i] = pointInNewBasis(ptConvex[i], T); // transform to 2d;
+
+		convexHull(ptConvex, hullCnt, Scopy);
+
+		hullCnt = 0;
+		while (!Scopy.empty())
+		{
+			vec p = Scopy.top();
+			p = T * p;
+			ptConvex[hullCnt++] = p; 
+			Scopy.pop();
+		}
+	}
+
+	void DrawConvexHull()
+	{
+		for (int i = 0; i < hullCnt; i++)
+		{
+			drawCircle(ptConvex[i], 0.05, 32);
+			drawLine(ptConvex[i], ptConvex[(i + 1) % hullCnt]);
+		}
+	}
+
+	void getTransformationToFace(int i, Matrix4 &transFace)
+	{
+		vec u, v, n, c;
+		getBasisOfFace(i, n, v);
+		u = v.cross(n);
+		c = getfaceCenter(i);
+
+		transFace.setColumn(0, u);
+		transFace.setColumn(1, v);
+		transFace.setColumn(2, n);
+		transFace.setColumn(3, c);
+	}
+
+	void CheckAndAddToConvexHull(vec * segmentEndPoints, vec * pts_faceJ, vec * pts_faceI)
+	{
+		double L1, L2;
+		vec pt = Intersect_linesegments(segmentEndPoints, L1, L2, false);
+		L1 += 1e-08; L2 += 1e-08;
+
+		//printf("%1.2f,%1.2f \n", L1,L2);
+		if (L1 < 1e-04 && L2 < 1e-04)return; // parallel
+		if (L1 <= 1.01 && L2 <= 1.01  && L1 >= 0.0 &&  L2 >= 0.0)addPtsToConvexHull(pt);
+	}
+
+	void computeCollisionInterfaces(rigidCube &R2)
+	{
+
+		for (int i = 0; i < 6; i++)
+		{
+
+			for (int j = 0; j < 6; j++)
+			{
+				isFacetoFace(R2, i, j);
+			}
+		}
+	}
+	//////////////////////////////// UTILITIES  -------------------------------------------------------------------------------------------- 
+	void getBasisOfFace(int face, vec &v1, vec &v2)
+	{
+
+		if (face == 0)
+		{
+			v1 = XA; v2 = ZA;
+		}
+		if (face == 1)
+		{
+			v1 = YA; v2 = ZA;
+		}
+		if (face == 2)
+		{
+			v1 = XA*-1; v2 = ZA;
+		}
+		if (face == 3)
+		{
+			v1 = YA*-1; v2 = ZA;
+		}
+		if (face == 4)
+		{
+			v1 = ZA * 1; v2 = XA;
+		}
+		if (face == 5)
+		{
+			v1 = ZA * -1; v2 = XA;
+		}
+	}
+	vec getfaceCenter(int i)
+	{
+		i *= 4;
+		vec fc;
+		for (int j = i; j < i + 4; j++) fc += pos[faces[j]];
+		fc /= 4;
+		return fc;
+	}
+	void getInvertRotateToAABB( Mesh &M , Matrix4 &Tr )
+	{
+		
+		vec x, y, z;
+		x = vec(1, 1, 0).normalise();
+		z = vec(0, 0, 1).normalise();
+		y = x.cross(z).normalise();
+
+		Tr.setColumn(0, x);
+		Tr.setColumn(1, y);
+		Tr.setColumn(2, z);
+		Tr.setColumn(3, vec(0, 0, 0.5));
+		Tr.invert();
+		
+	}
+	void getTopology( Mesh &M)
+	{
+		for (int i = 0; i < 8; i++)pos[i] = M.positions[i];
+
+		int eCnt = 0;
+		int *fv;
+
+		for (int i = 0; i < M.n_f; i++)
+		{
+			int n = M.faces[i].n_e;
+			fv = M.faces[i].faceVertices();
+
+			for (int j = 0; j < n; j++)
+			{
+				faces[eCnt] = fv[j];
+				eCnt++;
+			}
+		}
+
+	}
 	void setTransformation(Matrix4 &_transMatrix)
 	{
 		transMatrix = _transMatrix;
 	}
-
 	void setTransformation(vec &XA_, vec &YA_, vec &ZA_, vec &cen_)
 	{
 		transMatrix.setColumn(0, XA_);
@@ -424,17 +627,28 @@ public:
 		transMatrix.setColumn(2, ZA_);
 		transMatrix.setColumn(3, cen_);
 	}
-
 	void extractFrame()
 	{
 		transMatrix.getBasisVectors(XA, YA, ZA, cen);
 	}
-
 	void setScale(float scale[3])
 	{
 		for (int i = 0; i < 3; i++)
 			transMatrix.setColumn(i, transMatrix.getColumn(i).normalise()*scale[i]);
 
+	}
+	void setScale(float uniform)
+	{
+		for (int i = 0; i < 3; i++)
+			transMatrix.setColumn(i, transMatrix.getColumn(i).normalise()*uniform);
+
+	}
+
+	void setScale(double x, double y, double z)
+	{
+		float sc[3];
+		sc[0] = x; sc[1] = y; sc[2] = z;
+		setScale(sc);
 	}
 
 	void transform()
@@ -442,7 +656,6 @@ public:
 
 		for (int i = 0; i < 8; i++) pos[i] = transMatrix * pos[i];
 	}
-
 	void inverseTransform()
 	{
 		transMatrix.invert();
@@ -456,20 +669,25 @@ public:
 	{
 		for (int i = 0; i < n; i++)drawSphere(P[i],vec(0,0,0),vec(1,1,1),.02,1.0);
 	}
-
 	void drawGridAsPoints(vec *P, int n)
 	{
 		glPointSize(3);
-		for (int i = 0; i < n; i++) drawPoint(P[i]);// drawLine(P[i], P[i] * 1.0001); // hack for EPS output
+		for (int i = 0; i < n; i++)  drawLine(P[i], P[i] * 1.0001); // hack for EPS output
 	}
-
 	void drawAxes(float scale = 1.0)
 	{
-		glColor3f(1, 0, 0); drawLine(cen, cen + XA * scale);
+		/*glColor3f(1, 0, 0); drawLine(cen, cen + XA * scale);
 		glColor3f(0, 1, 0); drawLine(cen, cen + YA * scale);
-		glColor3f(0, 0, 1); drawLine(cen, cen + ZA * scale);
+		glColor3f(0, 0, 1); drawLine(cen, cen + ZA * scale);*/
+		drawAxes(XA, YA, ZA, cen,scale);
 	}
+	void drawAxes( vec &u, vec &v, vec &n, vec &c, float scale = 1.0 )
+	{
+		glColor3f(1, 0, 0); drawLine(c, c + u * scale);
+		glColor3f(0, 1, 0); drawLine(c, c + v * scale);
+		glColor3f(0, 0, 1); drawLine(c, c + n * scale);
 
+	}
 	void drawMatrix( Matrix4 &T, vec str)
 	{
 		char s[200];
@@ -493,20 +711,12 @@ public:
 
 		glColor3f(clr.r, clr.g, clr.b);
 		glLineWidth(lineWt);
-		//for (int i = 0; i < 24; i += 4)
-		//{
-		//	glBegin(GL_QUADS);
 
-		//	for (int j = i; j < i + 4; j++)
-		//		glVertex3f(pos[faces[j]].x, pos[faces[j]].y, pos[faces[j]].z);
-
-		//	glEnd();
-		//}
 
 		glColor3f(0, 0, 0);
 		for (int i = 0; i < 24; i += 4)
 		{
-			glBegin(GL_LINE_STRIP);
+			glBegin(GL_LINE_STRIP);//glBegin(GL_QUADS);
 
 			for (int j = i; j < i + 4; j++)
 				glVertex3f(pos[faces[j]].x, pos[faces[j]].y, pos[faces[j]].z);
@@ -515,32 +725,56 @@ public:
 		}
 
 
-		if (debug)
+		//if (debug)
 			for (int i = 0; i < 8; i++)
 			{
 			char c[200];
 				sprintf(c, "%i ", i);
 				string s = "";
 				s += c;
-				drawString(s, pos[i]);
+				drawString_tmp(s, pos[i]);
 
 			}
+
 
 	
 		///
 		glLineWidth(1.0);
 			extractFrame();
-			drawAxes(1);
+		//	drawAxes(0.1);
 		//glPointSize(8); drawPoint( cen );
 		glPointSize(1);
 
 		glLineWidth(4.0);
-		//glColor3f(1, 0, 0);drawLine(cen, cen + F);
-		//glColor3f(0, 1, 0);	drawLine(cen, cen + T);
+		
+		glColor3f(1, 0, 0.6);drawLine(cen, cen + F);
+		glColor3f(0, 1, 0.6);	drawLine(cen, cen + T);
 
 		glLineWidth(1.0);
 		///
 
+		vec u, v, n;
+		glPointSize(5);
+		glLineWidth(2.0);
+
+	/*	for (int i = 0; i < 6; i++)
+		{
+			getBasisOfFace(i, n, v);
+			u = v.cross(n);
+
+			drawAxes(u, v, n, getfaceCenter(i), 0.2);
+			drawPoint( getfaceCenter(i));
+
+			char chr[200];
+			sprintf(chr, "%i ", i);
+			string str = "";
+			str += chr;
+			drawString_tmp(str, getfaceCenter(i)+ vec(0.01,0.01,0.01));
+			drawCircle(getfaceCenter(i), .025, 32);
+		}
+*/
+		glPointSize(1.0);
+		glLineWidth(1.0);
 
 	}
 };

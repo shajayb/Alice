@@ -80,6 +80,16 @@ void draw()
 	if (tillThreshold) M.drawIsoContoursInRange(threshold);
 
 
+	if (!zScalars)
+	{
+		for (int i = 0; i < M.n_v; i++)
+		{
+			vec dir = M.vertices[i].getAngleGradient(M.positions);
+			dir.normalise();
+			dir *= 3;
+			drawLine(M.positions[i], M.positions[i] + dir);
+		}
+	}
 	/////// ------------------- draw GUI
 
 	S.draw();
