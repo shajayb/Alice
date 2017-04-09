@@ -32,6 +32,8 @@ int counter = 0;
 string inFile = "";
 CONTROLLER CONTROLLERS;
 MODEL SCENE;
+ButtonGroup B;
+SliderGroup S;
 //------------------------------------------------------------------------------- CALLBACKS
 
 void updateCallBack( int value )
@@ -84,7 +86,8 @@ void drawCallBack()
 			SCENE.performWindowSelection(CONTROLLERS);
 			SCENE.draw();
 			CONTROLLERS.draw();
-
+			S.draw();
+			B.draw();
 		//////////////////////////////////////////////////////////////////////////
 
 		if (saveF)
@@ -183,7 +186,8 @@ void mousePressCallBack(int b,int s,int x,int y)
 	 mousePress( b, s, x, y) ;
 
 	 updateCam = (glutGetModifiers() == GLUT_ACTIVE_ALT) ? false : true;
-	 if(updateCam)Mouse( b, s, x, y) ;
+	 
+	 if(updateCam )Mouse( b, s, x, y) ;
 }
 
 void motionCallBack( int x, int y )

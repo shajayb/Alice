@@ -34,7 +34,7 @@ ButtonGroup B;
 bool showRobot = false;
 bool showGraphStackData = false;
 
-char s[200],t[200], jts[400];
+char s[200],text[200], jts[400];
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
 
@@ -128,7 +128,7 @@ void draw()
 	//////////////////////////////////////////////////////////
 
 	sprintf_s(s, " current point id : %i", path.currentPointId);
-	sprintf_s(t, " total points in path : %i", path.actualPathLength - 1);
+	sprintf_s(text, " total points in path : %i", path.actualPathLength - 1);
 	int cid = path.currentPointId;
 
 	if (cid < path.actualPathLength - 1 && cid >= 0)
@@ -139,7 +139,7 @@ void draw()
 	setup2d();
 
 	AL_drawString(s, winW * 0.5, winH - 50);
-	AL_drawString(t, winW * 0.5, winH - 75);
+	AL_drawString(text, winW * 0.5, winH - 75);
 	AL_drawString(jts, winW * 0.5, winH - 100);
 
 	int hts = 50;

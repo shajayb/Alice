@@ -242,6 +242,7 @@ void drawVector(vec&a, vec loc, string suffix)
 
 	restore3d();
 }
+
 void drawMatrix(Matrix4 &T, vec str)
 {
 
@@ -625,19 +626,29 @@ void barycentric(vec &p, vec *q, int n, float *w )
 		
 }
 
-void Intersect_segment2d(double *x, double *y, double &u, double &v)
+enum IntersectResult { PARALLEL, COINCIDENT, NOT_INTERESECTING, INTERESECTING };
+IntersectResult Intersect_segment2d(double *x, double *y, double &u, double &v)
 {
 	double denom = ((y[3] - y[2]) * (x[1] - x[0])) - ((x[3] - x[2]) * (y[1] - y[0]));
-	if (fabs(denom) < 1e-04)
+	double nume_a = ((x[3] - x[2]) * (y[0] - y[2])) - ((y[3] - y[2]) * (x[0] - x[2]));
+	double nume_b = ((x[1] - x[0]) * (y[0] - y[2])) - ((y[1] - y[0]) * (x[0] - x[2]));
+
+	if (fabs(denom) < 1e-06)
 	{
+		if (fabs(nume_a) < 1e-06 && fabs(nume_b) < 1e-06)return COINCIDENT;
+
 		u = v = -0.0; 
-		return; // lines are parallel
+		return PARALLEL; // lines are parallel
 	}
-	u = ((x[3] - x[2]) * (y[0] - y[2])) - ((y[3] - y[2]) * (x[0] - x[2]));
+	u = nume_a;// ((x[3] - x[2]) * (y[0] - y[2])) - ((y[3] - y[2]) * (x[0] - x[2]));
 	u /= denom;// ((y[3] - y[2]) * (x[1] - x[0])) - ((x[3] - x[2]) * (y[1] - y[0]));
 
-	v = ((x[1] - x[0]) * (y[0] - y[2])) - ((y[1] - y[0]) * (x[0] - x[2]));
+	v = nume_b;// ((x[1] - x[0]) * (y[0] - y[2])) - ((y[1] - y[0]) * (x[0] - x[2]));
 	v /= denom;// ((y[3] - y[2]) * (x[1] - x[0])) - ((x[3] - x[2]) * (y[1] - y[0]));
+
+	if (u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f)return INTERESECTING;
+
+		return NOT_INTERESECTING;
 }
 
 vec Intersect_linesegments( vec *pts, vec &normal , double &u, double &v,bool project = true )
@@ -657,10 +668,53 @@ vec Intersect_linesegments( vec *pts, vec &normal , double &u, double &v,bool pr
 
 vec Intersect_linesegments(vec *pts, double &u, double &v, bool project = true) // pts is of length 4
 {
+
+	/*for (int i = 0; i < 4; i++)swap(pts[i].x, pts[i].z);*/
+
 	vec normal = (pts[1] - pts[0]).cross(pts[3] - pts[2]).normalise();
-	return Intersect_linesegments( pts, normal, u,v, project) ;
+	vec pt = Intersect_linesegments( pts, normal, u,v, project) ;
+	
+	//swap(pt.x, pt.z);
+	//for (int i = 0; i < 4; i++)swap(pts[i].x, pts[i].z);
+	
+	return pt;
 }
 
+vec Intersect_linesegments(vec *pts , double &lambda)
+{
+	vec v1 = (pts[1] - pts[0]);// .normalise();
+	vec v2 = (pts[3] - pts[2]);// .normalise();
+
+	if (fabs(v1.angle(v2)) < 1e-04)
+	{
+		lambda = -1; // parallel;
+		return vec(0,0,0);
+	}
+
+
+	double l1 = v1.mag();
+	double l2 = v2.mag();
+	v1 *= 1.0/l1; v2 *= 1.0/l2;
+
+	vec LHS = (v1.cross(v2));
+	vec RHS = (pts[2] - pts[0]).cross(v2);
+	double denom = LHS.mag();
+	lambda = denom > 0 ? ( RHS.mag() / denom ) : -1.0;
+	
+	if (fabs(LHS.angle(RHS) - 180.0) < 1e-04 && fabs(lambda) > 1e-04 )lambda *= -1;
+	vec intPt = pts[0] + v1 * lambda;
+
+	double param1, param2;
+
+	param1 = intPt.distanceTo(pts[2]) / l2;
+	param2 = intPt.distanceTo(pts[3]) / l2;
+	/*param1 = (intPt - pts[2])*(intPt - pts[2]) / (l1*l1);
+	param1 = (intPt - pts[3])*(intPt - pts[3]) / (l2*l2);*/
+	//printf("%1.8f,%1.8f, %1.8f, %1.8f,%1.8f \n", param1,param2, LHS.angle(RHS), denom,lambda);
+	
+	if ( param1 > 1.0f + EPS || param2 > 1.0 + EPS )lambda = -1.0; // greater than computes to true without the EPS addition
+	return (intPt);
+}
 vec pointInNewBasis( vec inPt , vec &u, vec &v, vec &n, vec &c)
 {
 	vec rpt = inPt;
@@ -691,15 +745,22 @@ bool pointInPolygon(vec &pt,vec *pts , int n)
 	return ((pt - rpt)*(pt - rpt) <  pow(1e-4,2) ) ? true : false;
 }
 
-void drawString_tmp(string &s, vec pt)
+
+//////////////////////////////////////////////////////////////////////////
+
+void drawString_tmp(string &s, vec pt , bool twoD = false)
 {
+	if (twoD)setup2d();
 
 	unsigned int i;
 	glRasterPos3f(pt.x, pt.y, pt.z);
 
 	for (i = 0; i < s.length(); i++)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+
+	if (twoD)restore3d();
 }
+
 
 void drawString_tmp(double a, vec pt)
 {
@@ -721,6 +782,96 @@ void drawString_tmp(int a, vec pt)
 	drawString_tmp(s, pt);
 }
 
+
+enum Elementtype { VECTOR, TEXT };
+struct deferDrawElement
+{
+	vec P;
+	string text;
+	Elementtype TYP;
+	deferDrawElement(Elementtype _typ,vec &p, string _suffix = "")
+	{
+		TYP = _typ;
+		P = p;
+		text = _suffix;
+	}
+
+	deferDrawElement(Elementtype _typ,string str = " string : ")
+	{
+		TYP = _typ;
+		text = str;
+	}
+};
+vector<deferDrawElement> deferDrawElements;
+
+void deferDraw_addElement( vec p , string suffix = "" )
+{
+	deferDrawElements.push_back( deferDrawElement(VECTOR,p,suffix) );
+}
+
+void deferDraw_addElement( string suffix = "")
+{
+	deferDrawElements.push_back( deferDrawElement(TEXT,suffix) );
+}
+
+void deferDraw_addElement(double r , string suffix = "" )
+{
+	char s[20];
+	sprintf(s, " %1.2f ", r);
+	string str = s;
+	str += suffix;
+
+	deferDrawElements.push_back(deferDrawElement(TEXT, suffix));
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+bool areClose( vec &a,vec &b, double tol)
+{
+	vec c = b - a;
+	return(fabs(c.x) < tol && fabs(c.y) < tol && fabs(c.z) < tol);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+long start_time;
+long end_time;
+
+void startTimer()
+{
+	start_time = GetTickCount();
+}
+
+long endTimer()
+{
+	end_time = GetTickCount();
+	long elapsedTime = end_time - start_time;
+	if (elapsedTime < 10)elapsedTime = 10;
+	return elapsedTime;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+
+vector<string> splitString(const string& str, const string& delimiter)
+{
+	vector<string> elements;
+	// Skip delimiters at beginning.
+	string::size_type lastPos = str.find_first_not_of(delimiter, 0);
+	// Find first "non-delimiter".
+	string::size_type pos = str.find_first_of(delimiter, lastPos);
+
+	while (string::npos != pos || string::npos != lastPos)
+	{
+		// Found a token, add it to the vector.
+		elements.push_back(str.substr(lastPos, pos - lastPos));
+		// Skip delimiters.  Note the "not_of"
+		lastPos = str.find_first_not_of(delimiter, pos);
+		// Find next "non-delimiter"
+		pos = str.find_first_of(delimiter, lastPos);
+	}
+	return elements;
+}
 
 #define _UTILITIES_
 #endif // !_UTILITIES_

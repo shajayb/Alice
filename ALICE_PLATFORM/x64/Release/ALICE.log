@@ -1,9 +1,9 @@
-﻿  sketch_rbe_test.cpp
+﻿  sketch_two_rectangles.cpp
 C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
   Generating code
-  70 of 617 functions (11.3%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    13 functions had inline decision re-evaluated but remain unchanged
+  153 of 807 functions (19.0%) were compiled, the rest were copied from previous compilation.
+    85 functions were new in current compilation
+    73 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
   ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)
