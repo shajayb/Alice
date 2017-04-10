@@ -86,6 +86,7 @@
     <ClCompile Include="src\alglib\statistics.cpp">
       <Filter>algLib</Filter>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_two_rectangles.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">

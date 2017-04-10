@@ -40,6 +40,7 @@ public:
 	float wtsOnConvex[50];
 	stack<vec> Scopy; //!! REMOVE
 	vec ptConvex[20];
+	int hullCnt = 0;
 
 	//////////////////////////////// CONSTRUCTORS -------------------------------------------------------------------------------------------- 
 
@@ -72,7 +73,7 @@ public:
 	{
 
 		getTopology(M);
-
+		for (int i = 0; i < 8; i++) pos[i] = M.positions[i];
 		///
 		transMatrix.identity();
 		setInitialTransformation(transMatrix);
@@ -403,76 +404,58 @@ public:
 
 		transform();
 	}
+	//------
 
-	double tol = 0.1;
-	int hullCnt = 0;
 	void addPtsToConvexHull( vec &pt)
 	{
+		for (int i = 0; i < hullCnt; i++)
+			if (pt == ptConvex[i])return;
+
 		ptConvex[hullCnt] = pt;
 		hullCnt++;
 	}
 
-	bool isFacetoFace( rigidCube &r2, int i, int j)
+	vec pts_faceI[4], pts_faceJ[4];
+	bool isFacetoFace( rigidCube &r2, int i, int j, double distancetoPlaneTolerance = 0.2)
 	{
-		extractFrame();
 
 		// -----------------------------------------  get face i data;
-		vec u, v, n,c;Matrix4 transFace;
+		vec u, v, n, c; Matrix4 transFace;
 		getTransformationToFace(i, transFace);
 		transFace.getBasisVectors(u, v, n, c);
 
 		// ----------------------------------------- ---- cast face J from global unto frame of face I
 		// return false if all points are NOT within tolerance along normal direction.
 		//  iterate through pts of face j
-		i *= 4; j *= 4; // pts are ordered in sets of 4, corresponding to each face;
-		vec pts_faceJ[4], pts_faceI[4];
-		for (int o = j, cnt = 0; o < j + 4; o++, cnt++)
-			if ( pointInNewBasis(r2.pos[r2.faces[o]],u,v,n,c).z > tol)return false;
+		
+		r2.getFacePoints(j , pts_faceJ);
+		
+		bool found = true; 
+		for (int o = 0; o < 4; o++)
+			if (fabs(pointInNewBasis(pts_faceJ[o], transFace).z) > distancetoPlaneTolerance)found = false;
+		
 
-		// -----------------------------------------  collect facePts_I,facePts_J,
-		for (int o = j, cnt = 0; o < j + 4; o++, cnt++)pts_faceJ[cnt] = r2.pos[ r2.faces[o] ];
-		for (int o = 0; o < 4; o++)pts_faceJ[o] = (pts_faceJ[o] - n * (pts_faceJ[o] * n)) + c; // project facePts_J to plane of facePts_j;
-		for (int o = i, cnt = 0; o < i + 4; o++, cnt++)pts_faceI[cnt] = pos[faces[o]];
+		if (!found)return false; 
+
+		char s[200];
+		sprintf(s, "Within zRange %i & %i", i, j);
+		deferDraw_addElement(s);
+		// -----------------------------------------  collect facePts_I , project facePts_J to face i , etc
+		getFacePoints(i, pts_faceI);
+		//for (int o = 0; o < 4; o++)pts_faceJ[o] = pointInNewBasis(pts_faceJ[o], transFace);
+		for (int o = 0; o < 4; o++)pts_faceJ[o] -= n * ( n * (pts_faceJ[o]-c) ) ; // project facePts_J to plane of facePts_j;
+		
 
 		//glLineWidth(5);
 		//glColor3f(1, 0, 0); for (int p = 0; p < 4; p++)drawLine(pts_faceI[p], pts_faceI[(p + 1) % 4]);
 		//glColor3f(0, 0, 1); for (int p = 0; p < 4; p++)drawLine(pts_faceJ[p], pts_faceJ[(p + 1) % 4]);
 		//glLineWidth(1);
+		//return false;
 
 		// ----------------------------------------- computer convex hull of edge-edge intersections and pointsInPolygons;
-		vec segmentEndPoints[4];
-		for (int i = 0; i < Scopy.size(); i++)Scopy.pop();// clear stack
-	
-		hullCnt = 0;
-
-		for (int a = 0; a < 4; a++)
-		{
-
-			segmentEndPoints[0] = pts_faceI[a];
-			segmentEndPoints[1] = pts_faceI[(a + 1) % 4];
-
-			if (pointInPolygon(pts_faceI[a], pts_faceJ, 4))addPtsToConvexHull(pts_faceI[a]);// if Vb_i is PIP( face_Bj) , add Vb_j to convex hull
-			
-			for (int b = 0; b < 4; b++)
-			{
-				segmentEndPoints[2] = pts_faceJ[b];
-				segmentEndPoints[3] = pts_faceJ[(b + 1) % 4];
-				CheckAndAddToConvexHull(segmentEndPoints,pts_faceJ, pts_faceI); // if edges intersect, add intersection pt to convex hull
-
-				//{
-				//	glLineWidth(5);
-				//	glColor3f(1, 0, 0);drawLine(segmentEndPoints[0], segmentEndPoints[1]);
-				//	glColor3f(0, 0, 1);drawLine(segmentEndPoints[2], segmentEndPoints[3]);
-				//	glLineWidth(1);
-				//}
-				
-				if (pointInPolygon(pts_faceJ[b], pts_faceI, 4))addPtsToConvexHull(pts_faceJ[b]);// if Vb_j is PIP( face_Bi) , add Vb_j to convex hull
-			}
-
-		}
-
-		//draw
+		ComputeFaceToFaceIntersection(pts_faceI, pts_faceJ,0.0051);
 		ComputeConvexHull(transFace);
+
 		glLineWidth(5); 
 			DrawConvexHull(); 
 		glLineWidth(1);
@@ -481,12 +464,91 @@ public:
 		return true;
 	}
 
+	double areaofConvexHUll()
+	{
+		double area = 0.0;
+		for (int i = 1; i < hullCnt-2; i++)
+		{
+			area += 1.0 * (ptConvex[i] - ptConvex[0]).cross(ptConvex[i+1] - ptConvex[0]).mag();
+		}
+		return area;
+	}
+	void ComputeFaceToFaceIntersection(vec * pts_faceI, vec * pts_faceJ , double incidenceTolernace = 0.05)
+	{
+		hullCnt = 0;
+
+		//// CASE 1 : COINCIDENCE 
+		bool coincident = true;
+		int numCoincident = 0;
+		for (int a = 0; a < 4; a++)
+		{
+			bool found = false;
+			for (int b = 0; b < 4; b++)
+				if (areClose(pts_faceI[a], pts_faceJ[b], incidenceTolernace))found = true;
+
+			if (!found) coincident = false;
+			else numCoincident++;
+
+		}
+
+		if ( coincident )
+		{
+			for (int a = 0; a < 4; a++) ptConvex[hullCnt++] = pts_faceI[a];
+			return;
+		}
+
+		
+		deferDraw_addElement( "	not coincident");
+		///// CASE 2 : edge INTERSECTION/S 
+		
+
+		vec segmentEndPoints[4];
+
+		for (int a = 0; a < 4; a++)
+		{
+
+			if (pointInPolygon(pts_faceI[a], pts_faceJ, 4))addPtsToConvexHull(pts_faceI[a]);// if Vb_i is PIP( face_Bj) , add Vb_j to convex hull
+
+			for (int b = 0; b < 4; b++)
+			{
+				segmentEndPoints[0] = pts_faceI[a];
+				segmentEndPoints[1] = pts_faceI[(a + 1) % 4];
+
+				segmentEndPoints[2] = pts_faceJ[b];
+				segmentEndPoints[3] = pts_faceJ[(b + 1) % 4];
+				CheckAndAddToConvexHull(segmentEndPoints, pts_faceJ, pts_faceI); // if edges intersect, add intersection pt to convex hull
+
+				//{
+				//	glLineWidth(5);
+				//	glColor3f(1, 0, 0);drawLine(segmentEndPoints[0], segmentEndPoints[1]);
+				//	glColor3f(0, 0, 1);drawLine(segmentEndPoints[2], segmentEndPoints[3]);
+				//	glLineWidth(1);
+				//}
+
+				if (pointInPolygon(pts_faceJ[b], pts_faceI, 4))addPtsToConvexHull(pts_faceJ[b]);// if Vb_j is PIP( face_Bi) , add Vb_j to convex hull
+			}
+
+		}
+
+		char s[200];
+		sprintf(s, "     %i pts added to hull", hullCnt);
+		deferDraw_addElement(s);
+
+		///// !!CASE 3 : shared edge : should deal with this in face-edge intersection
+		if (numCoincident == 2)
+		{
+			hullCnt = 0;
+			deferDraw_addElement("     shared edge ");
+		}
+	}
+
 	void ComputeConvexHull(Matrix4 &T)
 	{
-		if (!(hullCnt > 0))return;
+		if (!(hullCnt >=3 ))return;
 
 		for (int i = 0; i < hullCnt; i++)ptConvex[i] = pointInNewBasis(ptConvex[i], T); // transform to 2d;
-
+		
+		
 		convexHull(ptConvex, hullCnt, Scopy);
 
 		hullCnt = 0;
@@ -503,11 +565,50 @@ public:
 	{
 		for (int i = 0; i < hullCnt; i++)
 		{
-			drawCircle(ptConvex[i], 0.05, 32);
+			drawCircle(ptConvex[i], 0.01, 32);
 			drawLine(ptConvex[i], ptConvex[(i + 1) % hullCnt]);
 		}
 	}
 
+	void CheckAndAddToConvexHull(vec * segmentEndPoints, vec * pts_faceJ, vec * pts_faceI)
+	{
+		//double L1, L2;
+		//
+		//vec pt = Intersect_linesegments(segmentEndPoints, L1, L2, false);
+		//L1 += 1e-08; L2 += 1e-08;
+
+		////printf("%1.2f,%1.2f \n", L1,L2);
+		//if (L1 < 1e-04 && L2 < 1e-04)return; // parallel
+		//if (L1 <= 1.01 && L2 <= 1.01  && L1 >= 0.0 &&  L2 >= 0.0)addPtsToConvexHull(pt);
+		
+		//---------------------------------------------------------------------------------
+		double lambda;
+		vec pt =Intersect_linesegments(segmentEndPoints, lambda);
+		
+		if (( lambda) <= 1.0 + EPS &&  lambda >= 0.0 )addPtsToConvexHull(pt); // comparison of floats seems to need EPS addition !!!
+	}
+
+	void computeCollisionInterfaces(rigidCube &R2, double zTol = 0.2)
+	{
+
+		for (int i = 0; i < 6; i++)
+			for (int j = 0; j < 6; j++)
+			{
+				if (isFacetoFace(R2, i, j, zTol));
+				//else if (/*isFaceToEdge*/)
+				
+			}
+		
+		//isFacetoFace(R2, 2, 0, zTol);
+
+	}
+	//////////////////////////////// UTILITIES  -------------------------------------------------------------------------------------------- 
+
+	void getFacePoints(int face, vec *pts_face)
+	{
+		face *= 4;
+		for (int o = face, cnt = 0; o < face + 4; o++, cnt++)pts_face[cnt] = pos[faces[o]];
+	}
 	void getTransformationToFace(int i, Matrix4 &transFace)
 	{
 		vec u, v, n, c;
@@ -520,33 +621,9 @@ public:
 		transFace.setColumn(2, n);
 		transFace.setColumn(3, c);
 	}
-
-	void CheckAndAddToConvexHull(vec * segmentEndPoints, vec * pts_faceJ, vec * pts_faceI)
-	{
-		double L1, L2;
-		vec pt = Intersect_linesegments(segmentEndPoints, L1, L2, false);
-		L1 += 1e-08; L2 += 1e-08;
-
-		//printf("%1.2f,%1.2f \n", L1,L2);
-		if (L1 < 1e-04 && L2 < 1e-04)return; // parallel
-		if (L1 <= 1.01 && L2 <= 1.01  && L1 >= 0.0 &&  L2 >= 0.0)addPtsToConvexHull(pt);
-	}
-
-	void computeCollisionInterfaces(rigidCube &R2)
-	{
-
-		for (int i = 0; i < 6; i++)
-		{
-
-			for (int j = 0; j < 6; j++)
-			{
-				isFacetoFace(R2, i, j);
-			}
-		}
-	}
-	//////////////////////////////// UTILITIES  -------------------------------------------------------------------------------------------- 
 	void getBasisOfFace(int face, vec &v1, vec &v2)
 	{
+		extractFrame();
 
 		if (face == 0)
 		{
@@ -643,14 +720,12 @@ public:
 			transMatrix.setColumn(i, transMatrix.getColumn(i).normalise()*uniform);
 
 	}
-
 	void setScale(double x, double y, double z)
 	{
 		float sc[3];
 		sc[0] = x; sc[1] = y; sc[2] = z;
 		setScale(sc);
 	}
-
 	void transform()
 	{
 
@@ -661,6 +736,14 @@ public:
 		transMatrix.invert();
 		transform();
 		transMatrix.identity();
+	}
+	void writeOBJ()
+	{
+		MeshFactory fac;
+		Mesh M = fac.createPlatonic(1.0 / sqrt(2), 6);
+
+		for (int i = 0; i < 8; i++)M.positions[i] = pos[i];
+		M.writeOBJ("data/test.obj", "", M.positions, false);
 	}
 
 	//////////////////////////////// DISPLAY  -------------------------------------------------------------------------------------------- 
@@ -725,7 +808,7 @@ public:
 		}
 
 
-		//if (debug)
+		if (debug)
 			for (int i = 0; i < 8; i++)
 			{
 			char c[200];
@@ -757,7 +840,7 @@ public:
 		glPointSize(5);
 		glLineWidth(2.0);
 
-	/*	for (int i = 0; i < 6; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			getBasisOfFace(i, n, v);
 			u = v.cross(n);
@@ -772,7 +855,7 @@ public:
 			drawString_tmp(str, getfaceCenter(i)+ vec(0.01,0.01,0.01));
 			drawCircle(getfaceCenter(i), .025, 32);
 		}
-*/
+
 		glPointSize(1.0);
 		glLineWidth(1.0);
 
