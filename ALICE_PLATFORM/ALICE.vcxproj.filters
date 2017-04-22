@@ -87,12 +87,16 @@
       <Filter>algLib</Filter>
     </ClCompile>
     <ClCompile Include="src\userSrc\sketch_UR\sketch_two_rectangles.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_lineSegment_intersect.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_test.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_threeRigidCubes.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_barySubDivide.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_algLibtest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
       <Filter>ImGui_freeglut</Filter>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\Controller.h" />
     <ClInclude Include="src\userSrc\sketch_UR\utilities.h">
       <Filter>PhD_R02</Filter>
     </ClInclude>
@@ -102,9 +106,18 @@
     <ClInclude Include="src\userSrc\sketch_UR\rigidCube.h">
       <Filter>PhD_R02</Filter>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\object.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\MODEL.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\interpolate.h" />
+    <ClInclude Include="src\userSrc\sketch_UR\interpolate.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\MODEL.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\object.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\Controller.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ImGui">
@@ -121,6 +134,9 @@
     </Filter>
     <Filter Include="algLib">
       <UniqueIdentifier>{86505d70-40b7-4f3c-95be-9e8ec63c9a1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MVP">
+      <UniqueIdentifier>{363452be-02d7-4398-854d-90ea253cf8b3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -66,7 +66,8 @@ public:
 		
 		
 		setInitialTransformation(transMatrix);
-		transMatrix = transM.identity();
+		//transMatrix = transM.identity();
+		transMatrix.identity();
 	}
 
 	rigidCube( Mesh &M )
@@ -87,7 +88,7 @@ public:
 
 		////
 		F = P = T = L = w = vec(0, 0, 0);
-
+		cog = transMatrix.getColumn(3);
 		for (int i = 0; i < 3; i++) inertiaTensor.setColumn(i, trans.getColumn(i));
 		//inertiaTensor = pow(10,5) * inertiaTensor;
 		Matrix3 rotMatrix;
@@ -201,8 +202,9 @@ public:
 		{
 			if (b_Fgrv)
 			{
-				F += F_grv;
-				T += (P[i] - cog).cross(F_grv);
+				//F += F_grv;
+				//T += (P[i] - cog).cross(F_grv);
+				F += vec(0,0,-1e-04);
 			}
 		}
 	}
@@ -360,14 +362,14 @@ public:
 		vel = P / mass;
 		vec delX = vel * dt;
 		cog += delX;
-		P *= 0.99;
+		P *= 0.9;
 		// ------------- orientation
 
 		// update angular momentum
 		vec delL;
 		delL = T * dt;
 		L += delL;
-		L *= 0.99;
+		L *= 0.9;
 		
 		
 		// update angular velocity
@@ -404,7 +406,195 @@ public:
 
 		transform();
 	}
+	//////////////////////////////////////////////////////////////////////////
+	vec FunctionAtPoint( vec &P , vector<vec> &HullPts , vec &normal /*unit normal expected*/)
+	{
+
+		vec F_is;
+		for (auto pOther : HullPts)
+		{
+			//pOther += normal * 0.1; 
+			vec relPos_ij = (P - pOther) /** -1.0*/;;
+
+			double dist;
+			/*dia = 0.5;
+			if (relPos_ij * relPos_ij > pow(dia * 0.9, 2))continue;
+			if (relPos_ij * relPos_ij < pow(1e-6, 2))continue;*/
+			if (relPos_ij * relPos_ij < pow(1e-6, 2))continue;
+
+			dist = relPos_ij.mag();
+			vec relPos_normalised = relPos_ij / dist; /// normalise();
+			F_is += (relPos_normalised);// *(dist);// *(1.0 / (dist * dist));
+			F_is *= 0.1; 
+		}
+
+		return F_is;
+	}
+	
 	//------
+
+	vec getAngularMomentumContribution( vec &torque , vec &ra )
+	{
+
+		Matrix3 R_atT;
+		R_atT = q.quatToRotationMatrix();
+
+		Matrix3 I_inverse = inertiaTensor.invert();
+		Matrix3 I_atT_inverse = R_atT*I_inverse*(R_atT.transpose());
+		return ( (I_atT_inverse )* torque.cross(ra) );// *1e-04;;
+	}
+	void updateCOG()
+	{
+		extractFrame();
+		cog = cen;
+	}
+	double computeAij( int &i, int &j, rigidCube &r2, vec &n)
+	{
+	
+	}
+	void computeRestingForces(real_1d_array &x , vec &n, rigidCube &r2)
+	{
+		real_2d_array Amat;
+		real_1d_array b;
+		r2.updateCOG();
+		updateCOG();
+
+		Amat.setlength(hullCnt, hullCnt);
+		b.setlength(hullCnt);
+		x.setlength(hullCnt);
+
+		for (int i = 0; i < hullCnt; i++)b[i] = -1.0;// *((i % 2 == 0) ? 1 : 1);
+
+		for (int i = 0; i < hullCnt; i++)
+			for (int j = 0; j < hullCnt; j++)
+			{
+		/*		if (i == j)
+				{
+					Amat[i][j] = 0.0;
+					continue;
+				}*/
+
+				vec forceOnA, forceOnB;
+				vec torqueOnA, torqueOnB;
+				vec aAng, bAng;
+				vec ra, rb;
+				//vec PA, PB;
+				//PA = ptConvex[i]; PB = ptConvex[j];
+
+				forceOnA = n;
+				forceOnB = n * -1;
+
+				ra = ptConvex[i] - cog;
+				rb = ptConvex[i] - r2.cog;
+
+				torqueOnA = (ptConvex[j] - cog).cross(forceOnA);
+				torqueOnB = (ptConvex[j] - r2.cog).cross(forceOnB);
+
+				aAng = (torqueOnA).cross(ra);//  getAngularMomentumContribution(torqueOnA, ra);
+				bAng = (torqueOnB).cross(rb);// r2.getAngularMomentumContribution(torqueOnB, rb);
+
+
+				Amat[i][j] = n * ( forceOnA - forceOnB + aAng - bAng);
+				//(aAng - bAng).print();
+				//n.print();
+				//bAng.print();
+				//cout << Amat[i][j] << "---" << endl;
+			}
+
+		
+		QP_SOLVE_dense(Amat, b, x);
+		printf("\n%s\n ---- a\n ", x.tostring(hullCnt).c_str()); // EXPECTED: [3,2]
+		
+		vec netT;
+		for (int i = 0; i < hullCnt; i++)
+		{
+			netT += (n * (x[i])).cross(ptConvex[i] - r2.cog);
+		}
+
+		cog.print();
+		cout << "cog" << endl;
+		r2.cog.print();
+		cout << "r2Cog" << endl;
+		deferDraw_addElement(netT, "net T on r2");
+	/*	for (int i = 0; i < hullCnt; i++)
+		{
+			cout << endl;
+			for (int j = 0; j < hullCnt; j++)
+			{
+				cout << Amat[i][j] << ",";
+			}
+		}*/
+	}
+	void computeIntegratedContactForces( vec &n  )
+	{
+		if (hullCnt < 3)return;
+		// subDivide convex hull to compute F(x) at gauss quadrature points;
+		vector<vec> subPts;
+		vector<tri> Ts = subDivideHull(ptConvex, hullCnt, subPts, 2);
+		
+		subPts.clear();
+		for (auto Tr : Ts)subPts.push_back(Tr.centroid());
+
+		for (auto P : subPts)drawPoint(P);
+		//for (auto Tr : Ts)Tr.draw();
+
+		// gauss quadrature integration per triangle 
+		n.normalise();
+		vector<tri> Tris;
+		for (int i = 1; i < hullCnt - 1; i++)
+			Tris.push_back(tri(ptConvex[i], ptConvex[(i + 1) % hullCnt], ptConvex[0]));
+		for (auto T : Tris)T.draw();
+
+
+		vec C;
+		for (int i = 0; i < hullCnt; i++)C += ptConvex[i];
+		C /= hullCnt;
+		C += n * 0.1;
+		drawCircle(C, .02, 32);
+
+
+		/*for (int i = 1; i < hullCnt - 1; i++)
+		{
+			vec P0 = (ptConvex[i] + ptConvex[0]) * 0.5;
+			vec P1 = (ptConvex[i + 1] + ptConvex[0]) * 0.5;
+			vec P2 = (ptConvex[i] + ptConvex[i + 1]) * 0.5;
+			vec Force;
+			Force += FunctionAtPoint(P0, subPts, n) * 0.33;
+			Force += FunctionAtPoint(P1, subPts, n) * 0.33;
+			Force += FunctionAtPoint(P2, subPts, n) * 0.33;
+
+			vec cen = (ptConvex[i] + ptConvex[0] + ptConvex[i + 1]) / 3.0;
+
+			F += Force;
+			double mult = 1000.0;
+			T += Force.cross(cog - cen) * mult;
+
+			glLineWidth(4);
+			glColor3f(1, 0, 0);
+			drawLine(cen, cen + Force * 30);
+			glLineWidth(1);
+			glColor3f(0, 0, 0);
+
+			drawCircle(P0, .02, 32);
+			drawCircle(P1, .02, 32);
+			drawCircle(P2, .02, 32);
+		}*/
+		cen = transMatrix.getColumn(3);
+		T = vec(0, 0, 0);
+		
+		//for (int i = 0; i < hullCnt; i++)
+		for (auto P : subPts)
+		{
+			//vec P = ptConvex[i];
+			vec Force;
+			Force = vec(0, 0, 0.1);// FunctionAtPoint(P, subPts, n);// vector-valued function F(p) ;
+			T += Force.cross(P - cog);
+			glColor3f(1, 0, 0);; drawLine(P, P + (Force.cross(P - cen)));
+			//glColor3f(0,0,1); drawLine(P, P + (Force));
+		}
+
+		deferDraw_addElement(T, "torqueNet");
+	}
 
 	void addPtsToConvexHull( vec &pt)
 	{
@@ -456,6 +646,13 @@ public:
 		ComputeFaceToFaceIntersection(pts_faceI, pts_faceJ,0.0051);
 		ComputeConvexHull(transFace);
 
+		// ----------------------------------------- computer convex hull of edge-edge intersections and pointsInPolygons;
+
+		//computeIntegratedContactForces(n);
+		real_1d_array x;
+		computeRestingForces(x, n, r2);
+		
+		// ----------------------------------------- drawConvex hull
 		glLineWidth(5); 
 			DrawConvexHull(); 
 		glLineWidth(1);
@@ -467,9 +664,9 @@ public:
 	double areaofConvexHUll()
 	{
 		double area = 0.0;
-		for (int i = 1; i < hullCnt-2; i++)
+		for (int i = 1; i < hullCnt-1; i++)
 		{
-			area += 1.0 * (ptConvex[i] - ptConvex[0]).cross(ptConvex[i+1] - ptConvex[0]).mag();
+			area += 0.5 * (ptConvex[i] - ptConvex[0]).cross(ptConvex[i+1] - ptConvex[0]).mag();
 		}
 		return area;
 	}
@@ -500,7 +697,21 @@ public:
 		
 		deferDraw_addElement( "	not coincident");
 		///// CASE 2 : edge INTERSECTION/S 
-		
+	/*	{
+			for (int a = 0; a < 4; a++)
+			{
+				char s[200];
+				sprintf( s, "%i" , a );
+				drawString(s, (pts_faceI[a] + pts_faceI[(a + 1) % 4])* 0.5);
+			}
+
+			for (int a = 0; a < 4; a++)
+			{
+				char s[200];
+				sprintf( s, "%i", a );
+				drawString(s, (pts_faceJ[a] + pts_faceJ[(a + 1) % 4]) * 0.5 );
+			}
+		}*/
 
 		vec segmentEndPoints[4];
 
@@ -563,29 +774,35 @@ public:
 
 	void DrawConvexHull()
 	{
+		if (hullCnt < 3)return;
+
 		for (int i = 0; i < hullCnt; i++)
 		{
 			drawCircle(ptConvex[i], 0.01, 32);
 			drawLine(ptConvex[i], ptConvex[(i + 1) % hullCnt]);
+			char s[200];
+			sprintf(s, "%i", i);
+			drawString(s, ptConvex[i]);
 		}
 	}
 
 	void CheckAndAddToConvexHull(vec * segmentEndPoints, vec * pts_faceJ, vec * pts_faceI)
 	{
-		//double L1, L2;
-		//
-		//vec pt = Intersect_linesegments(segmentEndPoints, L1, L2, false);
-		//L1 += 1e-08; L2 += 1e-08;
+		double L1, L2;
+		
+		bool closeToVertPlane;
+		vec pt = Intersect_linesegments(segmentEndPoints, L1, L2, closeToVertPlane);
+		L1 += 1e-08; L2 += 1e-08;
 
-		////printf("%1.2f,%1.2f \n", L1,L2);
-		//if (L1 < 1e-04 && L2 < 1e-04)return; // parallel
-		//if (L1 <= 1.01 && L2 <= 1.01  && L1 >= 0.0 &&  L2 >= 0.0)addPtsToConvexHull(pt);
+		//printf("%1.2f,%1.2f \n", L1,L2);
+		if (L1 < 1e-04 && L2 < 1e-04)return; // parallel
+		if (L1 <= 1.01 && L2 <= 1.01  && L1 >= 0.0 &&  L2 >= 0.0)addPtsToConvexHull(pt);
 		
 		//---------------------------------------------------------------------------------
-		double lambda;
-		vec pt =Intersect_linesegments(segmentEndPoints, lambda);
-		
-		if (( lambda) <= 1.0 + EPS &&  lambda >= 0.0 )addPtsToConvexHull(pt); // comparison of floats seems to need EPS addition !!!
+		//double lambda;
+		//vec pt =Intersect_linesegments(segmentEndPoints, lambda);
+		//
+		//if (( lambda) <= 1.0 + EPS &&  lambda >= 0.0 )addPtsToConvexHull(pt); // comparison of floats seems to need EPS addition !!!
 	}
 
 	void computeCollisionInterfaces(rigidCube &R2, double zTol = 0.2)
@@ -755,7 +972,7 @@ public:
 	void drawGridAsPoints(vec *P, int n)
 	{
 		glPointSize(3);
-		for (int i = 0; i < n; i++)  drawLine(P[i], P[i] * 1.0001); // hack for EPS output
+		for (int i = 0; i < n; i++) drawPoint(P[i]);// drawLine(P[i], P[i] * 1.0001); // hack for EPS output
 	}
 	void drawAxes(float scale = 1.0)
 	{
@@ -824,14 +1041,14 @@ public:
 		///
 		glLineWidth(1.0);
 			extractFrame();
-		//	drawAxes(0.1);
+			drawAxes(0.1);
 		//glPointSize(8); drawPoint( cen );
 		glPointSize(1);
 
 		glLineWidth(4.0);
 		
 		glColor3f(1, 0, 0.6);drawLine(cen, cen + F);
-		glColor3f(0, 1, 0.6);	drawLine(cen, cen + T);
+		glColor3f(1, 0, 0.6);drawLine(cen, cen + T);
 
 		glLineWidth(1.0);
 		///

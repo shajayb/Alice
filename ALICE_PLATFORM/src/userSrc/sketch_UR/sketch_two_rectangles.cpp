@@ -1,6 +1,4 @@
 
-#define _MAIN_
-
 
 #ifdef _MAIN_
 
@@ -25,40 +23,19 @@ using namespace std::experimental;
 
 #include "rigidCube.h"
 Mesh M;
-vector<rigidCube> RBodies;
-vector<rigidCube> RSBodies;
-int nr = 5; int nrs = 5;
-vec *PCur,*PNext;
 
-
-
-stack<vec> stk ;
-int RES = 8;
-#define RES_DEF 8
-vec PConvex[(RES_DEF + 1)*(RES_DEF + 1)  *    (RES_DEF + 1) * (RES_DEF + 1)];
-int nCol;
-//Matrix4 T;
-
-
-Interpolator matProp;
-
-float simTime = 0;
-
-Graph G_RB;
-Graph G_RBS;
 
 
 #define rx ofRandom(-1,1)
+#define rxx ofRandom( 1,5)
 rigidCube R1, R2;
 
-rigidCube RCS[RES_DEF][RES_DEF];
-Matrix4 trans;
-vec pt(0.9, 0.25, 0);
 
 double zTol = 0.2;
 double angleR = -45;
 vec cenCur(0.0, 0, 1);
 bool run = false;
+vec sc_r1, sc_r2;
 //////////////////////////////////////////////////////////////////////////
 
 void inverse()
@@ -92,30 +69,35 @@ void setup()
 	int sizeInKB = sizeof(rigidCube) / 1024;
 	cout << (sizeInKB * 100000) / 1000 << " sizeInMB : 100,000 micro-units " << endl;
 
-		R1 = rigidCube(1.0);
-		R1.setScale(2.0, 2.0, 1);
-		R1.transform();
-		R1.transMatrix.identity();
-		R1.transMatrix.setColumn(3, vec(1, 0, 0));
-		R1.transform();
+	angleR = +45.;
+	cenCur = vec(0.0, 0, 1);
+	sc_r1 = vec(rxx, rxx, 1);
+	sc_r2 = vec(rxx, rxx, 1);
 
-		
-		R2 = rigidCube(1.0);
+	R1 = rigidCube(1.0);
+	R1.setScale(sc_r1.x,sc_r1.y,sc_r1.z);
+	R1.transform();
+	R1.transMatrix.identity();
+	R1.transMatrix.setColumn(3, vec(rx, rx, 0));
+	R1.transform();
 
-		R2.setScale(2.0, 4.0, 1);
-		R2.transform();
-		R2.transMatrix.identity();
-		R2.transMatrix.rotateZ(angleR);
-		R2.transMatrix.setColumn(3, cenCur );
-		R2.transform();
 
-		
+	R2 = rigidCube(1.0);
+
+	R2.setScale(sc_r2.x, sc_r2.y, sc_r2.z);
+	R2.transform();
+	R2.transMatrix.identity();
+	R2.transMatrix.rotateZ(angleR);
+	R2.transMatrix.setColumn(3, cenCur);
+	R2.transform();
+
 }
 
 
 void update(int value)
 {
-	if (run)keyPress('x', 0, 0);
+	if (run)
+		for (int i = 0; i < 25; i++)keyPress('x', 0, 0);
 
 }
 
@@ -136,9 +118,18 @@ void draw()
 //	R1.computeCollisionInterfaces(R2,0.15);
 	R1.isFacetoFace(R2, 4, 5, 0.2);
 	double area = R1.areaofConvexHUll();
-	char s[20];
+	//
+	char s[200];
+	sprintf(s, "R1 %1.2f w %1.2f h", sc_r1.x, sc_r1.y);
+	deferDraw_addElement(s);
+	sprintf(s, "R2 %1.2f w %1.2f h", sc_r2.x, sc_r2.y);
+	deferDraw_addElement(s);
+	
 	sprintf(s, " %1.8f area", area);
 	deferDraw_addElement(s);
+
+	
+	
 
 	sprintf(s, " %1.2f angle", angleR);
 	deferDraw_addElement(s);
@@ -165,7 +156,6 @@ void mousePress(int b, int state, int x, int y)
 	{
 		B.performSelection(x, y);
 		S.performSelection(x, y, HUDSelectOn);
-		matProp.performselection(x, y, HUDSelectOn);
 	}
 }
 
@@ -175,9 +165,7 @@ void mouseMotion(int x, int y)
 {
 	{
 		S.performSelection(x, y, HUDSelectOn);
-		matProp.performselection( x,  y, HUDSelectOn);
 
-		for (int i = 0; i < RSBodies.size(); i++) RSBodies[i].dia = RSBodies[0].dia;
 	}
 }
 
@@ -223,17 +211,17 @@ void keyPress(unsigned char k, int xm, int ym)
 
 		//////////////////////////////////////////////////////////////////////////
 		double dA_dAng = (areaPlus - areaMinus) / 0.02;
-		angleR += dA_dAng * 100;
+		angleR += dA_dAng * 100.0;
 		
 		double dA_dX = (areaXPlus - areaXMinus) / 0.02;
-		//cenCur.x += dA_dX * 1000;
+		cenCur.x += dA_dX * 0.001;
 		
 		double dA_dY = (areaYPlus - areaYMinus) / 0.02;
-	//	cenCur.y += dA_dY * 1000;
+		cenCur.y += dA_dY * 0.001;
 
-		printf("%1.8f,%1.8f,%1.8f \n", dA_dAng, dA_dX, dA_dY);
+		//printf("%1.8f,%1.8f,%1.8f \n", dA_dAng, dA_dX, dA_dY);
 		setVariables(angleR,cenCur);
-
+		deferDrawElements.clear();
 	}
 
 	if (k == ' ')run = !run;

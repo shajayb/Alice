@@ -11,7 +11,7 @@ using namespace ROBOTICS;
 ////// --- MODEL OBJECTS ----------------------------------------------------
 
 float objectMatrix[16];
-Matrix4 T;
+Matrix4 Tr;
 Mesh M;
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
@@ -127,8 +127,8 @@ void imgui_draw()
 
 void setup()	
 {
-	T.identity();
-	for (int i = 0; i < 16; i += 1)objectMatrix[i] = T[i];
+	Tr.identity();
+	for (int i = 0; i < 16; i += 1)objectMatrix[i] = Tr[i];
 
 
 

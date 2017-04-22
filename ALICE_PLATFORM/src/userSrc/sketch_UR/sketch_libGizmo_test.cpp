@@ -14,7 +14,7 @@ using namespace ROBOTICS;
 
 IGizmo *Gz, *Gz_m, *Gz_r, *Gz_s;
 float objectMatrix[16];
-Matrix4 T;
+Matrix4 Tr;
 Mesh M;
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
@@ -24,8 +24,8 @@ Mesh M;
 
 void setup()	
 {
-	T.identity();
-	for (int i = 0; i < 16; i += 1)objectMatrix[i] = T[i];
+	Tr.identity();
+	for (int i = 0; i < 16; i += 1)objectMatrix[i] = Tr[i];
 
 	Gz_m = CreateMoveGizmo();
 	Gz_r = CreateRotateGizmo();
@@ -54,15 +54,15 @@ void setup()
 
 void update(int value)
 {
-	T.invert();
-	for (int i = 0; i < M.n_v; i++) M.positions[i] = T * M.positions[i];
+	Tr.invert();
+	for (int i = 0; i < M.n_v; i++) M.positions[i] = Tr * M.positions[i];
 
 	
 	Gz->SetScreenDimension(winW, winH);
-	for (int i = 0; i < 16; i += 1)T[i] = objectMatrix[i];
-	T = T.transpose();
+	for (int i = 0; i < 16; i += 1)Tr[i] = objectMatrix[i];
+	Tr = Tr.transpose();
 
-	for (int i = 0; i < M.n_v; i++) M.positions[i] = T * M.positions[i];
+	for (int i = 0; i < M.n_v; i++) M.positions[i] = Tr * M.positions[i];
 	
 	
 }
@@ -119,7 +119,7 @@ void draw()
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
 		{
-			sprintf(s, "%1.2f", T[j * 4 + i]);
+			sprintf(s, "%1.2f", Tr[j * 4 + i]);
 			drawString(s, i * width + str.x, j * ht + str.y);
 		}
 

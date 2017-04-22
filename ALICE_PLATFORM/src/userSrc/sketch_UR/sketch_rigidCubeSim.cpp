@@ -1,3 +1,5 @@
+
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -35,8 +37,8 @@ vec PConvex[(RES_DEF + 1)*(RES_DEF + 1)  *    (RES_DEF + 1) * (RES_DEF + 1)];
 int nCol;
 //Matrix4 T;
 bool run = false;
-ButtonGroup B;
-SliderGroup S;
+//ButtonGroup B;
+//SliderGroup S;
 Interpolator matProp;
 
 float simTime = 0;

@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\alglib\alglibinternal.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\alglibmisc.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\ap.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\dataanalysis.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\diffequations.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\fasttransforms.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\integration.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\interpolation.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\linalg.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\optimization.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\solvers.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\specialfunctions.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\alglib\statistics.cpp">
+      <Filter>algLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_algLibtest.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\userSrc\sketch_UR\MODEL.h">
+      <Filter>mvp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\Controller.h">
+      <Filter>mvp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\interpolate.h">
+      <Filter>mvp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\object.h">
+      <Filter>mvp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\utilities.h">
+      <Filter>mvp</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="mvp">
+      <UniqueIdentifier>{f47b8411-c9e8-4a27-91d5-ccd4f631dcdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="algLib">
+      <UniqueIdentifier>{369c1607-ed4a-4fec-ae08-370a4b9683cf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -3,9 +3,18 @@
 #include "ALICE_DLL.h"
 #include "matrices.h"
 
+#ifdef _ALG_LIB_
+
+
+
+#include "optimization.h"
+using namespace alglib;
+
+#endif // _ALG_LIB_
+
 inline float SIGN(float x) { return (x >= 0.0f) ? +1.0f : -1.0f; }
 inline float NORM(float a, float b, float c, float d) { return sqrt(a * a + b * b + c * c + d * d); }
-
+bool areClose(double &a, double &b, double tol);
 
 
 struct E
@@ -235,7 +244,7 @@ void drawVector(vec&a, vec loc, string suffix)
 	setup2d();
 
 	char s[200];
-	sprintf(s, "%1.2f,%1.2f,%1.6f : ", a.x, a.y, a.z);
+	sprintf(s, "%1.2f,%1.2f,%1.2f : ", a.x, a.y, a.z);
 	string str = s;
 	str += suffix;
 	drawString(str, loc);
@@ -651,12 +660,11 @@ IntersectResult Intersect_segment2d(double *x, double *y, double &u, double &v)
 		return NOT_INTERESECTING;
 }
 
-vec Intersect_linesegments( vec *pts, vec &normal , double &u, double &v,bool project = true )
+vec Intersect_linesegments( vec *pts, double &u, double &v )
 {
 	double x[4], y[4];
 	for (int i = 0; i < 4; i++)
 	{
-		if(project)pts[i] = pts[i] - normal * (pts[i] * normal); // project to face i
 		x[i] = pts[i].x;
 		y[i] = pts[i].y;
 
@@ -666,20 +674,71 @@ vec Intersect_linesegments( vec *pts, vec &normal , double &u, double &v,bool pr
 	return pts[0] + (pts[1]-pts[0])* u; 
 }
 
-vec Intersect_linesegments(vec *pts, double &u, double &v, bool project = true) // pts is of length 4
+
+void computeFrame( vec *pts, Matrix4 &T )
+{
+	vec u = (pts[1] - pts[0]).normalise();
+	vec n = (u).cross(pts[3] - pts[2]).normalise();
+	vec v = u.cross(n).normalise();
+	vec cen;
+	for (int i = 0; i < 4; i++)cen += pts[i];
+	cen /= 4.0;
+
+	T.setColumn(0, u);
+	T.setColumn(1, v);
+	T.setColumn(2, n);
+	T.setColumn(3, cen);
+
+}
+
+enum planes { XY, YZ, ZX };
+bool arePointsCloseToVerticalPlane( vec *pts , planes pl, int n = 4 )
+{
+	bool closeToVerticalPlane;
+	double y = 0.0;
+	
+	
+	int i = 0;
+	while ( areClose( (pl == ZX) ? pts[i].y : pts[i].x , y, 1e-2) && i < n )i++;
+
+	closeToVerticalPlane = (i == n) ? true : false;
+	i = 0;
+
+	return closeToVerticalPlane;
+}
+Matrix4 Tr, Tr_inv;
+vec Intersect_linesegments(vec *pts, double &u, double &v, bool &closeToVerticalPlane ) // pts is of length 4
 {
 
-	/*for (int i = 0; i < 4; i++)swap(pts[i].x, pts[i].z);*/
+	// check if close to xz or yz plane ...
 
-	vec normal = (pts[1] - pts[0]).cross(pts[3] - pts[2]).normalise();
-	vec pt = Intersect_linesegments( pts, normal, u,v, project) ;
+	closeToVerticalPlane = arePointsCloseToVerticalPlane(pts,ZX,4);
+	if (!closeToVerticalPlane) closeToVerticalPlane = arePointsCloseToVerticalPlane(pts, YZ, 4);
 	
-	//swap(pt.x, pt.z);
-	//for (int i = 0; i < 4; i++)swap(pts[i].x, pts[i].z);
+	// if so, invert to horizontal plane : uvn--> xyz;
+	if(closeToVerticalPlane)
+	{
+		computeFrame(pts, Tr);
+
+		Tr_inv = Tr;
+		Tr_inv.invert();
+		for (int i = 0; i < 4; i++)pts[i] = Tr_inv * pts[i];
+	}
+
+	// compute intersection
+	vec pt = Intersect_linesegments( pts, u,v) ;
 	
+	//transform back to original planem, if previous inverted;
+	if( closeToVerticalPlane ) 
+	{
+		for (int i = 0; i < 4; i++)pts[i] = Tr * pts[i];
+		pt = Tr * pt;
+	}
+
 	return pt;
 }
 
+// obsolete .. too many sqrt calcs... and conditionals; use Intersect_linesegments(vec *pts, double &u, double &v, bool &closeToVerticalPlane );
 vec Intersect_linesegments(vec *pts , double &lambda)
 {
 	vec v1 = (pts[1] - pts[0]);// .normalise();
@@ -710,11 +769,11 @@ vec Intersect_linesegments(vec *pts , double &lambda)
 	param2 = intPt.distanceTo(pts[3]) / l2;
 	/*param1 = (intPt - pts[2])*(intPt - pts[2]) / (l1*l1);
 	param1 = (intPt - pts[3])*(intPt - pts[3]) / (l2*l2);*/
-	//printf("%1.8f,%1.8f, %1.8f, %1.8f,%1.8f \n", param1,param2, LHS.angle(RHS), denom,lambda);
 	
 	if ( param1 > 1.0f + EPS || param2 > 1.0 + EPS )lambda = -1.0; // greater than computes to true without the EPS addition
 	return (intPt);
 }
+
 vec pointInNewBasis( vec inPt , vec &u, vec &v, vec &n, vec &c)
 {
 	vec rpt = inPt;
@@ -814,14 +873,15 @@ void deferDraw_addElement( string suffix = "")
 	deferDrawElements.push_back( deferDrawElement(TEXT,suffix) );
 }
 
-void deferDraw_addElement(double r , string suffix = "" )
+void deferDraw_addElement(float r , string suffix = "" )
 {
 	char s[20];
-	sprintf(s, " %1.2f ", r);
-	string str = s;
+	sprintf(s, " %1.2f ", float(r));
+	string str;
+	str += s;
 	str += suffix;
 
-	deferDrawElements.push_back(deferDrawElement(TEXT, suffix));
+	deferDrawElements.push_back( deferDrawElement(TEXT, str));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -830,6 +890,11 @@ bool areClose( vec &a,vec &b, double tol)
 {
 	vec c = b - a;
 	return(fabs(c.x) < tol && fabs(c.y) < tol && fabs(c.z) < tol);
+}
+
+bool areClose(double &a, double &b, double tol)
+{
+	return(fabs(a-b) < tol );
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -872,6 +937,170 @@ vector<string> splitString(const string& str, const string& delimiter)
 	}
 	return elements;
 }
+
+
+//////////////////////////////////////////////////////////////////////////
+
+struct tri
+{
+	tri() {};
+	tri(vec *pt)
+	{
+		for (int i = 0; i < 3; i++)pts[i] = pt[i];
+	}
+
+	tri(vector<vec> &pt)
+	{
+		for (int i = 0; i < 3; i++)pts[i] = pt[i];
+	}
+
+	tri(vec &a, vec &b, vec &c)
+	{
+		pts[0] = a;
+		pts[1] = b;
+		pts[2] = c;
+	}
+
+	void subDivide(vector<tri> &tris, bool all = true)
+	{
+		tri T;
+		for (int i = 0; i < 3; i++)T.pts[i] = ((pts[i] + pts[(i + 1) % 3]) * 0.5);
+
+		tris.push_back(T);
+		if (all)
+		{
+			tris.push_back(tri(pts[0], T.pts[0], T.pts[2]));
+			tris.push_back(tri(pts[1], T.pts[1], T.pts[0]));
+			tris.push_back(tri(pts[2], T.pts[2], T.pts[1]));
+		}
+	}
+
+	vec centroid()
+	{
+		return ((pts[0] + pts[1] + pts[2]) / 3.0);
+	}
+
+	void draw()
+	{
+		for (int i = 0; i < 3; i++) drawLine(pts[i], pts[(i + 1) % 3]);
+	}
+	vec pts[3];
+};
+
+
+void subDivideTris( vector<tri> &TRIS , vector<vec> &subPts, int numDivs )
+{
+	
+	int gen = 0;
+	subPts.clear();
+
+	for (int i = 0; i < numDivs; i++)//keyPress(' ', 0, 0);
+	{
+		// sub divide latest generation of traingles.
+		vector<tri>TRI_NEWGEN;
+		for (int i = gen; i < TRIS.size(); i++)
+		{
+			TRIS[i].subDivide(TRI_NEWGEN);
+			for (int j = 0; j < 3; j++)subPts.push_back( TRI_NEWGEN[TRI_NEWGEN.size() - 4].pts[j] ); // add points of central (first of 4) triangle
+		}
+
+		// append buffer, update count;
+		for (int i = 0; i < TRI_NEWGEN.size(); i++)TRIS.push_back(TRI_NEWGEN[i]);
+		gen = TRIS.size() - TRI_NEWGEN.size();
+	}
+}
+
+vector<tri> subDivideHull(vec *C_HULL, int n, vector<vec> &subPts, int numDivs = 2)
+{
+	// centroid
+	vec cen;
+	for (int i = 0; i < n; i++)cen += C_HULL[i];
+	cen /= n;
+
+	// triangulate hull
+	vector<tri>TRIS;
+	for (int i = 0; i < n; i++)
+	{
+		TRIS.push_back(tri(C_HULL[i], C_HULL[(i + 1) % n], cen));
+		for (int j = 0; j < 3; j++)subPts.push_back( TRIS[TRIS.size() - 1].pts[j] );
+	}
+
+	// subDivide triangles, 5 times, collect points in subPts;
+	subDivideTris(TRIS, subPts, numDivs);
+
+	return TRIS;
+}
+
+
+////////////////////////////////////////////////////////////////////////// QP solver
+
+#ifdef _ALG_LIB_
+
+
+void QP_SOLVE_dense(real_2d_array &A , real_1d_array &b, real_1d_array &x)
+{
+	//
+	// This example demonstrates minimization of F(x0,x1) = x0^2 + x1^2 -6*x0 - 4*x1
+	//
+	// Exact solution is [x0,x1] = [3,2]
+	//
+	// We provide algorithm with starting point, although in this case
+	// (dense matrix, no constraints) it can work without such information.
+	//
+	// IMPORTANT: this solver minimizes  following  function:
+	//     f(x) = 0.5*x'*A*x + b'*x.
+	// Note that quadratic term has 0.5 before it. So if you want to minimize
+	// quadratic function, you should rewrite it in such way that quadratic term
+	// is multiplied by 0.5 too.
+	//
+	// For example, our function is f(x)=x0^2+x1^2+..., but we rewrite it as 
+	//     f(x) = 0.5*(2*x0^2+2*x1^2) + ....
+	// and pass diag(2,2) as quadratic term - NOT diag(1,1)!
+	//
+	//real_2d_array A = "[[2,0],[0,2]]";
+	//real_1d_array b = "[-6,-4]";
+	real_1d_array x0;// = "[0,1]";
+	x0.setlength(b.length());
+	for (int i = 0; i < x0.length(); i++)x0[i] = 0; // intial guess for solution vector;
+
+	real_1d_array s;
+	s.setlength(b.length());
+	for (int i = 0; i < s.length(); i++)s[i] = 1; // scale of the variables 
+
+	//real_1d_array x;
+	minqpstate state;
+	minqpreport rep;
+
+	// create solver, set quadratic/linear terms
+	minqpcreate(b.length(), state);
+	minqpsetquadraticterm(state, A);
+	minqpsetlinearterm(state, b);
+	minqpsetstartingpoint(state, x0);
+
+	// Set scale of the parameters.
+	// It is strongly recommended that you set scale of your variables.
+	// Knowing their scales is essential for evaluation of stopping criteria
+	// and for preconditioning of the algorithm steps.
+	// You can find more information on scaling at http://www.alglib.net/optimization/scaling.php
+	minqpsetscale(state, s);
+
+	// solve problem with QuickQP solver, default stopping criteria are used, Newton phase is active
+	//minqpsetalgoquickqp(state, 0.0, 0.0, 0.0, 0, true);
+	//minqpoptimize(state);
+	//minqpresults(state, x, rep);
+	//printf("%d\n", int(rep.terminationtype)); // EXPECTED: 4
+	//printf("%s\n", x.tostring(2).c_str()); // EXPECTED: [3,2]
+
+	// solve problem with BLEIC-based QP solver.
+	// default stopping criteria are used.
+	minqpsetalgobleic(state, 0.0, 0.0, 0.0, 0);
+	minqpoptimize(state);
+	minqpresults(state, x, rep);
+	//printf("%d\n", int(rep.terminationtype)); // EXPECTED: 4
+	//printf("%s\n", x.tostring(2).c_str()); // EXPECTED: [3,2]
+}
+
+#endif // _ALG_LIB_
 
 #define _UTILITIES_
 #endif // !_UTILITIES_
