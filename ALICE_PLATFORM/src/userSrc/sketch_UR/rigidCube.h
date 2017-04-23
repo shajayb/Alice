@@ -463,7 +463,10 @@ public:
 		b.setlength(hullCnt);
 		x.setlength(hullCnt);
 
-		for (int i = 0; i < hullCnt; i++)b[i] = -1.0;// *((i % 2 == 0) ? 1 : 1);
+		vec Wa, Wb; //weight vector of Body A,B
+		Wa = Wb = vec(0, 0, -1);
+		
+		for (int i = 0; i < hullCnt; i++)b[i] = (Wa + Wb) * n;// *((i % 2 == 0) ? 1 : 1); Wa
 
 		for (int i = 0; i < hullCnt; i++)
 			for (int j = 0; j < hullCnt; j++)
@@ -502,19 +505,28 @@ public:
 			}
 
 		
-		QP_SOLVE_dense(Amat, b, x);
+		QP_SOLVE_dense(Amat, b, x);// solves 0.5 * Xt *A * x + bt *x ;
+		for (int i = 0; i < hullCnt; i++)x[i] *= 2.0;
 		printf("\n%s\n ---- a\n ", x.tostring(hullCnt).c_str()); // EXPECTED: [3,2]
 		
-		vec netT;
+		vec netT,netF;
 		for (int i = 0; i < hullCnt; i++)
 		{
 			netT += (n * (x[i])).cross(ptConvex[i] - r2.cog);
+			netF += (n * (x[i]));
 		}
+
+		netF += (Wa + Wb);
+		F = netF;
+		T = netT;
 
 		cog.print();
 		cout << "cog" << endl;
 		r2.cog.print();
 		cout << "r2Cog" << endl;
+		netT.print();
+		netF.print();
+
 		deferDraw_addElement(netT, "net T on r2");
 	/*	for (int i = 0; i < hullCnt; i++)
 		{
