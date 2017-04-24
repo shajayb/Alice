@@ -1,3 +1,5 @@
+#define _MAIN_
+#define _ALG_LIB_
 
 
 
@@ -147,7 +149,7 @@ void draw()
 {
 
 	backGround(0.8);
-	glColor3f(0, 0, 0);drawGrid(10);
+	glColor3f(0, 0, 0);//drawGrid(10);
 
 	//R2.computeGrid(PCur, RES);
 

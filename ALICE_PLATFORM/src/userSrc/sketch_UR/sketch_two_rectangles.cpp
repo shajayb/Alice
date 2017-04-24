@@ -36,6 +36,8 @@ double angleR = -45;
 vec cenCur(0.0, 0, 1);
 bool run = false;
 vec sc_r1, sc_r2;
+vec gradient;
+
 //////////////////////////////////////////////////////////////////////////
 
 void inverse()
@@ -105,8 +107,8 @@ vec normal(0, 0, 1);
 void draw()
 {
 
-	backGround(0.8);
-	glColor3f(0, 0, 0);drawGrid(10);
+	backGround(1.0);
+	glColor3f(0, 0, 0);//drawGrid(10);
 
 
 
@@ -118,6 +120,9 @@ void draw()
 //	R1.computeCollisionInterfaces(R2,0.15);
 	R1.isFacetoFace(R2, 4, 5, 0.2);
 	double area = R1.areaofConvexHUll();
+
+	drawLine(R1.cen, R2.cen);
+	drawLine(R2.cen, R2.cen + gradient);
 	//
 	char s[200];
 	sprintf(s, "R1 %1.2f w %1.2f h", sc_r1.x, sc_r1.y);
@@ -218,6 +223,8 @@ void keyPress(unsigned char k, int xm, int ym)
 		
 		double dA_dY = (areaYPlus - areaYMinus) / 0.02;
 		cenCur.y += dA_dY * 0.001;
+
+		gradient = vec(dA_dX, dA_dY, 0.0);
 
 		//printf("%1.8f,%1.8f,%1.8f \n", dA_dAng, dA_dX, dA_dY);
 		setVariables(angleR,cenCur);

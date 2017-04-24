@@ -1,5 +1,3 @@
-#define _MAIN_
-#define _ALG_LIB_
 
 #ifdef _MAIN_
 
@@ -19,7 +17,7 @@ using namespace std::experimental;
 #include "ActiveGraph.h"
 
 //////////////////////////////////////////////////////////////////////////
-Graph G;
+Graph G, G_RB;
 activeGraph wet_AG, wet_AG1;
 rigidCube r1, r2;
 vector<activeGraph> taskGraph;
@@ -37,7 +35,7 @@ void setup()
 	importer imp = *new importer(file, 10000, 1.0);
 	imp.readPts_p5();
 
-	
+
 	G.reset();
 	for (int i = 0; i < imp.nCnt; i++) G.createVertex(imp.nodes[i].pos + vec(0, 0, 0.1 * float(j)));
 	for (int i = 0; i < imp.eCnt; i++) G.createEdge(G.vertices[imp.edges[i].n0], G.vertices[imp.edges[i].n1]);
@@ -52,11 +50,11 @@ void setup()
 	toroidalGraph A;
 	A.constructFromGraph(G, 5);
 	wet_AG.constructFromToroidalGraph(A);
-	wet_AG.populateRigidBodies( 0.25,1.0);
-	
+	wet_AG.populateRigidBodies(0.25, 0.25);
+
 	wet_AG1.constructFromToroidalGraph(A);
-	for (int i = 0; i < wet_AG1.n_v; i++)wet_AG1.positions[i].z += 1;
-	wet_AG1.populateRigidBodies(0.25, 1.0);
+	for (int i = 0; i < wet_AG1.n_v; i++)wet_AG1.positions[i].z += 0.25;
+	wet_AG1.populateRigidBodies(0.25, 0.25);
 
 	int i = 15;
 	r1 = wet_AG1.RCsOnCurve[i];
@@ -77,8 +75,31 @@ void setup()
 	//	taskGraph.push_back(AG);
 
 	//}
-}
 
+
+	{
+		importer imp = *new importer("data/tree_pts.txt", 10000, 1.0);
+		imp.readEdges();
+		//---------
+		G_RB.reset();
+		for (int i = 0; i < imp.nCnt; i++)G_RB.createVertex(imp.nodes[i].pos);
+		for (int i = 0; i < imp.eCnt; i++)G_RB.createEdge(G_RB.vertices[imp.edges[i].n0], G_RB.vertices[imp.edges[i].n1]);
+
+		Matrix4 trans;
+		G_RB.boundingbox(minV, maxV);
+		double preferedDiag = 50;
+		trans.scale(preferedDiag / (minV.distanceTo(maxV)));
+		trans.translate((minV + maxV) * 0.5);
+		for (int i = 0; i < G_RB.n_v; i++) G_RB.positions[i] = trans * G_RB.positions[i];
+		cout << " ACUTAL DIAG " << minV.distanceTo(maxV) << endl;
+		G_RB.boundingbox(minV, maxV);
+
+		for (int i = 0; i < G_RB.n_v; i++) G_RB.positions[i] -= (minV + maxV) * 0.5;
+
+
+
+	}
+}
 
 void update(int value)
 {
@@ -91,12 +112,12 @@ void draw()
 {
 
 	backGround(0.75);
-	drawGrid(20);
+	//drawGrid(20);
 
-	//G.draw();
+	G_RB.draw();
 	//AG.draw();
 	/*AG1.display();*/
-	//for (auto AG : taskGraph)AG.display();
+	for (auto AG : taskGraph)AG.display();
 
 	
 	wet_AG1 = taskGraph[1];

@@ -512,12 +512,19 @@ public:
 		
 		vec netT,netF;
 		glLineWidth(4);
-		glColor3f(1, 1, 0);
+		
 		for (int i = 0; i < hullCnt; i++)
 		{
 			netT += (n * (x[i])).cross(ptConvex[i] - r2.cog);
 			netF += (n * (x[i]));
-			drawLine(ptConvex[i], ptConvex[i] + (n * ofClamp(x[i],-1,1)));
+			vec fi = (n * ofClamp(x[i], -1, 1) );
+			glColor3f(1, 1, 0);  drawLine(ptConvex[i], ptConvex[i] + fi);
+
+			char s[200];
+			sprintf(s, "f");
+			drawString(s, ptConvex[i] + (n * (ofClamp(x[i], -1, 1) - 0.1)));
+
+			glColor3f(0, 1, 0); drawLine(ptConvex[i], ptConvex[i] - fi * 0.5 );
 		}
 		glLineWidth(1);
 		glColor3f(0, 0, 0);
@@ -674,11 +681,14 @@ public:
 
 
 		}
-		else
+		//else
 		{
 			glLineWidth(4);
 			glColor3f(1, 0, 1);
 			drawLine(cen, cen+vec(0, 0, -0.75));
+			char s[200];
+			sprintf(s, "W");
+			drawString(s, cen + vec(0, 0, -0.8));
 			glLineWidth(1);
 
 			
