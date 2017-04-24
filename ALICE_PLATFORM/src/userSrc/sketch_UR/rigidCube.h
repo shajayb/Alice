@@ -1,3 +1,5 @@
+
+
 #ifndef _RIGID_CUBE_
 #include "main.h"
 #include "ALICE_DLL.h"
@@ -56,28 +58,29 @@ public:
 	{
 		MeshFactory fac;
 		Mesh M = fac.createPlatonic( radius / sqrt(2), sides);
-		Matrix4 transM;
+	
 
-		getTopology(M);
-		getInvertRotateToAABB(M,transM);// cube needs to be rotated back to align with cardinal axes
-
-		for (int i = 0; i < 8; i++) M.positions[i] = transM * M.positions[i];
-		for (int i = 0; i < 8; i++) pos[i] =  M.positions[i];
-		
-		
-		setInitialTransformation(transMatrix);
-		//transMatrix = transM.identity();
-		transMatrix.identity();
+		extractFromMesh(M);
 	}
 
 	rigidCube( Mesh &M )
 	{
+		extractFromMesh(M);
+	}
 
+	void extractFromMesh( Mesh &M)
+	{
+		Matrix4 transM;
 		getTopology(M);
+		getInvertRotateToAABB(M, transM);// cube needs to be rotated back to align with cardinal axes
+
+
 		for (int i = 0; i < 8; i++) pos[i] = M.positions[i];
-		///
-		transMatrix.identity();
+		for (int i = 0; i < 8; i++) pos[i] = transM * pos[i];
+
 		setInitialTransformation(transMatrix);
+		//transMatrix = transM.identity();
+		transMatrix.identity();
 	}
 
 	void setInitialTransformation( Matrix4 &trans)
@@ -448,16 +451,14 @@ public:
 		extractFrame();
 		cog = cen;
 	}
-	double computeAij( int &i, int &j, rigidCube &r2, vec &n)
-	{
-	
-	}
+
 	void computeRestingForces(real_1d_array &x , vec &n, rigidCube &r2)
 	{
 		real_2d_array Amat;
 		real_1d_array b;
 		r2.updateCOG();
-		updateCOG();
+		//updateCOG();
+
 
 		Amat.setlength(hullCnt, hullCnt);
 		b.setlength(hullCnt);
@@ -467,6 +468,7 @@ public:
 		Wa = Wb = vec(0, 0, -1);
 		
 		for (int i = 0; i < hullCnt; i++)b[i] = (Wa + Wb) * n;// *((i % 2 == 0) ? 1 : 1); Wa
+		
 
 		for (int i = 0; i < hullCnt; i++)
 			for (int j = 0; j < hullCnt; j++)
@@ -488,7 +490,7 @@ public:
 				forceOnB = n * -1;
 
 				ra = ptConvex[i] - cog;
-				rb = ptConvex[i] - r2.cog;
+				rb = ptConvex[i] - r2.cog ;
 
 				torqueOnA = (ptConvex[j] - cog).cross(forceOnA);
 				torqueOnB = (ptConvex[j] - r2.cog).cross(forceOnB);
@@ -496,36 +498,39 @@ public:
 				aAng = (torqueOnA).cross(ra);//  getAngularMomentumContribution(torqueOnA, ra);
 				bAng = (torqueOnB).cross(rb);// r2.getAngularMomentumContribution(torqueOnB, rb);
 
-
 				Amat[i][j] = n * ( forceOnA - forceOnB + aAng - bAng);
-				//(aAng - bAng).print();
-				//n.print();
-				//bAng.print();
-				//cout << Amat[i][j] << "---" << endl;
+			
 			}
 
-		
+		//
+		//for (int i = 0; i < hullCnt; i++)ptConvex[i] += cog;
+		//r2.cog += cog;
+
 		QP_SOLVE_dense(Amat, b, x);// solves 0.5 * Xt *A * x + bt *x ;
 		for (int i = 0; i < hullCnt; i++)x[i] *= 2.0;
-		printf("\n%s\n ---- a\n ", x.tostring(hullCnt).c_str()); // EXPECTED: [3,2]
+		//printf("\n%s\n ---- a\n ", x.tostring(hullCnt).c_str()); // EXPECTED: [3,2]
 		
 		vec netT,netF;
+		glLineWidth(4);
+		glColor3f(1, 1, 0);
 		for (int i = 0; i < hullCnt; i++)
 		{
 			netT += (n * (x[i])).cross(ptConvex[i] - r2.cog);
 			netF += (n * (x[i]));
+			drawLine(ptConvex[i], ptConvex[i] + (n * ofClamp(x[i],-1,1)));
 		}
-
+		glLineWidth(1);
+		glColor3f(0, 0, 0);
 		netF += (Wa + Wb);
 		F = netF;
 		T = netT;
 
-		cog.print();
-		cout << "cog" << endl;
-		r2.cog.print();
-		cout << "r2Cog" << endl;
-		netT.print();
-		netF.print();
+		//cog.print();
+		//cout << "cog" << endl;
+		//r2.cog.print();
+		//cout << "r2Cog" << endl;
+		//netT.print();
+		//netF.print();
 
 		deferDraw_addElement(netT, "net T on r2");
 	/*	for (int i = 0; i < hullCnt; i++)
@@ -661,13 +666,31 @@ public:
 		// ----------------------------------------- computer convex hull of edge-edge intersections and pointsInPolygons;
 
 		//computeIntegratedContactForces(n);
-		real_1d_array x;
-		computeRestingForces(x, n, r2);
+		if( hullCnt >=3 )
+		{
+			
+			real_1d_array x;
+			computeRestingForces(x, n, r2);
+
+
+		}
+		else
+		{
+			glLineWidth(4);
+			glColor3f(1, 0, 1);
+			drawLine(cen, cen+vec(0, 0, -0.75));
+			glLineWidth(1);
+
+			
+		}
+
+		glLineWidth(5);
+		glColor3f(1, 0.25, 0.25);
+			DrawConvexHull();
+		glLineWidth(1);
 		
 		// ----------------------------------------- drawConvex hull
-		glLineWidth(5); 
-			DrawConvexHull(); 
-		glLineWidth(1);
+	
 
 
 		return true;
@@ -790,7 +813,7 @@ public:
 
 		for (int i = 0; i < hullCnt; i++)
 		{
-			drawCircle(ptConvex[i], 0.01, 32);
+			//drawCircle(ptConvex[i], 0.01, 32);
 			drawLine(ptConvex[i], ptConvex[(i + 1) % hullCnt]);
 			char s[200];
 			sprintf(s, "%i", i);
@@ -1059,13 +1082,13 @@ public:
 
 		glLineWidth(4.0);
 		
-		glColor3f(1, 0, 0.6);drawLine(cen, cen + F);
-		glColor3f(1, 0, 0.6);drawLine(cen, cen + T);
+		/*glColor3f(1, 0, 0.6);drawLine(cen, cen + F);
+		glColor3f(1, 0, 0.6);drawLine(cen, cen + T);*/
 
 		glLineWidth(1.0);
 		///
 
-		vec u, v, n;
+		/*vec u, v, n;
 		glPointSize(5);
 		glLineWidth(2.0);
 
@@ -1083,7 +1106,7 @@ public:
 			str += chr;
 			drawString_tmp(str, getfaceCenter(i)+ vec(0.01,0.01,0.01));
 			drawCircle(getfaceCenter(i), .025, 32);
-		}
+		}*/
 
 		glPointSize(1.0);
 		glLineWidth(1.0);

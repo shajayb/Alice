@@ -43,10 +43,6 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_rigidCubeSim.cpp">
       <Filter>PhD_R03</Filter>
     </ClCompile>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_tests.cpp">
-      <Filter>PhD_R03</Filter>
-    </ClCompile>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_rbe_test.cpp" />
     <ClCompile Include="src\alglib\optimization.cpp">
       <Filter>algLib</Filter>
     </ClCompile>
@@ -86,12 +82,30 @@
     <ClCompile Include="src\alglib\statistics.cpp">
       <Filter>algLib</Filter>
     </ClCompile>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_two_rectangles.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_lineSegment_intersect.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_test.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_threeRigidCubes.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_barySubDivide.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_algLibtest.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_barySubDivide.cpp">
+      <Filter>PhD_R04</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_test.cpp">
+      <Filter>PhD_R04</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_rbe_test.cpp">
+      <Filter>PhD_R04</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_algLibtest.cpp">
+      <Filter>PhD_R05</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_lineSegment_intersect.cpp">
+      <Filter>PhD_R05</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_populateGragh_v2.cpp">
+      <Filter>PhD_R05</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_threeRigidCubes.cpp">
+      <Filter>PhD_R05</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_two_rectangles.cpp">
+      <Filter>PhD_R05</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
@@ -137,6 +151,12 @@
     </Filter>
     <Filter Include="MVP">
       <UniqueIdentifier>{363452be-02d7-4398-854d-90ea253cf8b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PhD_R04">
+      <UniqueIdentifier>{69b194d3-0666-44b5-96b2-b22b8e61dcca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PhD_R05">
+      <UniqueIdentifier>{ae4ea988-c2cb-4316-9a2b-c4e2f18c4d15}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

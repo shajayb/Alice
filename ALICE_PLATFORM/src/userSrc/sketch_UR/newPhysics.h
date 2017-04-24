@@ -22,7 +22,7 @@ public:
 	newPhysics()
 	{
 		calcCharge = true;
-		calcCustom = true;
+//		calcCustom = true;
 		down = vec(0, 0, 0.0);
 		gravity = down.mag();
 	}

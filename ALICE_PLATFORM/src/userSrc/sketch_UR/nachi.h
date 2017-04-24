@@ -25,7 +25,7 @@ public:
 	EndEffector(string file)
 	{
 		MeshFactory fac;
-		M = fac.createFromOBJ(file, 1, false, false);
+		M = fac.createFromOBJ(file, 1, false);
 		invertMeshToLocal();
 
 		int i, j, k;

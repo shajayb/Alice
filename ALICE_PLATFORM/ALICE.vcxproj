@@ -101,6 +101,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\userSrc\sketch_UR\sketch_picking.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_populateGragh_v2.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_populateGraph.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -111,7 +112,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\userSrc\sketch_UR\sketch_rigidCubeSim.cpp" />
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_tests.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_threeRigidCubes.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>

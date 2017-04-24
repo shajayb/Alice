@@ -114,12 +114,13 @@ public:
 		//data points
 		glPointSize(4);
 		char s[200];
-		glColor3f(1,1,1);	
+		glColor3f(.9, .9, .9);
+
 			for( int i = 0 ; i < anchors.size() ; i++ )
 			{
 				drawPoint(anchors[i]);
 				sprintf(s,"%1.2f", ofMap(fabs(anchors[i].y-origin.y),0,h,0,dataMax));
-				drawString(s,anchors[i].x , anchors[i].y - 15 );
+				AL_drawString(s,anchors[i].x , anchors[i].y - 15 );
 			}
 		glPointSize(1);
 		
@@ -145,7 +146,7 @@ public:
 		vec or ;
 		or = origin;
 		or.y += h*0.1;
-		glColor3f(1,1,1);	
+		glColor3f(.9,.9,.9	);	
 		drawLine(or,or+vec(w,0,0));
 		
 		or = origin;

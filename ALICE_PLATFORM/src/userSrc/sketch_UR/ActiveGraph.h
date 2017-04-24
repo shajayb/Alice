@@ -7,7 +7,6 @@ using namespace ROBOTICS;
 #include "metaMesh.h"
 #include "nachi.h"
 #include "graph.h"
-#include "newPhysics.h";
 #include "rigidCube.h"
 
 
@@ -18,6 +17,7 @@ public:
 
 	rigidCube RC;
 	vector<rigidCube> RCsOnCurve;
+
 
 	activeGraph()
 	{
@@ -42,6 +42,8 @@ public:
 		vec S, E, cen, XA, YA, ZA;
 		ZA = vec(0, 0, 1);
 
+		MeshFactory fac;
+		Mesh M = fac.createPlatonic(1.0 / sqrt(2),6);
 
 		for (int i = 0; i < n_e; i++)
 		{
@@ -57,12 +59,21 @@ public:
 			Scale[0] = S.distanceTo(E)* 1.0;
 			Scale[1] = depth; Scale[2] = ht ;
 
-			//RC = *new rigidCube(M);
-			RC.setTransformation(XA, YA, ZA, cen);
+			///
+			RC = rigidCube(M);
+			
 			RC.setScale(Scale);
 			RC.transform();
+
+			Matrix4 T;
+			T.setColumn(0, XA);
+			T.setColumn(1, YA);
+			T.setColumn(2, ZA);
+			T.setColumn(3, cen);
+			RC.setInitialTransformation(T);
+			
 				RCsOnCurve.push_back(RC);
-			RC.inverseTransform();
+			
 		}
 
 		

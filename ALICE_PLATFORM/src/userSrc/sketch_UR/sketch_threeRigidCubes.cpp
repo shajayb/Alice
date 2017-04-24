@@ -1,5 +1,5 @@
-#define _MAIN_
-#define _ALG_LIB_
+
+
 
 #ifdef _MAIN_
 
@@ -46,7 +46,7 @@ vec sc_r1, sc_r2;
 #define RES 8
 vec PCur[RES*RES * 6]; 
 vec PNex[RES*RES * 6];
-
+double simTime = 0.0;
 //////////////////////////////////////////////////////////////////////////
 
 void inverse()
@@ -81,9 +81,9 @@ void setup()
 	cout << (sizeInKB * 100000) / 1000 << " sizeInMB : 100,000 micro-units " << endl;
 
 	angleR = +0;
-	cenCur = vec(0.0, 0.0, 1.5);
+	cenCur = vec(0,0, 1.5);
 	sc_r1 = vec(1, 1, 1);
-	sc_r2 = vec(0.5,0.85, 1);
+	sc_r2 = vec(0.8,0.8, 1);
 
 	R1 = rigidCube(1.0);
 	R1.setScale(sc_r1.x,sc_r1.y,sc_r1.z);
@@ -91,7 +91,7 @@ void setup()
 
 	T.identity();
 	T.rotateZ(angleR);
-	T.setColumn(3, vec(0,0,0.5));
+	T.setColumn(3, vec(0, 0, 0.5));
 	R1.setInitialTransformation(T);
 	
 
@@ -111,11 +111,31 @@ void setup()
 	//PCur = new vec[RES*RES*6];
 	//PNex = new vec[RES*RES * 6];
 	R2.b_Fgrv = true; 
+
+	//////////////////////////////////////////////////////////////////////////
+	#define SEG 4
+	float yValues[SEG];
+	for (int i = 0; i < SEG; i++)yValues[i] = float(i) / float(SEG);
+
+	yValues[0] = 0.001;
+	yValues[1] = 0.0015;
+	yValues[2] = 1.0;
+	yValues[3] = 1.0;
+	matProp = *new Interpolator(SEG, vec(50, 750, 0), 350, 100, yValues);
+	matProp.dataMin = 0.0;
+	matProp.dataMax = 1.0;
+	simTime = 0.0;
+
+
 }
 
 
 void update(int value)
 {
+	
+	float parameter = matProp.getValueAt(simTime);
+	simTime += R2.dt * 30;
+	
 	if (run)keyPress('n', 0, 0);
 		
 	//for (int i = 0; i < 25; i++)keyPress('x', 0, 0);
@@ -135,7 +155,7 @@ void draw()
 	glPushMatrix();
 	glScalef(5, 5, 5);
 	
-	R1.draw();	
+	R1.draw(0);	
 	R2.draw(); //R2.drawGridAsPoints(PCur, R2.cnt);
 	//R1.computeCollisionInterfaces(R2,0.15);
 	R2.resetForces();
@@ -143,6 +163,12 @@ void draw()
 	//R2.addSelfWeightAndTorque(PCur);
 	//R2.drawGridAsPoints(PCur, RES*RES * 6);
 	R2.isFacetoFace(R1, 5, 4, 0.2);
+
+
+
+	matProp.draw();
+
+	//////////////////////////////////////////////////////////////////////////
 
 
 	double area = R2.areaofConvexHUll();

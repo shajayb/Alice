@@ -7,7 +7,7 @@ using namespace ROBOTICS;
 #include "metaMesh.h"
 #include "nachi.h"
 #include "graph.h"
-#include "newPhysics.h";
+//#include "newPhysics.h";
 #include "ActiveGraph.h"
 #include "utilities.h"
 #include "graphStack.h"
@@ -35,7 +35,7 @@ int2 strId(0, 0);
 
 ////// --- GUI OBJECTS ----------------------------------------------------
 
-ButtonGroup B;
+//ButtonGroup B;
 bool showPoints = false;
 bool showSpheres = false;
 
@@ -125,7 +125,7 @@ void setup()
 
 	//// graph stack
 	displayStack.clear();
-	for (int j = 0; j < 35; j++)
+	for (int j = 0; j < 5; j++)
 	{
 
 		string file = "";
@@ -296,7 +296,7 @@ void draw()
 
 	for (auto nbor : nbor_RCs)
 	{
-		AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], PCur, PNext, RES);
+//		AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], PCur, PNext, RES);
 
 		AGStack[nbor.l].RCsOnCurve[nbor.n].draw(2, vec4(1, 0, 0, 1));
 		if (showSpheres)AGStack[nbor.l].RCsOnCurve[nbor.n].drawGrid(PNext, RES*RES*RES);
@@ -365,8 +365,8 @@ void keyPress(unsigned char k, int xm, int ym)
 				nbor_RCs.clear();
 				getNBors(id, nbor_RCs, 0.5);
 
-				for (auto nbor : nbor_RCs)
-					AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], PCur, PNext, RES);
+		//		for (auto nbor : nbor_RCs)
+//					AGStack[id.l].RCsOnCurve[id.n].computeContactsAndForces(AGStack[nbor.l].RCsOnCurve[nbor.n], PCur, PNext, RES);
 			}
 		}
 	}
