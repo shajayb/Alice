@@ -805,6 +805,7 @@ bool pointInPolygon(vec &pt,vec *pts , int n)
 }
 
 
+
 //////////////////////////////////////////////////////////////////////////
 
 void drawString_tmp(string &s, vec pt , bool twoD = false)
@@ -975,14 +976,37 @@ struct tri
 		}
 	}
 
+	void subDivide_center(vector<tri> &tris)
+	{
+		vec cen = centroid();
+		for (int i = 0; i < 3; i++)tris.push_back(tri(pts[i], pts[(i+1)%3], cen));
+	}
+
+	void subDivide_center(vector<tri> &tris, vec cen)
+	{
+		for (int i = 0; i < 3; i++)tris.push_back(tri(pts[i], pts[(i + 1) % 3], cen));
+	}
+
 	vec centroid()
 	{
 		return ((pts[0] + pts[1] + pts[2]) / 3.0);
 	}
-
-	void draw()
+	vec norm()
+	{
+		return (pts[1] - pts[0]).cross(pts[2] - pts[0]).normalise();
+	}
+	void draw( vec4 clr= vec4(1,1,1,1))
 	{
 		for (int i = 0; i < 3; i++) drawLine(pts[i], pts[(i + 1) % 3]);
+	
+		glColor3f(clr.r,clr.b,clr.g);
+		vec normal = norm();
+		glNormal3f(normal.x, normal.y, normal.z);
+		glBegin(GL_TRIANGLES);
+			for (int i = 0; i < 3; i++)glVertex3f(pts[i].x, pts[i].y, pts[i].z);
+		glEnd();
+		
+		//drawLine(centroid(), centroid() + norm().normalise());
 	}
 	vec pts[3];
 };

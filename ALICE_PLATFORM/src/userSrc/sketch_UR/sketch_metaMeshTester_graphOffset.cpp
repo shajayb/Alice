@@ -19,8 +19,8 @@ bool run = false;
 
 ////// --- GUI OBJECTS ----------------------------------------------------
 
-SliderGroup S;
-ButtonGroup B;
+//SliderGroup S;
+//ButtonGroup B;
 bool blendPrev, blend, blend1;
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------

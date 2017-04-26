@@ -107,7 +107,7 @@ importer imp;
 bool importFromFile = false;
 bool showstack = false;
 
-ButtonGroup B;
+//ButtonGroup B;
 
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM //
