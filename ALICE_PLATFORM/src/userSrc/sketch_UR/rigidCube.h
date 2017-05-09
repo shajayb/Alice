@@ -518,7 +518,7 @@ public:
 			netT += (n * (x[i])).cross(ptConvex[i] - r2.cog);
 			netF += (n * (x[i]));
 			vec fi = (n * ofClamp(x[i], -1, 1) );
-			glColor3f(1, 1, 0);  drawLine(ptConvex[i], ptConvex[i] + fi);
+			glColor3f(1, 0.25, 0);  drawLine(ptConvex[i], ptConvex[i] + fi);
 
 			char s[200];
 			sprintf(s, "f");
@@ -630,6 +630,7 @@ public:
 	}
 
 	vec pts_faceI[4], pts_faceJ[4];
+	bool computeRestingContacts = false;
 	bool isFacetoFace( rigidCube &r2, int i, int j, double distancetoPlaneTolerance = 0.2)
 	{
 
@@ -677,18 +678,18 @@ public:
 		{
 			
 			real_1d_array x;
-			computeRestingForces(x, n, r2);
+			if(computeRestingContacts)computeRestingForces(x, n, r2);
 
 
 		}
-		//else
+		else
 		{
 			glLineWidth(4);
 			glColor3f(1, 0, 1);
-			drawLine(cen, cen+vec(0, 0, -0.75));
+			if (computeRestingContacts)drawLine(cen, cen+vec(0, 0, -0.75));
 			char s[200];
 			sprintf(s, "W");
-			drawString(s, cen + vec(0, 0, -0.8));
+			//drawString(s, cen + vec(0, 0, -0.8));
 			glLineWidth(1);
 
 			
@@ -827,7 +828,7 @@ public:
 			drawLine(ptConvex[i], ptConvex[(i + 1) % hullCnt]);
 			char s[200];
 			sprintf(s, "%i", i);
-			drawString(s, ptConvex[i]);
+			//drawString(s, ptConvex[i]);
 		}
 	}
 

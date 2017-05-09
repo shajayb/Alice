@@ -1,5 +1,4 @@
-#define _MAIN_
-#define _ALG_LIB_
+
 
 
 
@@ -128,6 +127,7 @@ void setup()
 	matProp.dataMax = 1.0;
 	simTime = 0.0;
 
+	R2.computeRestingContacts = true;
 
 }
 
@@ -148,7 +148,7 @@ vec normal(0, 0, 1);
 void draw()
 {
 
-	backGround(0.8);
+	backGround(1);
 	glColor3f(0, 0, 0);//drawGrid(10);
 
 	//R2.computeGrid(PCur, RES);

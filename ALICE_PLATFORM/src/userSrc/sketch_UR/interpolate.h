@@ -114,7 +114,7 @@ public:
 		//data points
 		glPointSize(4);
 		char s[200];
-		glColor3f(.9, .9, .9);
+		glColor3f(0.75,0.75,0.75);
 
 			for( int i = 0 ; i < anchors.size() ; i++ )
 			{
@@ -146,7 +146,7 @@ public:
 		vec or ;
 		or = origin;
 		or.y += h*0.1;
-		glColor3f(.9,.9,.9	);	
+		glColor3f(0.75, 0.75, 0.75);
 		drawLine(or,or+vec(w,0,0));
 		
 		or = origin;

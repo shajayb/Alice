@@ -1,4 +1,5 @@
 
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -95,15 +96,17 @@ void setup()
 		G_RB.boundingbox(minV, maxV);
 
 		for (int i = 0; i < G_RB.n_v; i++) G_RB.positions[i] -= (minV + maxV) * 0.5;
-
-
-
 	}
+
+	B.numButtons = 0;
+	B.addButton(&taskGraph[1].RCsOnCurve[0].computeRestingContacts, "contacts");
 }
 
 void update(int value)
 {
-	//AG.smoothVertices();
+	bool val = taskGraph[1].RCsOnCurve[0].computeRestingContacts;
+	for (int i = 0; i < taskGraph.size(); i++)
+		for (int j = 0; j < taskGraph[i].RCsOnCurve.size(); j++)taskGraph[i].RCsOnCurve[j].computeRestingContacts = val;
 
 }
 
@@ -111,7 +114,7 @@ void update(int value)
 void draw()
 {
 
-	backGround(0.75);
+	backGround(1.0);
 	//drawGrid(20);
 
 	G_RB.draw();
@@ -125,7 +128,7 @@ void draw()
 
 	int n = MIN(wet_AG1.RCsOnCurve.size(), wet_AG.RCsOnCurve.size());
 
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < n; i++)
 	{
 		r1 = wet_AG1.RCsOnCurve[i];
 		r2 = wet_AG.RCsOnCurve[i];
@@ -143,7 +146,11 @@ void draw()
 
 void mousePress(int b, int state, int x, int y)
 {
-		
+	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
+	{
+		B.performSelection(x, y);
+		S.performSelection(x, y, HUDSelectOn);
+	}
 }
 
 
@@ -155,11 +162,15 @@ void mouseMotion(int x, int y)
 
 void keyPress(unsigned char k, int xm, int ym)
 {
+	bool val = taskGraph[1].RCsOnCurve[0].computeRestingContacts;
 
 	wet_AG1 = taskGraph[1];
 	for (int i = 0; i < 2; i++)taskGraph[1].smoothVertices();
-	taskGraph[1].populateRigidBodies(0.25, 1.0);
+	taskGraph[1].populateRigidBodies(0.25, 0.25);
 
+
+	for (int i = 0; i < taskGraph.size(); i++)
+		for (int j = 0; j < taskGraph[i].RCsOnCurve.size(); j++)taskGraph[i].RCsOnCurve[j].computeRestingContacts = val;
 }
 
 

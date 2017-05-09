@@ -1,4 +1,5 @@
-
+#define _MAIN_
+#define _ALG_LIB_
 
 #ifdef _MAIN_
 
@@ -68,6 +69,7 @@ void setVariables(double ang, vec cen )
 void setup()
 {
 
+	//
 	int sizeInKB = sizeof(rigidCube) / 1024;
 	cout << (sizeInKB * 100000) / 1000 << " sizeInMB : 100,000 micro-units " << endl;
 
@@ -93,6 +95,8 @@ void setup()
 	R2.transMatrix.setColumn(3, cenCur);
 	R2.transform();
 
+	R1.computeRestingContacts = true;
+
 }
 
 
@@ -100,13 +104,13 @@ void update(int value)
 {
 	if (run)
 		for (int i = 0; i < 25; i++)keyPress('x', 0, 0);
-
+	R1.computeRestingContacts = true;
 }
 
 vec normal(0, 0, 1);
 void draw()
 {
-
+	
 	backGround(1.0);
 	glColor3f(0, 0, 0);//drawGrid(10);
 
@@ -114,7 +118,9 @@ void draw()
 
 	glPushMatrix();
 	glScalef(5, 5, 5);
-	
+
+
+
 	R1.draw();
 	R2.draw();
 //	R1.computeCollisionInterfaces(R2,0.15);
