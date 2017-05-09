@@ -1,4 +1,5 @@
 
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -22,8 +23,8 @@ Graph G;
 
 ////// --- GUI OBJECTS ----------------------------------------------------
 
-SliderGroup S;
-ButtonGroup B;
+//SliderGroup S;
+//ButtonGroup B;
 double threshold = 0.5;
 bool tillThreshold = true;
 bool zScalars = true;
@@ -38,7 +39,7 @@ void setup()
 
 
 	MeshFactory fac;
-	Mesh tmp = fac.createFromOBJ("data/in.obj", 10, false, false);
+	Mesh tmp = fac.createFromOBJ("data/in.obj", 10, false);
 	M = metaMesh(tmp);
 	M.assignScalars(zScalars ? "z" : "c");
 	M.createIsoContourGraph(threshold);
