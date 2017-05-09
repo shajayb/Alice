@@ -5,7 +5,7 @@
 
 
 #define QUICKHULL_IMPLEMENTATION
-#include "quickhull.h"
+#include "quickhull.h" // from https://github.com/karimnaaji/3d-quickhull
 
 
 #ifdef _ALG_LIB_
@@ -1062,6 +1062,7 @@ vector<tri> subDivideHull(vec *C_HULL, int n, vector<vec> &subPts, int numDivs =
 
 
 ////////////////////////////////////////////////////////////////////////// QuickHull
+// from https://github.com/karimnaaji/3d-quickhull
 
 Mesh quickHull( vec *pts, int num)
 {
