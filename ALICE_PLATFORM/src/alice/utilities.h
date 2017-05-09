@@ -3,6 +3,11 @@
 #include "ALICE_DLL.h"
 #include "matrices.h"
 
+
+#define QUICKHULL_IMPLEMENTATION
+#include "quickhull.h"
+
+
 #ifdef _ALG_LIB_
 
 
@@ -995,18 +1000,18 @@ struct tri
 	{
 		return (pts[1] - pts[0]).cross(pts[2] - pts[0]).normalise();
 	}
-	void draw( vec4 clr= vec4(1,1,1,1))
+	void draw( )
 	{
-		for (int i = 0; i < 3; i++) drawLine(pts[i], pts[(i + 1) % 3]);
+		//for (int i = 0; i < 3; i++) drawLine(pts[i], pts[(i + 1) % 3]);
 	
-		glColor3f(clr.r,clr.b,clr.g);
+		
 		vec normal = norm();
-		glNormal3f(normal.x, normal.y, normal.z);
+		//glNormal3f(normal.x, normal.y, normal.z);
 		glBegin(GL_TRIANGLES);
 			for (int i = 0; i < 3; i++)glVertex3f(pts[i].x, pts[i].y, pts[i].z);
 		glEnd();
 		
-		//drawLine(centroid(), centroid() + norm().normalise());
+		drawLine(centroid(), centroid() + norm().normalise());
 	}
 	vec pts[3];
 };
@@ -1054,6 +1059,44 @@ vector<tri> subDivideHull(vec *C_HULL, int n, vector<vec> &subPts, int numDivs =
 
 	return TRIS;
 }
+
+
+////////////////////////////////////////////////////////////////////////// QuickHull
+
+Mesh quickHull( vec *pts, int num)
+{
+	qh_vertex_t *vertices = new qh_vertex_t[num];
+
+	for (int i = 0; i < num; ++i) {
+
+		vertices[i].z = pts[i].z;
+		vertices[i].x = pts[i].x;
+		vertices[i].y = pts[i].y;
+	}
+
+	qh_mesh_t mesh = qh_quickhull3d(vertices, num);
+	
+	Mesh M;
+
+
+	for (int i = 0; i < mesh.nvertices; i++) M.createVertex(vec(mesh.vertices[i].x, mesh.vertices[i].y, mesh.vertices[i].z));
+	
+	Vertex *fv[3];
+	for (int i = 0, j = 0; i < mesh.nindices; i += 3, j++)
+	{
+		fv[0] = &M.vertices[mesh.indices[i + 0]];
+		fv[1] = &M.vertices[mesh.indices[i + 1]];
+		fv[2] = &M.vertices[mesh.indices[i + 2]];
+
+		M.createFace(fv, 3);
+	}
+
+	for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+
+	return M;
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////////// QP solver
