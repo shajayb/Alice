@@ -1,5 +1,4 @@
-#define _MAIN_
-#define _ALG_LIB_
+
 
 #ifdef _MAIN_
 
@@ -63,8 +62,16 @@ void draw()
 	backGround(0.75);
 	drawGrid(20);
 
-	M.draw(true);
+
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	vec n = vec(sin(float(i) * (PI * 2.0 / 3.0)), cos(float(i) * (PI * 2.0 / 3.0)), 0);
+	//	drawPlane( n, n * 10);
+	//}
+	glColor4f(1,1,1,1);
+	//
 	M.draw(false);
+	M.draw(true);
 
 	glPointSize(5);
 		for (int i = 0; i < num; i++) drawPoint(P[i]);
@@ -93,6 +100,8 @@ void keyPress(unsigned char k, int xm, int ym)
 		for (int i = 0; i < num; i++) P[i] = vec(rx, rx, rx).normalise() * 10;
 
 		M = quickHull(P, num);
+		/*MeshFactory fac;
+		M = fac.createPlatonic(1, 6);*/
 	}
 
 
@@ -106,7 +115,7 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	if (k == 'p')
 	{
-		num = 4 * 3;
+		num = 4 * 8;
 		
 		Matrix4 rot;
 		vec plPts[4];
@@ -119,14 +128,14 @@ void keyPress(unsigned char k, int xm, int ym)
 
 		for (int i = 0; i < num; i += 4)
 		{
-			vec n = vec( rx,rx, rx);
+			vec n = vec(sin(float(i) * (PI * 2.0 / num)), cos(float(i) * (PI * 2.0 / num)), rx * 0.01);
 			vec u = n.cross(vec(1, 0, 0));
 			vec v = n.cross(u);
 			u.normalise(); v.normalise(); n.normalise();
 			rot.setColumn(0, u);
 			rot.setColumn(1, v);
 			rot.setColumn(2, n);
-			rot.setColumn(3, vec(rx, rx, 0).normalise() * 10);
+			rot.setColumn(3, n.normalise() * 10);
 			for (int j = 0; j < 4; j++)P[i + j] = rot * ( plPts[j] * 1 );
 		}
 

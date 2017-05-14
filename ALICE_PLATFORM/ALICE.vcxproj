@@ -75,6 +75,7 @@
     <ClCompile Include="src\alglib\statistics.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_R06\sketch_corep_v1.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_algLibtest.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_barySubDivide.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -82,6 +83,7 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_contours.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_contours_v2.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_graham.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_convexHull_test.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -129,7 +131,6 @@
     <ClInclude Include="src\userSrc\sketch_UR\interpolate.h" />
     <ClInclude Include="src\userSrc\sketch_UR\MODEL.h" />
     <ClInclude Include="src\userSrc\sketch_UR\object.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\rigidCube.h" />
     <ClInclude Include="src\userSrc\sketch_UR\utilities.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

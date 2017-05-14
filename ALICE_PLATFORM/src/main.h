@@ -183,6 +183,10 @@ void mousePressCallBack(int b,int s,int x,int y)
 
 	 CONTROLLERS.mousePress(b, s, x, y);
 
+
+	 S.performSelection(x, y, HUDSelectOn);
+	 B.performSelection(x, y);
+
 	 mousePress( b, s, x, y) ;
 
 	 updateCam = (glutGetModifiers() == GLUT_ACTIVE_ALT) ? false : true;
@@ -194,6 +198,9 @@ void motionCallBack( int x, int y )
 {
 
 	CONTROLLERS.mouseMotion(x, y);
+
+	S.performSelection(x, y, HUDSelectOn);
+	B.performSelection(x, y);
 
 	mouseMotion(x,y);
 	if(!HUDSelectOn && updateCam)Motion( x, y) ;

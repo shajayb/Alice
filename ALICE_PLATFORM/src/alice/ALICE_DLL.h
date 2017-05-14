@@ -16,7 +16,8 @@ using namespace std;
 #include <map>
 #include <set>
 //#include "isoSurfaceConstants.h"
-
+#include "gl2ps.h"
+#include "AL_gl2psUtils.h"
 
 #ifdef DLL_EXPORT
 #  define DLL_API __declspec(dllexport)
@@ -31,14 +32,15 @@ using namespace std;
 
 struct vec4
 {
-	double r,g,b,a ;
-	vec4(double _x,double _y,double _z,double _w)
+	double r, g, b, a;
+	vec4(double _x, double _y, double _z, double _w)
 	{
-		r = _x ; g = _y ;b = _z ;a = _w ;
+		r = _x; g = _y; b = _z; a = _w;
 	}
 	vec4(){};
 
 };
+
 
 #ifndef EPS
 #define EPS 0.0001 
@@ -558,12 +560,12 @@ namespace Alice
 		vec operator - (vec other) ;
 		void operator *= (double fac) ;
 		vec operator * (double fac) ;
-		vec operator / (double fac) ;
+		bool vec::operator < (vec &other);
+		vec operator / (double fac);
 		void operator /= (double fac) ;
 		vec operator /= (double &fac) ;
 		double operator *= (vec &other) ;
 		double operator * (vec &other) ;
-		bool operator < (vec &other);
 		double mag() ;
 		vec normalise() ;
 		double distanceTo( vec other ) ;
@@ -659,6 +661,7 @@ namespace Alice
 	};
 
 
+
 	////////////////////////////////////////////////////////////////////////// GEOMETRIC UTILITIES
 
 	DLL_API void DLL_CALL closestPointsOn3dLines( vec &a,vec &b,vec &c,vec &d, vec &p1, vec &p2 ) ;
@@ -686,7 +689,8 @@ namespace Alice
 	DLL_API void DLL_CALL resetCamera() ;
 	DLL_API void DLL_CALL topCamera() ;
 	DLL_API void DLL_CALL perspCamera() ;
-	DLL_API void DLL_CALL setCamera( float z , float rx, float ry, float tx,float ty) ;
+	DLL_API void DLL_CALL setCamera( float z , float rx, float ry, float _tx,float _ty) ;
+	DLL_API void DLL_CALL getCamera(float &z, float &rx, float &ry, float &_tx, float &_ty);
 	DLL_API void DLL_CALL enableLight( GLfloat light_pos[4] ) ;
 	DLL_API void DLL_CALL resetProjection() ;
 	DLL_API void DLL_CALL setup2d()  ;
@@ -953,7 +957,7 @@ namespace Alice
 		int np ,ns , nrs, nc ;
 		multimap<int,int> n_s_map;
 		
-		bool calcRotate,calcCharge,calcSprings,calcGravity ;
+		bool calcRotate,calcCharge,calcSprings,calcGravity,calcCustom ;
 
 		/*voxGrid spaceDiv ;*/
 		vec *particlePositions;
@@ -988,8 +992,11 @@ namespace Alice
 		void calcSpringForces( int ns, PARTICLESPRING * s, PARTICLE * p ) ;
 		void calcChargeForces(  PARTICLECHARGE * c, PARTICLE * p , int nc  ) ;
 		void calcRotationalForces( PARTICLE * p ) ;
-		void CalculateForces ( PARTICLE *p,int np,PARTICLESPRING *s,int ns , PARTICLECHARGE *c , int nc );
+		virtual void calcCustomForces_pre(PARTICLE *p);
+		virtual void calcCustomForces_post(PARTICLE *p);
+		void CalculateForces(PARTICLE *p, int np, PARTICLESPRING *s, int ns, PARTICLECHARGE *c, int nc);
 		void UpdateParticles(double dt = 0.1 ,int method = 2);
+		virtual void calcCollisions(PARTICLEDERIVATIVES *deriv);
 		void CalculateDerivatives( PARTICLE *p,int np,PARTICLEDERIVATIVES *deriv);
 		
 		////////////////////////////////////////////////////////////////////////// UTILITIES 
@@ -1150,7 +1157,7 @@ namespace Alice
 			
 			int     iDataSetSize ;
 			float   fStepSize ;
-			float   fTargetValue ;
+			double   fTargetValue ;
 			float boxDim ;
 			int num ;
 			vec  *charges ;
@@ -1345,8 +1352,8 @@ namespace Alice
 	#define  MAX_VERTS 80000 
 	#define  MAX_EDGES 80000 
 	#define  MAX_FACES 50000 
-	#define  MAX_VALENCE 10 
-	#define MAX_SEL_VERTS 10
+	#define  MAX_VALENCE 30 
+	#define MAX_SEL_VERTS 20
 
 	class Vertex;
 	class Edge;
@@ -1359,13 +1366,18 @@ namespace Alice
 		// --------------- 
 		int id ;
 		//Edge *edges ;
-		Edge *edgePtrs[MAX_VALENCE] ; // array of pinters to edges of the mesh ;
+		Edge *edgePtrs[MAX_VALENCE] ; // array of pointers to edges of the mesh ;
 		Face *vF[MAX_VALENCE] ;
 		int n_e ;
 		vec norm ;
 		vec4 clr ;
 		float curvature ;
 		float planeDis ;
+
+		//vec vPos, vPosCur, vPos1, vPos2, vPos3, vPos4;
+		//vec vVel, vVelCur, vVel1, vVel2, vVel3, vVel4;
+		//vec vForce;
+		//double mass;
 		// ------------- ------------- ------------- -------------------------- CONSTRUCTORS 
 		Vertex();
 		Vertex( int _id ) ;
@@ -1443,7 +1455,7 @@ namespace Alice
 		bool onBoundary() ;
 
 		// ------------- ------------- ------------- -------------------------- DISPLAY
-		void draw( vec *positions , bool wire   ) ;
+		void draw(vec *positions, bool wire, bool flipNormals = false, bool faceColors = false);
 	};
 
 	//////////////----------------------------------------- MESH
@@ -1499,6 +1511,7 @@ namespace Alice
 		Mesh chamfer( float factor  ) ;
 		Mesh triangulate(  ) ;
 		Mesh triangulate( bool addCenter = false ) ;
+		Mesh copy();
 		void smoothBoundary( Vertex *b_verts[] , int n , vec *pos ) ;
 		int getBoundary( /*vec *pos */  Vertex *b_verts[] ) ;
 
@@ -1510,7 +1523,8 @@ namespace Alice
 		// ------------- ------------- ------------- -------------------------- DISPLAY
 		
 		void drawVertices(  vec *pos , bool showIds = true ,int pSz = 4 ) ;
-		void draw( bool wire = false ) ;
+		void draw(bool wire = false);
+		
 
 		// -------------------------------------------------------------------- SELECTION
 
@@ -1533,7 +1547,7 @@ namespace Alice
 		MeshFactory();
 		Mesh createPrism( int nSides , float radius , float nTwist , bool tri ) ;
 		Mesh createFromArrays( vec *p , int n_v , int *polyCounts , int n_f , int *polyConnects , bool triangulate = false );
-		Mesh createFromOBJ( string file , float scale, bool triangulate = false );
+		Mesh createFromOBJ(string file, float scale, bool center = false);
 		Mesh createIcosahedron( float radius );
 		Mesh createTetra( float radius );
 		Mesh createPlatonic( float _radius , int n );

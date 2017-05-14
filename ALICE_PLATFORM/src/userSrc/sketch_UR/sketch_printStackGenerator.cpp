@@ -29,8 +29,8 @@ bool run = false;
 int rCnt = 0;
 ////// --- GUI OBJECTS ----------------------------------------------------
 
-SliderGroup S;
-ButtonGroup B;
+//SliderGroup S;
+//ButtonGroup B;
 bool showRobot = false;
 bool showGraphStackData = false;
 
@@ -43,10 +43,13 @@ char s[200],text[200], jts[400];
 void setup()
 {
 
+
+
 	GS = *new graphStack();
 	GS.readGraphAndCreateDataMesh("data/tree_pts.txt", 1.0);//circular_pts
 
 	//////////////////////////////////////////////////////////
+
 
 
 	//for (int i = 0; i < 50; i++)
@@ -113,8 +116,8 @@ void draw()
 	drawGrid(20.0);
 
 
-	S.draw();
-	B.draw();
+	//S.draw();
+	//B.draw();
 	//// ------------------------ draw the path points / Tool orientations 
 
 	if (showRobot)

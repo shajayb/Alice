@@ -79,7 +79,7 @@ public:
 		//MM = metaMesh(fac.createFromOBJ("data/in.obj", 1.0, false, false));
 		//MM.assignScalars("z");
 		MM = MM.createFromPlane(minV, maxV, 100);
-		MM.assignScalarsAsLineDistanceField(G);
+		MM.assignScalarsAsLineDistanceField(G,0.0,5.0,true);
 		MM.getMinMaxOfScalarField(dMin, dMax);
 	}
 

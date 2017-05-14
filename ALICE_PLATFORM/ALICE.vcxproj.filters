@@ -106,19 +106,21 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_two_rectangles.cpp">
       <Filter>PhD_R05</Filter>
     </ClCompile>
-    <ClCompile Include="src\userSrc\sketch_UR\sketch_quickHull.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_contours_v2.cpp">
+      <Filter>PhD_R06</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_quickHull.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_R06\sketch_corep_v1.cpp">
+      <Filter>PhD_R06</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
       <Filter>ImGui_freeglut</Filter>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\utilities.h">
-      <Filter>PhD_R02</Filter>
-    </ClInclude>
     <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h">
-      <Filter>PhD_R02</Filter>
-    </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\rigidCube.h">
       <Filter>PhD_R02</Filter>
     </ClInclude>
     <ClInclude Include="src\userSrc\sketch_UR\interpolate.h">
@@ -131,6 +133,9 @@
       <Filter>MVP</Filter>
     </ClInclude>
     <ClInclude Include="src\userSrc\sketch_UR\Controller.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\userSrc\sketch_UR\utilities.h">
       <Filter>MVP</Filter>
     </ClInclude>
   </ItemGroup>
@@ -158,6 +163,12 @@
     </Filter>
     <Filter Include="PhD_R05">
       <UniqueIdentifier>{ae4ea988-c2cb-4316-9a2b-c4e2f18c4d15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PhD_R06">
+      <UniqueIdentifier>{c21e7698-7e22-4dd8-be6d-6780a67c26ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TESTS">
+      <UniqueIdentifier>{4f63c95e-fc4a-4d9a-a768-3ceaeac8cedc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
