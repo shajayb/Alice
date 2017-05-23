@@ -21,9 +21,9 @@ public:
 
 	activeGraph()
 	{
-		MeshFactory fac;
+		/*MeshFactory fac;
 		Mesh M = fac.createPlatonic(1.0 / sqrt(2.0), 6);
-		RC = *new rigidCube(M);
+		RC = *new rigidCube(M);*/
 	}
 
 	void constructFromToroidalGraph(toroidalGraph &TG)

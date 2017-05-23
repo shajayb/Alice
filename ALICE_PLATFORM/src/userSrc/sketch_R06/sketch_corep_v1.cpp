@@ -1,5 +1,3 @@
-#define _MAIN_
-#define _ALG_LIB_
 
 
 
@@ -32,11 +30,7 @@ using namespace std::experimental;
 
 //////////////////////////////////////////////////////////////////////////
 
-metaMesh MM;
-double threshold = 1.0;
 
-Graph G;
-Mesh M;
 
 
 class dataMesh : public Mesh
@@ -48,7 +42,7 @@ public:
 	double scalars[MAX_VERTS];
 };
 
-metaMesh CombineMesh;
+//metaMesh CombineMesh;
 
 void combineMeshes( Mesh &sub , metaMesh &parent )
 {
@@ -75,7 +69,7 @@ void combineMeshes( Mesh &sub , metaMesh &parent )
 
 #define MAX_NUM 1000
 vec Pts[100];
-void meshFromGraph( Graph &G , metaMesh &CombinedMesh )
+void meshFromGraph( Graph &G , metaMesh &CombinedMesh, double endOffset = 0.2, double wid = 0.2 )
 {
 
 	MeshFactory fac;
@@ -90,9 +84,7 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh )
 	Matrix4 T;
 
 	////////////////////////////////////////////////////////////////////////// iterate through edges
-	double endOffset = 0.2;
-	double wid, dp;
-	wid = dp = 0.2;
+
 	for (int i = 0; i < G.n_e; i++)
 	{
 
@@ -103,7 +95,7 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh )
 		cen = (G.positions[G.edges[i].vEnd->id] + G.positions[G.edges[i].vStr->id]) * 0.5;
 
 		Scale[2] = n.mag() - (endOffset * 2.0);
-		Scale[0] = wid; Scale[1] = dp;
+		Scale[0] = Scale[1] = wid;
 		u.normalise(); v.normalise(); n.normalise();
 
 		T.setColumn(0, u * Scale[0]);
@@ -188,6 +180,16 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh )
 
 //////////////////////////////////////////////////////////////////////////
 
+metaMesh MM;
+double threshold = 1.0;
+
+Graph G;
+Mesh M;
+double Eoff = 0.2;
+double Width = 0.2;
+
+//////////////////////////////////////////////////////////////////////////
+
 void setup()
 {
 	glEnable(GL_POINT_SMOOTH);
@@ -195,27 +197,59 @@ void setup()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-	//keyPress('c', 0, 0);
 	//////////////////////////////////////////////////////////////////////////
 
-	G = *new Graph();
-	G.createVertex(vec(0, 0, 0)); //0
-	G.createVertex(vec(0, 0, 1)); // 1
-	G.createVertex(vec(1, 0, 2)); // 2
-	G.createVertex(vec(-1, 0, 2)); //3
-	G.createVertex(vec(-1, 0, 3)); //4
+	//G = *new Graph();
+	//G.createVertex(vec(0, 0, 0)); //0
+	//G.createVertex(vec(0, 0, 1)); // 1
+	//G.createVertex(vec(1, 0, 2)); // 2
+	//G.createVertex(vec(-1, 0, 2)); //3
+	//G.createVertex(vec(-1, 0, 3)); //4
 
-	G.createEdge(G.vertices[0], G.vertices[1]);
-	G.createEdge(G.vertices[1], G.vertices[2]);
-	G.createEdge(G.vertices[1], G.vertices[3]);
-	G.createEdge(G.vertices[3], G.vertices[4]);
+	//G.createEdge(G.vertices[0], G.vertices[1]);
+	//G.createEdge(G.vertices[1], G.vertices[2]);
+	//G.createEdge(G.vertices[1], G.vertices[3]);
+	//G.createEdge(G.vertices[3], G.vertices[4]);
+	string file = "data/tree_pts.txt";
+	importer imp = *new importer(file, 10000, 1.0);
+	imp.readEdges();
 
+
+	//---------
+	G.reset();
+	for (int i = 0; i < imp.nCnt; i++)G.createVertex(imp.nodes[i].pos);
+	for (int i = 0; i < G.n_v; i++) swap(G.positions[i].y, G.positions[i].z);
+
+	for (int i = 0; i < imp.eCnt; i++)G.createEdge(G.vertices[imp.edges[i].n0], G.vertices[imp.edges[i].n1]);
+
+	// ------------ scale to fit 
+	vec minV, maxV;
+	G.boundingbox(minV, maxV);
+
+	Matrix4 trans;
+	double preferedDiag = 50;
+	trans.scale(preferedDiag / (minV.distanceTo(maxV)));
+	for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
+
+	G.boundingbox(minV, maxV);
+
+	trans.identity();
+	trans.translate( (minV + maxV) * -0.5);
+	for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
+
+	
 	//////////////////////////////////////////////////////////////////////////
 
-	meshFromGraph(G, CombineMesh);
+	meshFromGraph(G, MM);
 
 	//////////////////////////////////////////////////////////////////////////
 	S.addSlider(&threshold, "threshold");
+	
+	S.addSlider();
+	S.addSlider();
+	S.addSlider(&Eoff, "edgeOffset");
+	S.addSlider(&Width,"width");
+	/*S.sliders[1].minVal = 0.05; S.sliders[1].maxVal = 0.05;*/
 }
 
 void update(int value)
@@ -240,9 +274,10 @@ void draw()
 	backGround(0.75);
 	drawGrid(20);
 
-
+	glPushMatrix();
+//	glScalef(5, 5, 5);
 	MM.display();
-	MM.drawIsoContoursInRange(threshold);
+	MM.drawIsoContoursInRange(threshold,0.1);
 
 	glColor4f(1,1,1,1);
 
@@ -253,6 +288,8 @@ void draw()
 	//glPointSize(3);
 	//for (int i = 0; i < 10; i++)drawPoint(Pts[i]);
 	//glPointSize(1);
+
+	glPopMatrix();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,7 +301,11 @@ void mousePress(int b, int state, int x, int y)
 
 void mouseMotion(int x, int y)
 {
-	if (HUDSelectOn)keyPress('S', 0, 0);
+	if (HUDSelectOn)
+	{
+
+		keyPress('S', 0, 0);
+	}
 }
 
 void keyPress(unsigned char k, int xm, int ym)
@@ -336,16 +377,15 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	if(k == 's')
 	{
-		MM = metaMesh(CombineMesh);
-		//for (int i = 0; i < MM.n_v; i++)cout << MM.scalars[i] << endl;
-	
+		MM.n_v = MM.n_f = MM.n_e = 0;
+		meshFromGraph(G, MM, Eoff, Width);
 	}
 	if (k == 'S')
 	{
 		double mn, mx;
 		MM.getMinMaxOfScalarField(mn, mx);
-		S.sliders[0].maxVal = mx;
-		S.sliders[0].minVal = mn;
+		S.sliders[0].maxVal = 2.0;// mx * 1.5;
+		S.sliders[0].minVal = 0.0;
 		MM.createIsoContourGraph(threshold);
 	}
 

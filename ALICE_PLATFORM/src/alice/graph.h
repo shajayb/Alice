@@ -391,6 +391,22 @@ public:
 
 	}
 
+	void writeVerticeToFile( ofstream &myfile)
+	{
+
+		// vertices
+		for (int i = 0; i < n_v; i++)
+		{
+
+			char s[200];
+			sprintf(s, "%1.4f,%1.4f,%1.4f", positions[i].x * 1, positions[i].y * 1, positions[i].z * 1);//(vertices[i].n_e == 1) ? 1 : 0
+
+			myfile << s << endl;
+		}
+
+
+	}
+
 
 	// ------------- ------------- ------------- -------------------------- DISPLAY
 

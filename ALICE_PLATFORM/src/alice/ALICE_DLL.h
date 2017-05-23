@@ -1349,9 +1349,9 @@ namespace Alice
 
 	////////////////////////////////////////////////////////////////////////// MESH
 	
-	#define  MAX_VERTS 80000 
-	#define  MAX_EDGES 80000 
-	#define  MAX_FACES 50000 
+	#define  MAX_VERTS 20000 
+	#define  MAX_EDGES 10000 
+	#define  MAX_FACES 20000 
 	#define  MAX_VALENCE 30 
 	#define MAX_SEL_VERTS 20
 

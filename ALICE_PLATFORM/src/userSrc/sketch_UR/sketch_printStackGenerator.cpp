@@ -1,4 +1,5 @@
-
+#define _MAIN_
+#define _ALG_LIB_
 
 #ifdef _MAIN_
 #include "main.h"
@@ -34,7 +35,7 @@ int rCnt = 0;
 bool showRobot = false;
 bool showGraphStackData = false;
 
-char s[200],text[200], jts[400];
+char s[200],text[200], text1[200], jts[400];
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
 
@@ -132,6 +133,7 @@ void draw()
 
 	sprintf_s(s, " current point id : %i", path.currentPointId);
 	sprintf_s(text, " total points in path : %i", path.actualPathLength - 1);
+	
 	int cid = path.currentPointId;
 
 	if (cid < path.actualPathLength - 1 && cid >= 0)
@@ -144,6 +146,7 @@ void draw()
 	AL_drawString(s, winW * 0.5, winH - 50);
 	AL_drawString(text, winW * 0.5, winH - 75);
 	AL_drawString(jts, winW * 0.5, winH - 100);
+
 
 	int hts = 50;
 	int wid = winW * 0.75;
@@ -182,12 +185,26 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == ' ')GS.smoothCurrentGraph();
 	if (k == 'c')GS.convertContourToToroidalGraph();
 	if (k == '-')GS.reducePointsOnContourGraph(2);
-	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.25, 1.75);
+	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.4, 1.75);
+	if (k == 'P')
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			keyPress('p', 0, 0);
+			for (int j = 0; j < 15; j++)keyPress(' ', 0, 0);
+		}
+	}
 	if (k == 'P')GS.currentStackLayer--;
 	if (k == 'O')GS.currentStackLayer = 0;
 	if (k == 'L')GS.ConvertContourStackToPrintPath(path);
 
 	if (k == 'Q')GS.writeCurrentGraph();
+	if (k == 'W')
+	{
+		GS.writeStackToFile("data/PRINT.txt");
+		GS.writeStackToObj("data/PRINT.obj");
+	}
+
 	if (k == 'R')run = !run;
 
 	///// ROBOT PROGRAM / PATH CHECKING 
@@ -222,6 +239,7 @@ void mousePress(int b, int state, int x, int y)
 		B.performSelection(x, y);
 		if (HUDSelectOn)
 		{
+			//GS.threshold = 1.5;
 			GS.createIsoContourGraph(GS.threshold);
 			cout << GS.MM.G.n_v << endl;
 		}

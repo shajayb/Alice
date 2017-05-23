@@ -11,7 +11,7 @@ class graphStack
 {
 public:
 
-	activeGraph PrintStack[25];
+	activeGraph PrintStack[200];
 	Graph G;
 	vec minV, maxV;
 	double dMin, dMax;
@@ -45,15 +45,15 @@ public:
 		G.boundingbox(minV, maxV);
 
 		Matrix4 trans;
-		double preferedDiag = 50;
-		trans.scale( preferedDiag / (minV.distanceTo(maxV)) );
+		double preferedDiag = (minV.distanceTo(maxV));
+		trans.scale(preferedDiag / (minV.distanceTo(maxV)));
 		trans.translate((minV + maxV) * 0.5);
 		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 		cout << " ACUTAL DIAG " << minV.distanceTo(maxV) << endl;
 		G.boundingbox(minV, maxV);
 
 		trans.identity();
-		trans.translate( vec(45,0,0) - (minV + maxV) * 0.5);
+		trans.translate(vec(45, 0, 0) - (minV + maxV) * 0.5);
 		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 		minV = minV * trans;
 		maxV = maxV * trans;
@@ -118,17 +118,17 @@ public:
 
 		//---------
 		activeGraph AG;
-		AG = * new activeGraph();
+		AG = /** new */activeGraph();
 		AG.reset();
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
-		AG.populateRigidBodies(0.1);
+		//AG.populateRigidBodies(0.1);
 		
 		PrintStack[currentStackLayer] = AG;
 
 		///
 		currentStackLayer++;
-		if (currentStackLayer >= 25)currentStackLayer = 0;
+		if (currentStackLayer >= 200 )currentStackLayer = 0;
 	}
 
 	void ConvertContourStackToPrintPath(pathImporter &path)
@@ -138,6 +138,67 @@ public:
 			for (int j = 0; j < PrintStack[i].n_v; j++)
 				path.addPoint( PrintStack[i].positions[j] );
 		
+	}
+
+	void writeStackToObj(string outFileName = "data/stack.txt")
+	{
+		Mesh M;
+		for (int i = 0; i < currentStackLayer; i++)
+			for (int j = 0; j < PrintStack[i].n_v; j+= 1)
+			{
+				M.createVertex(PrintStack[i].positions[j]);
+			}
+
+		Vertex *fv[4];
+
+		for (int i = 0; i < currentStackLayer -1; i++)
+			for (int j = 0; j < PrintStack[i].n_v-1; j+= 1)
+			{
+
+				fv[0] = &M.vertices[PrintStack[i].n_v * i + j];
+				fv[1] = &M.vertices[PrintStack[i].n_v * i + j+1];
+				fv[2] = &M.vertices[PrintStack[i].n_v * (i+1) + j+1];
+				fv[3] = &M.vertices[PrintStack[i].n_v * (i+1) + j];
+				M.createFace(fv, 4);
+			}
+
+		for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+
+		M.writeOBJ( outFileName, "", M.positions, false);
+	}
+
+	void writeStackToFile(string outFileName = "data/stack.txt")
+	{
+		printf(" ----------- writing graphs : stack \n ");
+
+		ofstream myfile;
+		myfile.open(outFileName.c_str(), ios::out);
+
+
+		if (myfile.fail())
+		{
+			myfile << " error in opening file  " << outFileName.c_str() << endl;
+			return;
+		}
+
+
+		for (int i = 0; i < currentStackLayer; i++)
+		{
+			string layer = "";
+			layer += "/*layer";
+			layer += "_";
+			char s[20];
+			itoa(i, s, 10);
+			layer += s;
+			layer += "*/";
+
+			myfile << layer << endl;
+			PrintStack[i].writeVerticeToFile(myfile);
+		}
+
+		myfile.close();
+		printf(" ----------- writing done : stack \n ");
+
 	}
 
 	void writeCurrentGraph()
@@ -190,7 +251,8 @@ public:
 
 		glColor3f(1, 0, 0);
 		
-		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();
+		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();//draw RC
+		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw();// draw();
 
 		//draw stats
 		char s[200];
@@ -201,7 +263,10 @@ public:
 		AL_drawString(s, winW * 0.5, 50);
 			sprintf_s(s, " num points in stack : %i", MM.G.n_v * currentStackLayer);
 		AL_drawString(s, winW * 0.5, 75);
-
+		
+		sprintf_s(s, " numlayers : %i total height : %1.2f", currentStackLayer, currentStackLayer * 0.1);
+		AL_drawString(s, winW * 0.5, 100);
+		
 		restore3d();
 	}
 

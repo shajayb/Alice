@@ -142,75 +142,7 @@ public:
 		return (p - pt) * (p - pt);// p.distanceTo(pt);
 	}
 
-	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0 , bool v1 = true , bool v2 = true)
-	{
-
-		for (int i = 0; i < n_v; i++)
-		{
-
-			vec pt;
-			double d = 1e10;
-			double dChk = 0.0;
-
-			for (int j = 0; j < G.n_e; j++)
-			{
-				int e0, e1;
-				e0 = G.edges[j].vEnd->id;
-				e1 = G.edges[j].vStr->id;
-				float Di = 0;
-				
-				if(v1) Di += distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt) * 10;
-
-				
-				vec ed = (G.positions[e1] - G.positions[e0]);
-				float edL = ed.mag();
-				ed.normalise();
-
-				if(v2)
-				for (int n = 0; n < 10; n++)
-				{
-					vec pt = G.positions[e0] + ed * (edL * n / 10.0);
-					Di += pt.distanceTo(positions[i]) * 1.0;
-				}
-
-				/*if (!blend)
-				{
-					dChk = Di;
-					d = MIN(dChk, d);
-				}*/
-				//else
-				{
-					dChk += 1.0 / (pow((Di + 0.01), 2.0));
-					d = dChk;
-				}
-
-				
-			}
-
-			//d = dChk;
-			d = ofClamp(d, clampMin, clampMax );
-			scalars[i] = d;
-			
-		}
-
-		////////////////////////////////////////////////////////////////////////
-
-		//for (int i = 0; i < n_v; i++)
-		//{
-
-		//	vec pt;
-		//	double dMin = 1e10;
-		//	
-
-		//	for (int j = 0; j < G.n_v; j++)dMin = MIN( G.positions[j].distanceTo(positions[i]), dMin);
-
-		//	
-		//	scalars[i] = dMin;
-
-		//}
-	}
-
-	//void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0, bool blend = true)
+	//void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0 , bool v1 = true , bool v2 = true)
 	//{
 
 	//	for (int i = 0; i < n_v; i++)
@@ -225,28 +157,96 @@ public:
 	//			int e0, e1;
 	//			e0 = G.edges[j].vEnd->id;
 	//			e1 = G.edges[j].vStr->id;
-	//			float Di = distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt);
+	//			float Di = 0;
+	//			
+	//			if(v1) Di += distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt) * 10;
 
-	//			if (!blend)
+	//			
+	//			vec ed = (G.positions[e1] - G.positions[e0]);
+	//			float edL = ed.mag();
+	//			ed.normalise();
+
+	//			if(v2)
+	//			for (int n = 0; n < 10; n++)
+	//			{
+	//				vec pt = G.positions[e0] + ed * (edL * n / 10.0);
+	//				Di += pt.distanceTo(positions[i]) * 1.0;
+	//			}
+
+	//			/*if (!blend)
 	//			{
 	//				dChk = Di;
 	//				d = MIN(dChk, d);
-	//			}
-	//			else
+	//			}*/
+	//			//else
 	//			{
 	//				dChk += 1.0 / (pow((Di + 0.01), 2.0));
 	//				d = dChk;
 	//			}
 
-
+	//			
 	//		}
 
 	//		//d = dChk;
-	//		d = ofClamp(d, clampMin, clampMax);
+	//		d = ofClamp(d, clampMin, clampMax );
 	//		scalars[i] = d;
-
+	//		
 	//	}
+
+	//	////////////////////////////////////////////////////////////////////////
+
+	//	//for (int i = 0; i < n_v; i++)
+	//	//{
+
+	//	//	vec pt;
+	//	//	double dMin = 1e10;
+	//	//	
+
+	//	//	for (int j = 0; j < G.n_v; j++)dMin = MIN( G.positions[j].distanceTo(positions[i]), dMin);
+
+	//	//	
+	//	//	scalars[i] = dMin;
+
+	//	//}
 	//}
+
+	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0, bool blend = true)
+	{
+
+		for (int i = 0; i < n_v; i++)
+		{
+
+			vec pt;
+			double d = 1e10;
+			double dChk = 0.0;
+
+			for (int j = 0; j < G.n_e; j++)
+			{
+				int e0, e1;
+				e0 = G.edges[j].vEnd->id;
+				e1 = G.edges[j].vStr->id;
+				float Di = distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt);
+
+				if (!blend)
+				{
+					dChk = Di;
+					d = MIN(dChk, d);
+				}
+				else
+				{
+					dChk += 1.0 / (pow((Di + 0.01), 2.0));
+					d = dChk;
+				}
+
+
+			}
+
+			//d = dChk;
+			d = ofClamp(d, clampMin, clampMax);
+			scalars[i] = d;
+
+		}
+	}
 
 	void getMinMaxOfScalarField( double &_dMin, double &_dMax )
 	{
@@ -381,7 +381,7 @@ public:
 		getMinMaxOfScalarField(minS, maxS);
 
 		glLineWidth(glLineWd);
-		for (double i = minS ; i <= threshold; i += percen * (maxS - minS))
+		for (double i = minS ; i <= threshold; i += percen /** (maxS - minS)*/)
 			for (auto &c : faceEdges(i))
 			{
 				drawLine(c.t, c.f);

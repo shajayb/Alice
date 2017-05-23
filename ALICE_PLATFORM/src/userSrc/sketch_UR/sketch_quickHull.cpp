@@ -1,5 +1,4 @@
 
-
 #ifdef _MAIN_
 
 #include "main.h"
@@ -70,7 +69,7 @@ void draw()
 	//}
 	glColor4f(1,1,1,1);
 	//
-	M.draw(false);
+	//M.draw(false);
 	M.draw(true);
 
 	glPointSize(5);
