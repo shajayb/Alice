@@ -11,7 +11,7 @@ class graphStack
 {
 public:
 
-	activeGraph PrintStack[200];
+	activeGraph PrintStack[500];
 	Graph G;
 	vec minV, maxV;
 	double dMin, dMax;
@@ -86,6 +86,7 @@ public:
 	void createIsoContourGraph( double threshold )
 	{
 		MM.createIsoContourGraph(threshold);
+		
 	}
 	void convertContourToToroidalGraph()
 	{
@@ -120,9 +121,10 @@ public:
 		activeGraph AG;
 		AG = /** new */activeGraph();
 		AG.reset();
+		
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
-		//AG.populateRigidBodies(0.1);
+		//AG.populateRigidBodies(1.0,layersize);
 		
 		PrintStack[currentStackLayer] = AG;
 
@@ -185,15 +187,18 @@ public:
 		for (int i = 0; i < currentStackLayer; i++)
 		{
 			string layer = "";
-			layer += "/*layer";
+			layer += "layer";
 			layer += "_";
 			char s[20];
 			itoa(i, s, 10);
 			layer += s;
-			layer += "*/";
 
 			myfile << layer << endl;
+			myfile << "/*" << endl;
+
 			PrintStack[i].writeVerticeToFile(myfile);
+
+			myfile << "*/" << endl;
 		}
 
 		myfile.close();
@@ -225,34 +230,42 @@ public:
 
 			/// ------------------------- TODO : clean this section -> encapsulate
 
+		glColor3f(1, 0, 0);
+		glLineWidth(3);
 			G.draw();
+		glLineWidth(1);
 
 			MM.G.computeIslandsAsEdgeAndVertexList();
-			MM.G.drawConnectedEdgeList();
+			//MM.G.drawConnectedEdgeList( true );
 			
 			convertedToToroidal ? glColor3f(1, 0, 0) : glColor3f(0, 0, 0);
 			MM.G.draw();
 
-
+			glColor3f(0, 0, 0);
 			/// ------------------------- TODO : clean this section
 
 		wireFrameOff();
 
 		//----------------- drawDataGridMesh
 		if(showData)
-		for (int i = 0; i < MM.n_v; i++)
 		{
-			vec4 clr = getColour(MM.scalars[i], dMin, dMax);
-			glColor3f(clr.r, clr.g, clr.b);
-			drawPoint(MM.positions[i]);
+			glPointSize(5);
+			for (int i = 0; i < MM.n_v; i++)
+			{
+
+				vec4 clr = getColour(MM.scalars[i], dMin, dMax);
+				glColor3f(clr.r, clr.g, clr.b);
+				drawPoint(MM.positions[i]);
+			}
+			glPointSize(1);
 		}
 
 		//----------------- drawDataGridMesh
 
-		glColor3f(1, 0, 0);
+		glColor3f(0, 0, 0);
 		
 		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();//draw RC
-		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw();// draw();
+		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw(false);// draw();
 
 		//draw stats
 		char s[200];

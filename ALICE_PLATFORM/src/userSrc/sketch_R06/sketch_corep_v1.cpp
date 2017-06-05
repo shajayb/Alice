@@ -1,7 +1,5 @@
 
 
-
-
 #ifdef _MAIN_
 
 #include "main.h"
@@ -44,7 +42,7 @@ public:
 
 //metaMesh CombineMesh;
 
-void combineMeshes( Mesh &sub , metaMesh &parent )
+void combineMeshes(Mesh &sub, metaMesh &parent)
 {
 	int P_nv = parent.n_v;
 	for (int i = 0; i < sub.n_v; i++)parent.createVertex(sub.positions[i]);
@@ -53,7 +51,7 @@ void combineMeshes( Mesh &sub , metaMesh &parent )
 	for (int i = 0; i < sub.n_f; i++)
 	{
 		int *f_v = sub.faces[i].faceVertices();
-		
+
 		for (int j = 0; j < sub.faces[i].n_e; j++)
 		{
 			int id = sub.vertices[f_v[j]].id;
@@ -69,7 +67,7 @@ void combineMeshes( Mesh &sub , metaMesh &parent )
 
 #define MAX_NUM 1000
 vec Pts[100];
-void meshFromGraph( Graph &G , metaMesh &CombinedMesh, double endOffset = 0.2, double wid = 0.2 )
+void meshFromGraph(Graph &G, metaMesh &CombinedMesh, double endOffset = 0.2, double wid = 0.2)
 {
 
 	MeshFactory fac;
@@ -79,45 +77,45 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh, double endOffset = 0.2, d
 	vec *P = new vec[MAX_NUM];
 
 	//////////////////////////////////////////////////////////////////////////
-	vec u, v, n,cen;
+	vec u, v, n, cen;
 	float Scale[3];
 	Matrix4 T;
 
 	////////////////////////////////////////////////////////////////////////// iterate through edges
 
-	for (int i = 0; i < G.n_e; i++)
-	{
+	//for (int i = 0; i < G.n_e; i++)
+	//{
 
-		//transform matrix
-		n = G.positions[G.edges[i].vEnd->id] - G.positions[G.edges[i].vStr->id];
-		u = n.cross(vec(1, 0, 0));
-		v = n.cross(u);
-		cen = (G.positions[G.edges[i].vEnd->id] + G.positions[G.edges[i].vStr->id]) * 0.5;
+	//	//transform matrix
+	//	n = G.positions[G.edges[i].vEnd->id] - G.positions[G.edges[i].vStr->id];
+	//	u = n.cross(vec(1, 0, 0));
+	//	v = n.cross(u);
+	//	cen = (G.positions[G.edges[i].vEnd->id] + G.positions[G.edges[i].vStr->id]) * 0.5;
 
-		Scale[2] = n.mag() - (endOffset * 2.0);
-		Scale[0] = Scale[1] = wid;
-		u.normalise(); v.normalise(); n.normalise();
+	//	Scale[2] = n.mag() - (endOffset * 2.0);
+	//	Scale[0] = Scale[1] = wid;
+	//	u.normalise(); v.normalise(); n.normalise();
 
-		T.setColumn(0, u * Scale[0]);
-		T.setColumn(1, v* Scale[1]);
-		T.setColumn(2, n* Scale[2]);
-		T.setColumn(3, cen);
+	//	T.setColumn(0, u * Scale[0]);
+	//	T.setColumn(1, v* Scale[1]);
+	//	T.setColumn(2, n* Scale[2]);
+	//	T.setColumn(3, cen);
 
-		//transform
-		for (int n = 0; n < Prim.n_v; n++)Prim.positions[n] = T * Prim_copy.positions[n];
+	//	//transform
+	//	for (int n = 0; n < Prim.n_v; n++)Prim.positions[n] = T * Prim_copy.positions[n];
 
-		//////////////////////////////////////////////////////////////////////////
-		int nv = CombinedMesh.n_v;
-		combineMeshes(Prim, CombinedMesh);
+	//	//////////////////////////////////////////////////////////////////////////
+	//	int nv = CombinedMesh.n_v;
+	//	combineMeshes(Prim, CombinedMesh);
 
-		for (int o = nv; o < CombinedMesh.n_v; o++)
-		{
-			double val;
-			vec p = CombinedMesh.positions[o];
-			val = (p - cen) * n;
-			CombinedMesh.scalars[o] = val;
-		}
-	}
+	//	for (int o = nv; o < CombinedMesh.n_v; o++)
+	//	{
+	//		double val;
+	//		vec p = CombinedMesh.positions[o];
+	//		val = (p - cen) * n;
+	//		CombinedMesh.scalars[o] = val;
+	//	}
+	//}
 
 	////////////////////////////////////////////////////////////////////////// iterate through vertices
 	int num = 0;
@@ -146,7 +144,7 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh, double endOffset = 0.2, d
 			T.setColumn(2, n);
 			T.setColumn(3, G.positions[vv] + n.normalise() * endOffset);
 			for (int j = 0; j < 4; j++)P[cnt++] = T * (plPts[j] * wid * 0.5);
-			
+
 		}
 
 		Prim = quickHull(P, num);
@@ -160,7 +158,7 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh, double endOffset = 0.2, d
 		{
 			double val = 1e10;
 			vec p = CombinedMesh.positions[o];
-			
+
 			// get distance to neares plane, for each of hte newly added vertices..
 			for (int i = 0; i < 1; i += 1)
 			{
@@ -169,7 +167,7 @@ void meshFromGraph( Graph &G , metaMesh &CombinedMesh, double endOffset = 0.2, d
 				n = G.positions[other] - G.positions[vv];
 				n.normalise();
 				cen = G.positions[vv] + (n * 0.1);
-				val = MIN( (p - cen) * n, val);
+				val = MIN((p - cen) * n, val);
 			}
 
 			CombinedMesh.scalars[o] = val;
@@ -210,7 +208,7 @@ void setup()
 	//G.createEdge(G.vertices[1], G.vertices[2]);
 	//G.createEdge(G.vertices[1], G.vertices[3]);
 	//G.createEdge(G.vertices[3], G.vertices[4]);
-	string file = "data/tree_pts.txt";
+	string file = "data/corep_graph.txt";
 	importer imp = *new importer(file, 10000, 1.0);
 	imp.readEdges();
 
@@ -227,34 +225,34 @@ void setup()
 	G.boundingbox(minV, maxV);
 
 	Matrix4 trans;
-	double preferedDiag = 50;
+	/*double preferedDiag = 50;
 	trans.scale(preferedDiag / (minV.distanceTo(maxV)));
 	for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
-
+*/
 	G.boundingbox(minV, maxV);
 
 	trans.identity();
-	trans.translate( (minV + maxV) * -0.5);
+	trans.translate((minV + maxV) * -0.5);
 	for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 
-	
+
 	//////////////////////////////////////////////////////////////////////////
 
 	meshFromGraph(G, MM);
 
 	//////////////////////////////////////////////////////////////////////////
 	S.addSlider(&threshold, "threshold");
-	
+
 	S.addSlider();
 	S.addSlider();
 	S.addSlider(&Eoff, "edgeOffset");
-	S.addSlider(&Width,"width");
-	/*S.sliders[1].minVal = 0.05; S.sliders[1].maxVal = 0.05;*/
+	S.addSlider(&Width, "width");
+	S.sliders[4].maxVal = 5; //S.sliders[1].maxVal = 0.05;
 }
 
 void update(int value)
 {
-	
+
 	//qh_vertex_t *vertices = new qh_vertex_t[num];
 
 	//for (int i = 0; i < num; ++i) {
@@ -275,11 +273,11 @@ void draw()
 	drawGrid(20);
 
 	glPushMatrix();
-//	glScalef(5, 5, 5);
-	MM.display();
-	MM.drawIsoContoursInRange(threshold,0.1);
+	glScalef(5, 5, 5);
+	MM.display(true,true,true);
+	MM.drawIsoContoursInRange(threshold, 0.1);
 
-	glColor4f(1,1,1,1);
+	glColor4f(1, 1, 1, 1);
 
 	//CombineMesh.draw(true);
 	M.draw();
@@ -296,7 +294,7 @@ void draw()
 
 void mousePress(int b, int state, int x, int y)
 {
-		
+
 }
 
 void mouseMotion(int x, int y)
@@ -310,7 +308,7 @@ void mouseMotion(int x, int y)
 
 void keyPress(unsigned char k, int xm, int ym)
 {
-	
+
 	//if (k == 'c')
 	//{
 
@@ -375,7 +373,7 @@ void keyPress(unsigned char k, int xm, int ym)
 	//if (k == 'w')
 	//	M.writeOBJ("data/conv", "", M.positions, false);
 
-	if(k == 's')
+	if (k == 's')
 	{
 		MM.n_v = MM.n_f = MM.n_e = 0;
 		meshFromGraph(G, MM, Eoff, Width);
@@ -384,7 +382,7 @@ void keyPress(unsigned char k, int xm, int ym)
 	{
 		double mn, mx;
 		MM.getMinMaxOfScalarField(mn, mx);
-		S.sliders[0].maxVal = 2.0;// mx * 1.5;
+		S.sliders[0].maxVal = mx * 1.5;
 		S.sliders[0].minVal = 0.0;
 		MM.createIsoContourGraph(threshold);
 	}
@@ -401,4 +399,3 @@ void keyPress(unsigned char k, int xm, int ym)
 
 
 #endif // _MAIN_
-

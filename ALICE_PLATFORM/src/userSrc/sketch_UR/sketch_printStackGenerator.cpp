@@ -1,5 +1,10 @@
+
 #define _MAIN_
 #define _ALG_LIB_
+
+
+
+
 
 #ifdef _MAIN_
 #include "main.h"
@@ -44,7 +49,10 @@ char s[200],text[200], text1[200], jts[400];
 void setup()
 {
 
-
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POINT_SMOOTH);
+	//////////////////////////////////////////////////////////////////////////
 
 	GS = *new graphStack();
 	GS.readGraphAndCreateDataMesh("data/tree_pts.txt", 1.0);//circular_pts
@@ -96,12 +104,14 @@ void update(int value)
 
 	if (run)
 	{
-		for (int i = 0; i < 10; i++)GS.smoothCurrentGraph();
-		
+		/*for (int i = 0; i < 10; i++)GS.smoothCurrentGraph();
+
 		rCnt++;
 		if (rCnt % 3 == 0)GS.writeCurrentGraph();
 
-		if (rCnt == 200 * 2 )run = !run;
+		if (rCnt == 200 * 2 )run = !run;*/
+		keyPress('p', 0, 0);
+		for (int i = 0; i < 5; i++)keyPress(' ', 0, 0);
 	}
 		
 
@@ -113,7 +123,7 @@ void update(int value)
 void draw()
 {
 
-	backGround(0.75);
+	backGround(1.0);
 	drawGrid(20.0);
 
 
@@ -127,7 +137,7 @@ void draw()
 		for (auto &g : GS.PrintStack) g.draw();
 	}
 	else
-		GS.draw(showGraphStackData);
+			GS.draw(showGraphStackData);
 
 	//////////////////////////////////////////////////////////
 
@@ -185,13 +195,13 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == ' ')GS.smoothCurrentGraph();
 	if (k == 'c')GS.convertContourToToroidalGraph();
 	if (k == '-')GS.reducePointsOnContourGraph(2);
-	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.4, 1.75);
+	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.2, 1.75);
 	if (k == 'P')
 	{
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 1; i++)
 		{
 			keyPress('p', 0, 0);
-			for (int j = 0; j < 15; j++)keyPress(' ', 0, 0);
+			for (int j = 0; j < 1; j++)keyPress(' ', 0, 0);
 		}
 	}
 	if (k == 'P')GS.currentStackLayer--;
@@ -202,10 +212,10 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == 'W')
 	{
 		GS.writeStackToFile("data/PRINT.txt");
-		GS.writeStackToObj("data/PRINT.obj");
+	//	GS.writeStackToObj("data/PRINT.obj");
 	}
 
-	if (k == 'R')run = !run;
+	if (k == 'U')run = !run;
 
 	///// ROBOT PROGRAM / PATH CHECKING 
 

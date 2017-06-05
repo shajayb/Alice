@@ -258,6 +258,7 @@ public:
 		connected_vertices.push_back(e.vStr->id);
 		str_Vid = e.vEnd->id;
 
+		
 		int n = connectedEdgeList.size();
 		for (int i = 1; i < n ; i += 1) 
 		{
@@ -268,6 +269,9 @@ public:
 			
 			connected_vertices.push_back(str_Vid);
 		}
+
+		// !!! IMP test
+		//for (int i = 0; i < 1; i++)connected_vertices.pop_back();
 	}
 	
 	void smooth_connectedVertices()
@@ -278,7 +282,7 @@ public:
 		for (int i = 0; i < n; i += 1)
 		{
 			int Vi = connected_vertices[Mod(i, n)];
-			int Vi_minus = connected_vertices[Mod(i + 1, n)];
+			int Vi_minus = connected_vertices[Mod(i - 1, n)];
 			int Vi_plus = connected_vertices[Mod(i + 1, n)];
 			positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
 		}
@@ -415,9 +419,10 @@ public:
 
 	}
 
-	void draw()
+	void draw(bool drawPoints = true)
 	{
 		glPointSize(5);
+		if(drawPoints)
 		for (int i = 0; i < n_v; i++)
 		{
 			char s[200];
@@ -428,6 +433,7 @@ public:
 		}
 		glPointSize(1);
 
+		
 		
 		for (int i = 0; i < n_e; i++)
 		{
