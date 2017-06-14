@@ -405,9 +405,9 @@ public:
 
 		if (drawMesh)
 		{
-			wireFrameOn();
-				draw();
-			wireFrameOff();
+			//wireFrameOn();
+				draw(true);
+			//wireFrameOff();
 		}
 
 		glPointSize(glPtSize);

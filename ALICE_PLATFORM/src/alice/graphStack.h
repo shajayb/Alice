@@ -11,6 +11,7 @@ class graphStack
 {
 public:
 
+	largeMesh LM;
 	activeGraph PrintStack[500];
 	Graph G;
 	vec minV, maxV;
@@ -124,13 +125,14 @@ public:
 		
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
-		//AG.populateRigidBodies(1.0,layersize);
+		/*AG.populateRigidBodies(1.0,layersize);*/
+		AG.populateRigidBodies(LM, layersize * 3, layersize);
 		
 		PrintStack[currentStackLayer] = AG;
 
 		///
 		currentStackLayer++;
-		if (currentStackLayer >= 200 )currentStackLayer = 0;
+		if (currentStackLayer >= 500 )currentStackLayer = 0;
 	}
 
 	void ConvertContourStackToPrintPath(pathImporter &path)
@@ -225,9 +227,11 @@ public:
 	void draw( bool showData = false )
 	{
 		
+		LM.draw();
 		
 		wireFrameOn();
 
+			
 			/// ------------------------- TODO : clean this section -> encapsulate
 
 		glColor3f(1, 0, 0);

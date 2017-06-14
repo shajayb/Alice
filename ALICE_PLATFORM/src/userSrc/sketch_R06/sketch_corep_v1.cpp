@@ -1,5 +1,6 @@
 
 
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -83,39 +84,39 @@ void meshFromGraph(Graph &G, metaMesh &CombinedMesh, double endOffset = 0.2, dou
 
 	////////////////////////////////////////////////////////////////////////// iterate through edges
 
-	//for (int i = 0; i < G.n_e; i++)
-	//{
+	for (int i = 0; i < G.n_e; i++)
+	{
 
-	//	//transform matrix
-	//	n = G.positions[G.edges[i].vEnd->id] - G.positions[G.edges[i].vStr->id];
-	//	u = n.cross(vec(1, 0, 0));
-	//	v = n.cross(u);
-	//	cen = (G.positions[G.edges[i].vEnd->id] + G.positions[G.edges[i].vStr->id]) * 0.5;
+		//transform matrix
+		n = G.positions[G.edges[i].vEnd->id] - G.positions[G.edges[i].vStr->id];
+		u = n.cross(vec(1, 0, 0));
+		v = n.cross(u);
+		cen = (G.positions[G.edges[i].vEnd->id] + G.positions[G.edges[i].vStr->id]) * 0.5;
 
-	//	Scale[2] = n.mag() - (endOffset * 2.0);
-	//	Scale[0] = Scale[1] = wid;
-	//	u.normalise(); v.normalise(); n.normalise();
+		Scale[2] = n.mag() - (endOffset * 4.0);
+		Scale[0] = Scale[1] = wid;
+		u.normalise(); v.normalise(); n.normalise();
 
-	//	T.setColumn(0, u * Scale[0]);
-	//	T.setColumn(1, v* Scale[1]);
-	//	T.setColumn(2, n* Scale[2]);
-	//	T.setColumn(3, cen);
+		T.setColumn(0, u * Scale[0]);
+		T.setColumn(1, v* Scale[1]);
+		T.setColumn(2, n* Scale[2]);
+		T.setColumn(3, cen);
 
-	//	//transform
-	//	for (int n = 0; n < Prim.n_v; n++)Prim.positions[n] = T * Prim_copy.positions[n];
+		//transform
+		for (int n = 0; n < Prim.n_v; n++)Prim.positions[n] = T * Prim_copy.positions[n];
 
-	//	//////////////////////////////////////////////////////////////////////////
-	//	int nv = CombinedMesh.n_v;
-	//	combineMeshes(Prim, CombinedMesh);
+		//////////////////////////////////////////////////////////////////////////
+		int nv = CombinedMesh.n_v;
+		combineMeshes(Prim, CombinedMesh);
 
-	//	for (int o = nv; o < CombinedMesh.n_v; o++)
-	//	{
-	//		double val;
-	//		vec p = CombinedMesh.positions[o];
-	//		val = (p - cen) * n;
-	//		CombinedMesh.scalars[o] = val;
-	//	}
-	//}
+		for (int o = nv; o < CombinedMesh.n_v; o++)
+		{
+			double val;
+			vec p = CombinedMesh.positions[o];
+			val = (p - cen) * n;
+			CombinedMesh.scalars[o] = val;
+		}
+	}
 
 	////////////////////////////////////////////////////////////////////////// iterate through vertices
 	int num = 0;
@@ -208,7 +209,7 @@ void setup()
 	//G.createEdge(G.vertices[1], G.vertices[2]);
 	//G.createEdge(G.vertices[1], G.vertices[3]);
 	//G.createEdge(G.vertices[3], G.vertices[4]);
-	string file = "data/corep_graph.txt";
+	string file = "data/corep_graph_0.txt";
 	importer imp = *new importer(file, 10000, 1.0);
 	imp.readEdges();
 
@@ -225,15 +226,15 @@ void setup()
 	G.boundingbox(minV, maxV);
 
 	Matrix4 trans;
-	/*double preferedDiag = 50;
-	trans.scale(preferedDiag / (minV.distanceTo(maxV)));
-	for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
-*/
-	G.boundingbox(minV, maxV);
+	//double preferedDiag = 50;
+	//trans.scale(preferedDiag / (minV.distanceTo(maxV)));
+	//for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 
-	trans.identity();
-	trans.translate((minV + maxV) * -0.5);
-	for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
+	//G.boundingbox(minV, maxV);
+
+	//trans.identity();
+	//trans.translate((minV + maxV) * -0.5);
+	//for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 
 
 	//////////////////////////////////////////////////////////////////////////

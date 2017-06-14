@@ -138,6 +138,9 @@
     <ClInclude Include="src\userSrc\sketch_UR\utilities.h">
       <Filter>MVP</Filter>
     </ClInclude>
+    <ClInclude Include="src\alice\largeMesh.h">
+      <Filter>PhD_R02</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ImGui">

@@ -1,4 +1,5 @@
 
+
 #define _MAIN_
 #define _ALG_LIB_
 
@@ -13,7 +14,7 @@ using namespace ROBOTICS;
 #include "metaMesh.h"
 #include "nachi.h"
 #include "graphStack.h"
-
+#include "largeMesh.h"
 
 ////////////////////////////////////////////////////////////////////////// GLOBAL VARIABLES ----------------------------------------------------
 ////// --- MODEL OBJECTS ----------------------------------------------------
@@ -43,6 +44,8 @@ bool showGraphStackData = false;
 char s[200],text[200], text1[200], jts[400];
 
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
+
+largeMesh LM;
 
 ////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
@@ -96,6 +99,7 @@ void setup()
 	B.addButton(&showRobot, "showRobot");
 	B.addButton(&showGraphStackData, "showGraphData");
 
+	//////////////////////////////////////////////////////////////////////////
 }
 
 void update(int value)
@@ -123,13 +127,17 @@ void update(int value)
 void draw()
 {
 
-	backGround(1.0);
+	backGround(0.9);
 	drawGrid(20.0);
 
+	/*wireFrameOn();
+		drawCube( vec(-1, -1, -1), vec(1, 1, 1) );
+	wireFrameOff();*/
+	
 
-	//S.draw();
-	//B.draw();
-	//// ------------------------ draw the path points / Tool orientations 
+	S.draw();
+	B.draw();
+	// ------------------------ draw the path points / Tool orientations 
 
 	if (showRobot)
 	{
@@ -198,7 +206,7 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.2, 1.75);
 	if (k == 'P')
 	{
-		for (int i = 0; i < 1; i++)
+		for (int i = 0; i < 10; i++)
 		{
 			keyPress('p', 0, 0);
 			for (int j = 0; j < 1; j++)keyPress(' ', 0, 0);
