@@ -8,6 +8,7 @@
 using namespace ROBOTICS;
 
 #include "graph.h"
+#include "Matrix.h"
 
 class EndEffector
 {
@@ -159,7 +160,7 @@ public:
 class pathImporter :public importer
 {
 
-#define maxPts 9999 // max nachi controller limit
+#define maxPts 59999 // max nachi controller limit
 public:
 
 	////////////////////////////////////////////////////////////////////////// CLASS VARIABLES 
@@ -180,7 +181,7 @@ public:
 	EndEffector E;
 	EndEffector E_disp;
 	Graph taskGraph;
-
+	Matrix4 fTrans;
 	////////////////////////////////////////////////////////////////////////// CLASS METHODS 
 
 	pathImporter()
@@ -242,6 +243,82 @@ public:
 		//	checkReach();
 		copyPathToGraph();
 
+	}
+
+	void readOBJ(string fileToRead = "data/path.txt" , float zHt = 0.2 , double spacing = 0.2, double distTol = 0.05)
+	{
+		
+		
+		Mesh M;
+		MeshFactory fac;
+		M = fac.createFromOBJ("data/block.obj", 1.0, false);
+		vec minV, maxV;
+		////////////////////////////////////////////////////////////////////////// invert to origin
+
+		{
+
+			Matrix3x3 PCA_mat;
+			vec mean, eigenValues, eigenvecs[3];
+			PCA_mat.PCA(M.positions, M.n_v, mean, eigenValues, eigenvecs);
+			M.boundingBox(minV, maxV);
+
+			Matrix3 trans;
+			trans.setColumn(0, eigenvecs[0].normalise());
+			trans.setColumn(1, eigenvecs[2].normalise());
+			trans.setColumn(2, eigenvecs[1].normalise());
+			trans.transpose();
+			for (int i = 0; i < M.n_v; i++)
+			{
+				M.positions[i] -= (minV + maxV)*0.5;
+				M.positions[i] = trans * M.positions[i];
+			}
+		}
+
+		////////////////////////////////////////////////////////////////////////// transform to base plate
+
+		vec x, y, z,cen;
+		cen = vec(35, 35, -2.5);
+		x = vec(1, 1, 0).normalise();
+		y = x.cross(vec(0, 0, -1));
+		z = vec(0, 0, -1);
+
+		fTrans.identity();
+		fTrans.setColumn(0, x.normalise());
+		fTrans.setColumn(1, y.normalise());
+		fTrans.setColumn(2, z.normalise());
+		fTrans.setColumn(3, cen);
+		
+		for (int i = 0; i < M.n_v; i++)M.positions[i] = fTrans * M.positions[i];
+
+
+		//////////////////////////////////////////////////////////////////////////
+		metaMesh MM(M);;
+		MM.assignScalars("z");
+		
+
+		MM.boundingBox(minV, maxV);
+
+		///////////
+		for (double  z = minV.z + zHt; z < maxV.z; z+= zHt )
+		{
+			MM.createIsoContourGraph(z);
+			MM.G.computeIslandsAsEdgeAndVertexList();
+			MM.convertContourToToroidalGraph();
+			MM.G.redistribute_toroidal(spacing * 0.5);
+
+			int iterations = 0;
+			while (fabs(MM.G.averageEdgeLenght() - spacing) < distTol && iterations < 1000)
+			{
+				MM.G.smoothGraph(10);
+				iterations++;
+			}
+
+			for (int i = 0; i < MM.G.n_v; i++)addPoint(MM.G.positions[i]);
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+
+		reachable = new bool[actualPathLength];
 	}
 	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
 
@@ -581,6 +658,64 @@ public:
 		myfile_write.close();
 		cout << "--------------------------- EXPORT GCODE COMPLETE ----------------- " << endl;
 	}
+	void exportGCode_3dp(string fileToWrite = "data/bl_1.src")
+	{
+
+
+		int counter = 0;
+	
+		//----- instance ofstream for file IO
+		ofstream myfile_write;
+		char gcode[600];
+
+		//- open file
+		myfile_write.open(fileToWrite.c_str(), ios::out);
+		if (myfile_write.fail())cout << " error in opening file  " << fileToWrite << endl;
+
+		// --------------------------- copy header from base file
+		std::fstream fs("data/3DP_header.txt", ios::in);
+
+			if (fs.fail())cout << " error in file reading " << fileToRead << endl;
+
+		int lcnt = 0;
+		while (!fs.eof() && lcnt < 1000)
+		{
+			char str[2000];
+			fs.getline(str, 2000);
+
+			myfile_write << str << endl;
+			lcnt++;
+		}
+		fs.close();
+		
+		// --------------------------- 
+		//- iterate through path
+		
+		vec tcp;
+		double scale = 10;
+		tcp = path[0][0]; tcp *= scale;
+		sprintf_s(gcode, "PTP{ E6POS: X %1.4f, Y %1.4f, Z %1.4f, A 0, B 90, C 0, E1 0, E2 0, E3 0, E4 0, S 'B 110' } C_PTP", tcp.x,tcp.y,tcp.z);
+		myfile_write << gcode << endl;
+		
+		tcp = path[1][0]; tcp *= scale;
+		sprintf_s(gcode, "LIN{ E6POS: X %1.4f, Y %1.4f, Z %1.4f, A 0, B 90, C 0, E1 0, E2 0, E3 0, E4 0 }", tcp.x, tcp.y, tcp.z);
+		myfile_write << gcode << endl;
+
+		for (int i = 2; i < actualPathLength - 1; i++)
+		{
+		
+			tcp = path[i][0]; tcp *= scale;
+			sprintf_s(gcode, "LIN{ E6POS: X %1.4f, Y %1.4f, Z %1.4f, A 0, B 90, C 0, E1 0, E2 0, E3 0, E4 0 } C_DIS", tcp.x, tcp.y, tcp.z);
+			myfile_write << gcode << endl; 
+		}
+
+		//------close file
+		myfile_write << "HALT" << endl;
+		myfile_write << "END" << endl;
+		myfile_write.close();
+		cout << "--------------------------- EXPORT GCODE COMPLETE ----------------- " << endl;
+	}
+
 
 	////////////////////////////////////////////////////////////////////////// DISPLAY METHODS
 	void drawHistograms( int j ,vec cen = vec (50, winH - 50,0), float r = 5.0)

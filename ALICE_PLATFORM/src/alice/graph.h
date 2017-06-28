@@ -6,6 +6,8 @@
 //#include "matrices.h"
 //#define _use_vector_
 //#define _push_back_
+#define MAX_GRAPH_EDGES 5000
+#define MAX_GRAPH_VERTS 5000
 
 class Graph
 {
@@ -16,8 +18,8 @@ public:
 	/// islands
 	vector<int> connected_edges;
 	vector<int> connected_vertices;
-	array<bool, MAX_EDGES> eChecked;
-	array<bool, MAX_EDGES> eAdded;
+	array<bool, MAX_GRAPH_EDGES> eChecked;
+	array<bool, MAX_GRAPH_EDGES> eAdded;
 
 
 #ifdef _use_vector_
@@ -57,9 +59,9 @@ public:
 	Graph()
 	{
 		n_e = n_v = 0;
-		vertices = new Vertex[MAX_VERTS];
-		edges = new Edge[MAX_EDGES];
-		positions = new vec[MAX_VERTS];
+		vertices = new Vertex[MAX_GRAPH_VERTS];
+		edges = new Edge[MAX_GRAPH_EDGES];
+		positions = new vec[MAX_GRAPH_VERTS];
 	}
 
 	void constructFromGraph( Graph &G )
@@ -104,6 +106,7 @@ public:
 
 	Vertex * createVertex(vec &p)
 	{
+		//if (n_v >= MAX_GRAPH_VERTS)return NULL;
 
 		vertices[n_v] = Vertex(n_v);
 		positions[n_v] = p;
@@ -115,6 +118,8 @@ public:
 	// EDGE
 	Edge * createEdge(Vertex &str, Vertex &end)
 	{
+		//if (n_e >= MAX_GRAPH_EDGES)return NULL;
+
 		edges[n_e] = Edge(str, end, n_e);
 		str.addEdge(&edges[n_e]);
 		end.addEdge(&edges[n_e]);
@@ -231,6 +236,7 @@ public:
 
 	void computeIslandsAsEdgeAndVertexList()
 	{
+
 		for (auto &c : eChecked)c = false;
 		for (auto &c : eAdded)c = false;
 		
@@ -270,24 +276,128 @@ public:
 			connected_vertices.push_back(str_Vid);
 		}
 
+		// !! temporary fix.. this is for digitalFUTURES hotFix;
+		{
+			bool flipped = false;
+			vec e1 = positions[connected_vertices[1]] - positions[connected_vertices[0]];
+			vec e2 = positions[connected_vertices[2]] - positions[connected_vertices[1]];
+			flipped = e1 * e2 < 0 ? true : false;
+			if(flipped)
+			swap(connected_vertices[0], connected_vertices[1]);
+		}
 		// !!! IMP test
 		//for (int i = 0; i < 1; i++)connected_vertices.pop_back();
 	}
 	
-	void smooth_connectedVertices()
+	void smooth_connectedVertices( double breakAngle = 360.0 )
 	{
 		if (!connected_vertices.size() > 0)return;
 		
 		int n = connected_vertices.size();
+
+
+		
 		for (int i = 0; i < n; i += 1)
 		{
 			int Vi = connected_vertices[Mod(i, n)];
 			int Vi_minus = connected_vertices[Mod(i - 1, n)];
 			int Vi_plus = connected_vertices[Mod(i + 1, n)];
-			positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
+
+			{
+				positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
+				
+			}
 		}
 	}
 
+	double averageEdgeLenght()
+	{
+		double d = 0;
+		for (int i = 0; i < n_e; i++) d += positions[edges[i].vEnd->id].distanceTo(positions[edges[i].vStr->id]);
+		d /= n_e;
+		return d;
+	}
+
+	void smoothGraph( double breakAngle = 360.0)
+	{
+		int n = n_v;
+
+		for (int i = 0; i < n; i += 1)
+		{
+			int Vi = Mod(i, n);
+			int Vi_minus = Mod(i - 1, n);
+			int Vi_plus = Mod(i + 1, n);
+			vec ed1 = positions[Vi] - positions[Vi_minus];
+			vec ed2 = positions[Vi_plus] - positions[Vi];
+			
+			double ang = ed2.angle(ed1);
+			if( fabs(ang) < breakAngle )
+				positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
+		}
+	}
+
+	void inflateVertices()
+	{
+		vec cen;
+		for (int i = 0; i < n_v; i++)cen += positions[i];
+
+		cen /= n_v;
+
+		for (int i = 0; i < n_v; i++)
+		{
+			vec n = positions[i] - cen;
+			n.normalise();
+			positions[i] += n * 0.01;
+		}
+	}
+
+	void inflateWRTMedialAxis( Graph &G )
+	{
+		for (int i = 0; i < n_v; i++)
+		{
+			vec np = G.nearestPointOnGraph(positions[i]);
+			vec n = positions[i] - np;
+			n.normalise();
+			positions[i] += n * 0.02;
+		}
+	}
+
+	void redistribute_toroidal(double dis = 0.2)
+	{
+		Graph A;
+
+
+		for (int i = 0; i < n_v; i += 1)
+		{
+			vec ptStr = positions[i];
+			vec ptEnd = positions[ Mod(i + 1, n_v)];
+			vec ed = (ptEnd - ptStr);
+			double len = ed.mag();
+			ed.normalise();
+		
+			
+			if( dis < len ) 
+			{
+				int numDivs = floor(len / dis);
+				for (int n = 0; n <= numDivs; n += 1)
+					A.createVertex(ptStr + ed * dis * n);
+			}
+			else
+			{
+				A.createVertex(ptStr);
+			}
+		}
+
+
+		reset();
+
+		for (int i = 0; i < A.n_v; i += 1)
+			createVertex(A.positions[i]);
+
+		for (int i = 0; i < n_v; i += 1)
+			createEdge(vertices[i], vertices[Mod(i + 1, n_v)]);
+		//for (int i = 0; i < grid_points.rows(); i++)
+	}
 
 	// ------------- ------------- ------------- -------------------------- DISPLAY 
 
@@ -411,7 +521,27 @@ public:
 
 	}
 
+	vec nearestPointOnGraph( vec inPt )
+	{
+		vec nearest; vec pt;
+		float min = 1e10;
+		for (int j = 0; j < n_e; j++)
+		{
+			int e0, e1;
+			e0 = edges[j].vEnd->id;
+			e1 = edges[j].vStr->id;
+			
+			float Di = distanceSquaredAndNearestPointOnEdge(positions[e0], positions[e1], inPt, pt);
+			if (Di < min)
+			{
+				min = Di;
+				nearest = pt;
+			}
+		}
 
+		return nearest;
+
+	}
 	// ------------- ------------- ------------- -------------------------- DISPLAY
 
 	void draw_edge( Edge &e )
@@ -421,13 +551,23 @@ public:
 
 	void draw(bool drawPoints = true)
 	{
+
+		//{
+		//	char s[200];
+		//	itoa(0, s, 10);
+		//	drawString(s, positions[0]+ vec(0,0,.1));
+		//	drawPoint(positions[0]);
+		//	//drawR(positions[i], 0.05, 32);
+		//}
+
+
 		glPointSize(5);
 		if(drawPoints)
 		for (int i = 0; i < n_v; i++)
 		{
 			char s[200];
 			itoa(i, s, 10);
-			//drawString(s, positions[i]+ vec(0,0,.1));
+			drawString(s, positions[i]+ vec(0,0,.1));
 			drawPoint(positions[i]);
 			//drawR(positions[i], 0.05, 32);
 		}
@@ -531,6 +671,7 @@ public:
 	{
 		fixed[0] = fixed[n_v - 1] = true;
 	}
+
 
 
 	void smoothVertices()

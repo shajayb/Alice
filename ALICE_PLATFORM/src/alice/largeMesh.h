@@ -95,9 +95,9 @@ public:
 		{
 			vec P = T * vec(vertices[i], vertices[i + 1], vertices[i + 2]);
 			int nv = n_v;
-			lm_normals[nv + 0] = normals[i] * 1 ;
-			lm_normals[nv + 1] = normals[i+1] * 1;
-			lm_normals[nv + 2] = normals[i+2] * 1;
+			lm_normals[nv + 0] = normals[i] * -1 ;
+			lm_normals[nv + 1] = normals[i+1] * -1;
+			lm_normals[nv + 2] = normals[i+2] * -1;
 
 			lm_positions[nv + 0] = P.x;
 			lm_positions[nv + 1] = P.y;
@@ -114,9 +114,9 @@ public:
 		offset += 24;
 	}
 
-	void writeOBJ(string outFileName, string header, vec *pos, bool removeBorder)
+	void writeOBJ(string outFileName)
 	{
-		printf(" ----------- writing \n ");
+		printf(" ----------- writing largemesh \n ");
 
 		float scaleBack = 1.0;
 
@@ -130,38 +130,43 @@ public:
 			return;
 		}
 
-		// header
-		myfile << "# " << header.c_str() << endl;
+
 		// vertices
 		for (int i = 0; i < n_v; i+=3)
 		{
 
 			char s[200];
-			sprintf(s, "v %1.4f %1.4f %1.4f ", lm_positions[i] * scaleBack, lm_positions[i+1] * scaleBack, lm_positions[i+2] * scaleBack);
+			sprintf(s, "v %1.4f %1.4f %1.4f ", lm_positions[i], lm_positions[i+1] , lm_positions[i+2] );
 
 			myfile << s << endl;
 
 		}
 
 		// faces
-		int strt = 0;
-		for (int i = 0; i < n_f; i++)
+		int numCubes = n_f / 6;
+		for (int i = 0; i < numCubes  ; i++)
 		{
 
 
 			string str;
 			str = "f ";
-			for (int j = 0; j < faces[i].n_e; j++)
+			for (int j = 0; j < 24; j++)
 			{
 				char s[200];
-				itoa(f_v[j] + 1, s, 10);
+				itoa(indices[j] + i * 24 + 1, s, 10);
 				str += s;
 				str += "//";
 				str += s;
 				str += " ";
+				if ((j+1) % 4 == 0 /*&& j > 0*/ )
+				{
+					
+					myfile << str.c_str() << endl;
+					str = "f ";
+				}
 			}
 
-			myfile << str.c_str() << endl;
+			
 
 		}
 
