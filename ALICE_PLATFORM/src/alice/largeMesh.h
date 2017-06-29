@@ -18,6 +18,7 @@ public:
 
 	GLfloat lm_positions[MAX_CUBES * 72];
 	GLfloat lm_normals[MAX_CUBES * 72];
+	GLfloat lm_colors[MAX_CUBES * 72];
 	GLubyte lm_indices[_LM_FACECONNECTS_];
 
 
@@ -95,9 +96,20 @@ public:
 		{
 			vec P = T * vec(vertices[i], vertices[i + 1], vertices[i + 2]);
 			int nv = n_v;
-			lm_normals[nv + 0] = normals[i] * -1 ;
-			lm_normals[nv + 1] = normals[i+1] * -1;
-			lm_normals[nv + 2] = normals[i+2] * -1;
+			lm_normals[nv + 0] = normals[i] * 1 ;
+			lm_normals[nv + 1] = normals[i+1] * 1;
+			lm_normals[nv + 2] = normals[i+2] * 1;
+
+			// normals
+			vec light(10, 10, 10);
+			double ambO = (P - light).angle(vec(normals[i], normals[i + 1], normals[i + 2]));
+
+			ambO = ofMap(ambO, -180, 180, 0, 1);
+				
+			lm_colors[nv + 0] = ambO;
+			lm_colors[nv + 1] = ambO;
+			lm_colors[nv + 2] = ambO;
+
 
 			lm_positions[nv + 0] = P.x;
 			lm_positions[nv + 1] = P.y;
@@ -191,27 +203,27 @@ public:
 		//////////////////////////////////////////////////////////////////////////
 		glPushAttrib(GL_CURRENT_BIT);
 
-		vec lightPos = vec(50, 0, 200);
-		GLfloat light_pos[] = { lightPos.x, lightPos.y, lightPos.z, 1.0 };
+		//vec lightPos = vec(50, 0, 200);
+		//GLfloat light_pos[] = { lightPos.x, lightPos.y, lightPos.z, 1.0 };
 
-		GLfloat qaAmbient[] = { 0.0, 0.0, 0.0, 1.0 }; //Black Color
-		GLfloat qaDiffuse[] = { 0.5, 0.5, 0.5, 1.0 }; //Green Color
-		GLfloat qaWhite[] = { 1.0, 1.0, 1.0, 1.0 }; //White Color
-		GLfloat qaRed[] = { 1.0, 0.0, 0.0, 1.0 }; //White Color
+		//GLfloat qaAmbient[] = { 0.0, 0.0, 0.0, 1.0 }; //Black Color
+		//GLfloat qaDiffuse[] = { 0.5, 0.5, 0.5, 1.0 }; //Green Color
+		//GLfloat qaWhite[] = { 1.0, 1.0, 1.0, 1.0 }; //White Color
+		//GLfloat qaRed[] = { 1.0, 0.0, 0.0, 1.0 }; //White Color
 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, qaAmbient);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, qaDiffuse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, qaWhite);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 1);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, qaAmbient);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, qaDiffuse);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, qaWhite);
+		//glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 1);
 
-		glPushAttrib(GL_CURRENT_BIT);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glPushAttrib(GL_CURRENT_BIT);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		//resetProjection();
-			glColor4f(1.0, 1.0, 1.0, 1.0);
-			lightsOn(light_pos);
-		//restore3d();
+		////resetProjection();
+		//	glColor4f(1.0, 1.0, 1.0, 1.0);
+		//	lightsOn(light_pos);
+		////restore3d();
 
 
 			//drawCube(vec(30, 0, 0), vec(60, 30, 1));
@@ -219,16 +231,18 @@ public:
 		{
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_NORMAL_ARRAY);
-
+			glEnableClientState(GL_COLOR_ARRAY);
 
 			glVertexPointer(3, GL_FLOAT, 0, lm_positions);
 			glNormalPointer(GL_FLOAT, 0, lm_normals);
+			glColorPointer(3, GL_FLOAT, 0, lm_colors);
 			//glDrawElements(GL_QUADS, n_f * 6, GL_UNSIGNED_BYTE, lm_indices);// index hopping isnt workign currently - 140617
 			glDrawArrays(GL_QUADS, 0, n_f * 6);
 
 
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
+			glDisableClientState(GL_COLOR_ARRAY);
 		}
 
 		glPopMatrix();

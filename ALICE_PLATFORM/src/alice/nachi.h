@@ -182,6 +182,8 @@ public:
 	EndEffector E_disp;
 	Graph taskGraph;
 	Matrix4 fTrans;
+	Mesh M;
+	metaMesh MM;
 	////////////////////////////////////////////////////////////////////////// CLASS METHODS 
 
 	pathImporter()
@@ -198,6 +200,8 @@ public:
 		actualPathLength = 0;
 		taskGraph = *new Graph();
 		taskGraph.reset();
+
+		reachable = new bool[maxPts];
 	}
 	void readPath(string fileToRead = "data/path.txt", string delimiter = ",", float inc = 0)
 	{
@@ -245,80 +249,120 @@ public:
 
 	}
 
-	void readOBJ(string fileToRead = "data/path.txt" , float zHt = 0.2 , double spacing = 0.2, double distTol = 0.05)
+	void readOBJ(string fileToRead = "data/path.txt" , float zHt = 0.2 , double spacing = 1.0, double distTol = 0.05)
 	{
 		
-		
-		Mesh M;
 		MeshFactory fac;
-		M = fac.createFromOBJ("data/block.obj", 1.0, false);
-		vec minV, maxV;
-		////////////////////////////////////////////////////////////////////////// invert to origin
+		M = fac.createFromOBJ(fileToRead, 100.0, false);
 
+		cout << " nachi" << fileToRead << endl;
 		{
-
+			vec minV, maxV;
 			Matrix3x3 PCA_mat;
 			vec mean, eigenValues, eigenvecs[3];
 			PCA_mat.PCA(M.positions, M.n_v, mean, eigenValues, eigenvecs);
 			M.boundingBox(minV, maxV);
 
-			Matrix3 trans;
-			trans.setColumn(0, eigenvecs[0].normalise());
-			trans.setColumn(1, eigenvecs[2].normalise());
-			trans.setColumn(2, eigenvecs[1].normalise());
-			trans.transpose();
 			for (int i = 0; i < M.n_v; i++)
-			{
 				M.positions[i] -= (minV + maxV)*0.5;
-				M.positions[i] = trans * M.positions[i];
+			
+			vec x = eigenvecs[0].normalise();
+			if( fabs(x.x) > 0.1 && x.y > 0.1)
+			{
+				
+				x.z = 0;
+				vec z = vec(0, 0, 1);
+				vec y = x.cross(z).normalise();
+
+				Matrix3 trans;
+				trans.setColumn(0, x);
+				trans.setColumn(1, y);
+				trans.setColumn(2, z);
+				trans.transpose();
+
+				for (int i = 0; i < M.n_v; i++)
+					M.positions[i] = trans * M.positions[i];
+
 			}
+
 		}
 
+		cout << "invert done" << endl;
 		////////////////////////////////////////////////////////////////////////// transform to base plate
+		{
+			vec x, y, z, cen;
+			cen = vec(53.9327, -2.2114, -17.4015);
+			x = vec(1, 0, 0).normalise();
+			z = vec(0, 0, -1);
+			y = x.cross(z);
 
-		vec x, y, z,cen;
-		cen = vec(35, 35, -2.5);
-		x = vec(1, 1, 0).normalise();
-		y = x.cross(vec(0, 0, -1));
-		z = vec(0, 0, -1);
-
-		fTrans.identity();
-		fTrans.setColumn(0, x.normalise());
-		fTrans.setColumn(1, y.normalise());
-		fTrans.setColumn(2, z.normalise());
-		fTrans.setColumn(3, cen);
-		
-		for (int i = 0; i < M.n_v; i++)M.positions[i] = fTrans * M.positions[i];
+			Matrix4 fTrans;
+			fTrans.identity();
+			fTrans.setColumn(0, x.normalise());
+			fTrans.setColumn(1, y.normalise());
+			fTrans.setColumn(2, z.normalise());
+			fTrans.setColumn(3, cen);
 
 
+			for (int i = 0; i < M.n_v; i++)
+				M.positions[i] = fTrans * M.positions[i];
+
+			vec minV, maxV;
+			M.boundingBox(minV, maxV);
+			double diff = cen.z - minV.z;
+
+
+			for (int i = 0; i < M.n_v; i++)
+				M.positions[i].z += diff;
+		}
+		cout << "trans done" << endl;
 		//////////////////////////////////////////////////////////////////////////
 		metaMesh MM(M);;
+
 		MM.assignScalars("z");
-		
+		double minZ, maxZ;
+		//MM.getMinMaxOfScalarField(minZ, maxZ);
 
-		MM.boundingBox(minV, maxV);
-
+		minZ = -17.4015; maxZ = 0;
 		///////////
-		for (double  z = minV.z + zHt; z < maxV.z; z+= zHt )
+		double z = 0; 
+		actualPathLength = 0;
+		vec refPt_renumber;
+		vector<vec> startPts;
+		for (double  z = minZ ; z < maxZ; z+= zHt )
 		{
 			MM.createIsoContourGraph(z);
+			
+			cout << z << endl;
+				if (!MM.G.n_v > 0)continue;
+			cout << MM.G.n_v << endl;
+
 			MM.G.computeIslandsAsEdgeAndVertexList();
 			MM.convertContourToToroidalGraph();
 			MM.G.redistribute_toroidal(spacing * 0.5);
 
 			int iterations = 0;
-			while (fabs(MM.G.averageEdgeLenght() - spacing) < distTol && iterations < 1000)
+			//while (fabs(MM.G.averageEdgeLenght() - spacing) < distTol && iterations < 1000)
 			{
-				MM.G.smoothGraph(10);
-				iterations++;
+				for (int i = 0; i < 10; i++)MM.G.smoothGraph(10);
+					
+				//iterations++;
 			}
 
+			// renumber
+			if (z == minZ)refPt_renumber = MM.G.positions[0];
+			refPt_renumber.z = z;
+			MM.G.renumber(refPt_renumber);
+			
 			for (int i = 0; i < MM.G.n_v; i++)addPoint(MM.G.positions[i]);
+			startPts.push_back(MM.G.positions[0]);
 		}
 
-		//////////////////////////////////////////////////////////////////////////
+		for (int i = 0; i < startPts.size(); i++)
+			printf("%1.2f,%1.2f,%1.2f \n", startPts[i].x, startPts[i].y, startPts[i].z);
 
-		reachable = new bool[actualPathLength];
+		//////////////////////////////////////////////////////////////////////////
+		for (int i = 0; i < actualPathLength; i++)reachable[i] = true;
 	}
 	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
 
@@ -773,6 +817,11 @@ public:
 		{
 			reachable[i] ? glColor3f(0, 0, 1) : glColor3f(1, 0, 0);
 			drawPoint(path[i][0]);
+			/*char c[200];
+			sprintf(c, "%i ", i);
+			string s = "";
+			s += c;
+			drawString(s, path[i][0]+ vec(0,0,0.2));*/
 		}
 		glPointSize(1);
 
@@ -792,7 +841,7 @@ public:
 		// ------------------- draw bounding box ;
 
 		wireFrameOn();
-		drawCube(min, max);
+			drawCube(min, max);
 		wireFrameOff();
 		// ------------------- draw Robot ;
 

@@ -110,7 +110,8 @@ public:
 	void assignScalars(string component = "z")
 	{
 		if(component == "z")
-		for (int i = 0; i < n_v; i++)scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
+		for (int i = 0; i < n_v; i++)
+			scalars[i] = positions[i].z;// vertices[i].getMeanCurvatureGradient(positions).mag(); // 
 																 //(&m.positions[i])* DEG_TO_RAD ; //// m.positions[i].y; // distanceTo(vec(0, 0, 0));
 		if (component == "y")
 			for (int i = 0; i < n_v; i++)scalars[i] = positions[i].y;
@@ -280,6 +281,9 @@ public:
 
 			diff = (positions[b] - positions[a]);// .normalise();
 			interp = ofMap(threshold, scalars[a], scalars[b], 0, 1);
+			
+			//printf("%1.2f,%1.2f,%1.2f \n", scalars[a], scalars[b],interp);
+
 			if (interp >= 0.0 && interp <= 1.0)
 			{
 				v = *(G.createVertex((positions[a] + diff * interp)));
@@ -325,13 +329,15 @@ public:
 	void convertContourToToroidalGraph()
 	{
 		if (!G.connected_vertices.size() > 0)return;
+		//if (G.n_v != G.connected_vertices.size() )return;
 
 		{
 			
 			Graph A;
 			for (int i = 0; i < G.n_v  ; i += 1) // !!! IMP ..fix starting index to 0
 			{
-				A.createVertex( G.positions[ G.connected_vertices[i]] );
+				
+				if(G.connected_vertices[i] < G.n_v)A.createVertex( G.positions[ G.connected_vertices[i]] );
 			}
 
 			for (int i = 0; i < A.n_v; i += 1)

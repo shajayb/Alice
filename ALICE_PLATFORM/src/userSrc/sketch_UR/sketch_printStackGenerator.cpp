@@ -47,7 +47,8 @@ char s[200],text[200], text1[200], jts[400];
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
 
 //largeMesh LM;
-
+int fileNum = 0;
+string printfile;
 ////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
 void setup()
@@ -71,8 +72,15 @@ void setup()
 	//	path.readPath("data/path.txt", ",", 1.15 + float(i) * 0.1);
 	//	//path.actualPathLength--;
 	//}
-	path.readOBJ("data/block.obj");
-	cout << "path read" << endl;
+	//char s[200];
+	//sprintf(s, "%i", fileNum);
+	//printfile = "data/block_";
+	//printfile += s;
+	//printfile += ".obj";
+	//path.readOBJ(printfile);
+	//cout << "path read " << printfile.c_str() << endl;
+
+	//cout << filePath[filePath.size() - 1] << endl;
 	//////////////////////////////////////////////////////////
 
 
@@ -91,9 +99,10 @@ void setup()
 	S.sliders[4].attachToVariable(&path.Nachi_tester.rot[4], -170, 170);
 	S.sliders[5].attachToVariable(&path.Nachi_tester.rot[5], -170, 170);
 
+	GS.threshold = 0;
 	S.addSlider(&GS.threshold, "threshold");
 	S.sliders[6].minVal = 0;
-	S.sliders[6].maxVal = 10;
+	S.sliders[6].maxVal = 1500;
 
 	/////////////////////////////
 
@@ -106,26 +115,59 @@ void setup()
 
 	Mesh M;
 	MeshFactory fac;
-	M = fac.createFromOBJ("data/block.obj", 1.0, false);
+	if (inFile.length() > 0)printfile = inFile;
+	M = fac.createFromOBJ(printfile, 100.0, false);
 
-		{
+	{
 
 			Matrix3x3 PCA_mat;
 			vec mean, eigenValues, eigenvecs[3];
 			PCA_mat.PCA(M.positions, M.n_v, mean, eigenValues, eigenvecs);
 			M.boundingBox(minV, maxV);
 
+			vec x = eigenvecs[0].normalise();
+			x.z = 0;
+			vec z = vec(0, 0, 1);
+			vec y = x.cross(z).normalise();
+			
 			Matrix3 trans;
-			trans.setColumn(0, eigenvecs[0].normalise());
-			trans.setColumn(1, eigenvecs[2].normalise());
-			trans.setColumn(2, eigenvecs[1].normalise());
+			trans.setColumn(0, x);
+			trans.setColumn(1, y);
+			trans.setColumn(2, z);
 			trans.transpose();
 			for (int i = 0; i < M.n_v; i++)
 			{
 				M.positions[i] -= (minV+maxV)*0.5;
-				M.positions[i] = trans * M.positions[i];
+				//M.positions[i] = trans * M.positions[i];
 			}
-		}
+	}
+
+	{
+		vec x, y, z, cen;
+		cen = vec(73.9327, -2.2114, -17.4015);
+		x = vec(1, 0, 0).normalise();
+		z = vec(0, 0, -1);
+		y = x.cross(z);
+
+		Matrix4 fTrans;
+		fTrans.identity();
+		fTrans.setColumn(0, x.normalise());
+		fTrans.setColumn(1, y.normalise());
+		fTrans.setColumn(2, z.normalise());
+		fTrans.setColumn(3, cen);
+
+
+		for (int i = 0; i < M.n_v; i++)
+			M.positions[i] = fTrans * M.positions[i];
+
+		vec minV, maxV;
+		M.boundingBox(minV, maxV);
+		double diff = cen.z - minV.z;
+
+
+		for (int i = 0; i < M.n_v; i++)
+		M.positions[i].z += diff;
+	}
 
 
 	MM = *new metaMesh(M);;
@@ -163,9 +205,13 @@ void draw()
 	backGround(0.9);
 	drawGrid(20.0);
 
-	glColor3f(1, 0, 0);
-	MM.display(false, true, true);
+	//glColor3f(1, 0, 0);
+	//MM.display(false, true, true);
 
+	//vec A = vec(73.9327, -2.2114, -17.4);
+	//wireFrameOn();
+	//	drawPlane(vec(0, 0, 1), A, 15.0);
+	//wireFrameOff();
 
 	S.draw();
 	B.draw();
@@ -186,7 +232,8 @@ void draw()
 
 	sprintf_s(s, " current point id : %i", path.currentPointId);
 	sprintf_s(text, " total points in path : %i", path.actualPathLength - 1);
-	
+
+
 	int cid = path.currentPointId;
 
 	if (cid < path.actualPathLength - 1 && cid >= 0)
@@ -199,7 +246,7 @@ void draw()
 	AL_drawString(s, winW * 0.5, winH - 50);
 	AL_drawString(text, winW * 0.5, winH - 75);
 	AL_drawString(jts, winW * 0.5, winH - 100);
-
+	AL_drawString(printfile.c_str(), winW * 0.5, winH - 125);
 
 	int hts = 50;
 	int wid = winW * 0.75;
@@ -296,18 +343,20 @@ void keyPress(unsigned char k, int xm, int ym)
 
 	if (k == 'm')
 	{
-	/*	setCamera(3,-45,45,0,0);*/
-		double spacing = 0.2;
-		MM.G.redistribute_toroidal(spacing * 0.9);
+			cout << "path read " << inFile.c_str() << endl;
+			vector<string>filePath = path.splitString(inFile, "\\");
+			vector<string>fileNameParts = path.splitString(filePath[filePath.size()-1], ".");
+			string fileName = fileNameParts[0];
+			cout << fileName << endl;
+			string exportFileName = "Robot2_";
+			exportFileName += fileName;
+			exportFileName += ".src";
 
-		int iterations = 0;
-		while (fabs(MM.G.averageEdgeLenght() - spacing) < 0.01 && iterations < 1000)
-		{
-			MM.G.smoothGraph(10);
-			iterations++;
-		}
+			path.readOBJ(inFile);
+			path.exportGCode_3dp(exportFileName);
 
-		cout << "---avergage length" << MM.G.averageEdgeLenght() << " -- expected spacing" << 0.2 << endl;
+	//	MM.G.smoothGraph(10);
+		//MM.G.renumber(MM.G.positions[4]);
 
 	}
 

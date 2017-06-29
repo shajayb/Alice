@@ -282,8 +282,8 @@ public:
 			vec e1 = positions[connected_vertices[1]] - positions[connected_vertices[0]];
 			vec e2 = positions[connected_vertices[2]] - positions[connected_vertices[1]];
 			flipped = e1 * e2 < 0 ? true : false;
-			if(flipped)
-			swap(connected_vertices[0], connected_vertices[1]);
+			if (flipped)
+				swap(connected_vertices[0], connected_vertices[1]);
 		}
 		// !!! IMP test
 		//for (int i = 0; i < 1; i++)connected_vertices.pop_back();
@@ -397,6 +397,37 @@ public:
 		for (int i = 0; i < n_v; i += 1)
 			createEdge(vertices[i], vertices[Mod(i + 1, n_v)]);
 		//for (int i = 0; i < grid_points.rows(); i++)
+	}
+
+	void renumber( vec refPt)
+	{
+			Graph A;
+
+			int nearest;
+			double dMin = 1e10;
+
+			for (int i = 0; i < n_v; i += 1)
+			{
+				double d = refPt.distanceTo(positions[i]);
+				if (d < dMin)
+				{
+					dMin = d;
+					nearest = i;
+				}
+			}
+			
+
+			for (int i = nearest; i < n_v; i++)	A.createVertex( positions[i]);
+			for (int i = 0; i < nearest; i++)A.createVertex(positions[i]);
+
+			reset();
+
+			for (int i = 0; i < A.n_v; i += 1)
+				createVertex(A.positions[i]);
+
+			for (int i = 0; i < n_v; i += 1)
+				createEdge(vertices[i], vertices[Mod(i + 1, n_v)]);
+
 	}
 
 	// ------------- ------------- ------------- -------------------------- DISPLAY 
@@ -567,7 +598,7 @@ public:
 		{
 			char s[200];
 			itoa(i, s, 10);
-			drawString(s, positions[i]+ vec(0,0,.1));
+			//drawString(s, positions[i]+ vec(0,0,.1));
 			drawPoint(positions[i]);
 			//drawR(positions[i], 0.05, 32);
 		}
