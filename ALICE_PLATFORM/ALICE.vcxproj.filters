@@ -138,6 +138,9 @@
     <ClInclude Include="src\alice\object.h">
       <Filter>MVP</Filter>
     </ClInclude>
+    <ClInclude Include="src\alice\graphStack.h">
+      <Filter>PhD_R02</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ImGui">

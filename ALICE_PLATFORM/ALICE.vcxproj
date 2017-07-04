@@ -124,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\alice\Controller.h" />
+    <ClInclude Include="src\alice\graphStack.h" />
     <ClInclude Include="src\alice\largeMesh.h" />
     <ClInclude Include="src\alice\MODEL.h" />
     <ClInclude Include="src\alice\object.h" />
