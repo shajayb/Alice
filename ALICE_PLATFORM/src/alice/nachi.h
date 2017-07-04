@@ -495,22 +495,22 @@ public:
 
 		vec pt = Nachi_tester.ForwardKineMatics(Nachi_tester.rot);
 
-		cout << rot_prev[3] - Nachi_tester.rot[3] << " J3 diff " << endl;
-		cout << rot_prev[3] << " J3_prev " << endl;
+		//cout << rot_prev[3] - Nachi_tester.rot[3] << " J3 diff " << endl;
+		//cout << rot_prev[3] << " J3_prev " << endl;
 
 
-		cout << " -- current point -- " << currentPointId << endl;
+		//cout << " -- current point -- " << currentPointId << endl;
 		vec ax, ay, az;
 		ax = Nachi_tester.Bars_to_world_matrices[5].getColumn(0);
 		ay = Nachi_tester.Bars_to_world_matrices[5].getColumn(1);
 		az = Nachi_tester.Bars_to_world_matrices[5].getColumn(2);
-		cout << pt.mag() << " lenghth " << endl;
+		//cout << pt.mag() << " lenghth " << endl;
 
-		cout << ax.angle(TOOL.getColumn(0)) << endl;
-		cout << ay.angle(TOOL.getColumn(1)) << endl;
-		cout << az.angle(TOOL.getColumn(2)) << endl;
+		//cout << ax.angle(TOOL.getColumn(0)) << endl;
+		//cout << ay.angle(TOOL.getColumn(1)) << endl;
+		//cout << az.angle(TOOL.getColumn(2)) << endl;
 		vec tcp_ret = Nachi_tester.Bars_to_world_matrices[5].getColumn(3);
-		cout << Nachi_tester.joints[5].distanceTo(TOOL.getColumn(3)) << " in-out - tcp diff " << endl;
+	//	cout << Nachi_tester.joints[5].distanceTo(TOOL.getColumn(3)) << " in-out - tcp diff " << endl;
 
 
 		currentPointId++;
@@ -580,7 +580,7 @@ public:
 			reachable[i] = true;
 			if (pt.distanceTo(TOOL.getColumn(3)) > 1e-04)
 			{
-				printf(" point id %i is unreachable \n", i);
+				//printf(" point id %i is unreachable \n", i);
 				reachable[i] = false;
 			}
 
@@ -591,15 +591,15 @@ public:
 			ay = Nachi_tester.Bars_to_world_matrices[5].getColumn(1);
 			az = Nachi_tester.Bars_to_world_matrices[5].getColumn(2);
 
-			cout << " -- current point -- " << i << endl;
-			if (fabs(ax.angle(TOOL.getColumn(0))) > 1e-04) printf(" point id %i axis ax & tcp_x do not match within tolernace \n", i);
-			if (fabs(ay.angle(TOOL.getColumn(1))) > 1e-04) printf(" point id %i axis ay & tcp_y do not match within tolernace \n", i);
-			if (fabs(az.angle(TOOL.getColumn(2))) > 1e-04) printf(" point id %i axis az & tcp_z do not match within tolernace \n", i);
+		//	cout << " -- current point -- " << i << endl;
+			//if (fabs(ax.angle(TOOL.getColumn(0))) > 1e-04) printf(" point id %i axis ax & tcp_x do not match within tolernace \n", i);
+			//if (fabs(ay.angle(TOOL.getColumn(1))) > 1e-04) printf(" point id %i axis ay & tcp_y do not match within tolernace \n", i);
+			//if (fabs(az.angle(TOOL.getColumn(2))) > 1e-04) printf(" point id %i axis az & tcp_z do not match within tolernace \n", i);
 
-			// test if current TOOL orientation axes are ortho-normal / perpendicular to each other
-			if (TOOL.getColumn(0)*TOOL.getColumn(1) > 1e-04)printf(" point id %i axis x & y are not ortho-normal \n", i);
-			if (TOOL.getColumn(1)*TOOL.getColumn(2) > 1e-04)printf(" point id %i axis y & z are not ortho-normal \n", i);
-			if (TOOL.getColumn(2)*TOOL.getColumn(0) > 1e-04)printf(" point id %i axis z & x are not ortho-normal \n", i);
+			//// test if current TOOL orientation axes are ortho-normal / perpendicular to each other
+			//if (TOOL.getColumn(0)*TOOL.getColumn(1) > 1e-04)printf(" point id %i axis x & y are not ortho-normal \n", i);
+			//if (TOOL.getColumn(1)*TOOL.getColumn(2) > 1e-04)printf(" point id %i axis y & z are not ortho-normal \n", i);
+			//if (TOOL.getColumn(2)*TOOL.getColumn(0) > 1e-04)printf(" point id %i axis z & x are not ortho-normal \n", i);
 
 			// store corresponding rotations at each point along path
 			// for later use such as gcode export & graph-generation etc.
@@ -612,27 +612,27 @@ public:
 	{
 		if (fabs(rot_prev[3] - Nachi_tester.rot[3]) > 180)
 		{
-			cout << Nachi_tester.rot[3] << " J3_fk " << endl;
+		//	cout << Nachi_tester.rot[3] << " J3_fk " << endl;
 
 			if (rot_prev[3] < 0 && Nachi_tester.rot[3] > 0) Nachi_tester.rot[3] -= 360;
 			if (rot_prev[3] > 0 && Nachi_tester.rot[3] < 0) Nachi_tester.rot[3] += 360;
 
-			cout << Nachi_tester.rot[3] << " J3_new " << endl;
+		//	cout << Nachi_tester.rot[3] << " J3_new " << endl;
 		}
 
-		cout << Nachi_tester.rot[3] << " J4_new_after " << endl;
+	//	cout << Nachi_tester.rot[3] << " J4_new_after " << endl;
 
 
 		if (fabs(rot_prev[5] - Nachi_tester.rot[5]) > 180)
 		{
 
-			cout << rot_prev[5] << " J5_prev " << endl;
-			cout << Nachi_tester.rot[5] << " J5_fk " << endl;
+			//cout << rot_prev[5] << " J5_prev " << endl;
+			//cout << Nachi_tester.rot[5] << " J5_fk " << endl;
 
 			if (rot_prev[5] < 0 && Nachi_tester.rot[5] > 0) Nachi_tester.rot[5] -= 360;
 			if (rot_prev[5] > 0 && Nachi_tester.rot[5] < 0) Nachi_tester.rot[5] += 360;
 
-			cout << Nachi_tester.rot[5] << " J5_new " << endl;
+			//cout << Nachi_tester.rot[5] << " J5_new " << endl;
 		}
 
 		/*Nachi_tester.rot[0] = ofClamp(Nachi_tester.rot[0], -170, 170);
@@ -644,6 +644,7 @@ public:
 	}
 	void exportGCode(string fileToWrite = "data/MZ07-01-A.080")
 	{
+		
 		int counter = 0;
 		//----- check & compute all necessary values
 		checkReach();
@@ -705,7 +706,7 @@ public:
 	void exportGCode_3dp(string fileToWrite = "data/bl_1.src")
 	{
 
-
+		checkReach();
 		int counter = 0;
 	
 		//----- instance ofstream for file IO

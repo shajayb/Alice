@@ -68,7 +68,7 @@ public:
 			for (int j = 0; j < divs; j++)
 			{
 				float y = minV.y + (maxV.y - minV.y) / float(divs) * float(j);
-				M.createVertex(vec(x, y, 0));
+				M.createVertex(vec(x, y, minV.z));
 				rowCnt++;
 			}
 			colCnt++;
@@ -226,7 +226,7 @@ public:
 				int e0, e1;
 				e0 = G.edges[j].vEnd->id;
 				e1 = G.edges[j].vStr->id;
-				float Di = distanceAndNearestPointOnEdge(G.positions[e0], G.positions[e1], positions[i], pt);
+				float Di = distanceAndNearestPointOnEdge( G.positions[e0], G.positions[e1], positions[i], pt);
 
 				if (!blend)
 				{

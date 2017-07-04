@@ -41,9 +41,14 @@ int rCnt = 0;
 bool showRobot = false;
 bool showGraphStackData = false;
 bool showGraphStackMesh = false;
+bool showMeshWire = false;
 
 char s[200],text[200], text1[200], jts[400];
 
+double lightscale = 3.0;
+double background = 0.8;
+bool flipNormals = false;
+vec camPt;
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
 
 //largeMesh LM;
@@ -53,6 +58,8 @@ string printfile;
 
 void setup()
 {
+
+
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -101,15 +108,21 @@ void setup()
 
 	GS.threshold = 0;
 	S.addSlider(&GS.threshold, "threshold");
-	S.sliders[6].minVal = 0;
-	S.sliders[6].maxVal = 1500;
-
+	//S.sliders[6].minVal = 0;
+	//S.sliders[6].maxVal = 35;
+	S.sliders[6].minVal = -20;
+	S.sliders[6].maxVal = 0;
+	S.addSlider(&lightscale, "lightscale");	
+	S.sliders[7].maxVal = 20;
+	S.addSlider(&background, "background");
 	/////////////////////////////
 
 	B = *new ButtonGroup(vec(50, 450, 0));
 	B.addButton(&showRobot, "showRobot");
 	B.addButton(&showGraphStackData, "showGraphData");
-	B.addButton(&showGraphStackMesh, "showGraphStackMesh");
+	B.addButton(&showGraphStackMesh, "showStackMesh");
+	B.addButton(&showMeshWire, "showMeshWire");
+	B.addButton(&flipNormals, "flipNormals");
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -189,8 +202,9 @@ void update(int value)
 		if (rCnt % 3 == 0)GS.writeCurrentGraph();
 
 		if (rCnt == 200 * 2 )run = !run;*/
-		keyPress('p', 0, 0);
-		for (int i = 0; i < 5; i++)keyPress(' ', 0, 0);
+		/*keyPress('p', 0, 0);
+		for (int i = 0; i < 5; i++)keyPress(' ', 0, 0);*/
+		keyPress('.', 0, 0);
 	}
 		
 
@@ -202,11 +216,11 @@ void update(int value)
 void draw()
 {
 
-	backGround(0.9);
+	backGround(background);
 	drawGrid(20.0);
 
-	//glColor3f(1, 0, 0);
-	//MM.display(false, true, true);
+	glColor3f(1, 0, 0);
+	MM.display(false, true, true);
 
 	//vec A = vec(73.9327, -2.2114, -17.4);
 	//wireFrameOn();
@@ -226,7 +240,7 @@ void draw()
 		path.drawFrame(path.fTrans, 3);
 	}
 	else
-			GS.draw(showGraphStackMesh,showGraphStackData);
+			GS.draw(showGraphStackMesh, showMeshWire,showGraphStackData);
 
 	//////////////////////////////////////////////////////////
 
@@ -247,6 +261,8 @@ void draw()
 	AL_drawString(text, winW * 0.5, winH - 75);
 	AL_drawString(jts, winW * 0.5, winH - 100);
 	AL_drawString(printfile.c_str(), winW * 0.5, winH - 125);
+	
+	
 
 	int hts = 50;
 	int wid = winW * 0.75;
@@ -269,9 +285,10 @@ void draw()
 	AL_drawString(" r : setup();", wid, hts); hts += 25;
 	AL_drawString(" h : path.home();", wid, hts); hts += 25;
 
+	
 	restore3d();
 
-
+	drawVector(camPt, vec(wid, hts + 25, 0), "cam");
 
 }
 
@@ -281,30 +298,55 @@ void keyPress(unsigned char k, int xm, int ym)
 {
 
 	///// GRAPH GENERTOR PROGRAM 
-	if (k == 'i')GS.inflateCurrentGraph();
+	if (k == 'i')setCamera(15, -40, 60, -2, 4);
+	
 
 	if (k == ' ')
 	{
-		GS.smoothCurrentGraph();
+		//GS.smoothCurrentGraph();
+		//GS.MM.G.redistribute_toroidal(0.2);
+		GS.MM.G.smoothGraph(180);
+
 		for (int i = 0; i < 10; i++)MM.G.smoothGraph(10);
 	}
-	if (k == 'c')GS.convertContourToToroidalGraph();
+	if (k == 'c')
+	{
+		GS.convertContourToToroidalGraph();
+		MM.convertContourToToroidalGraph();
+
+		
+	}
+	if (k == 'n')
+	{
+		GS.MM.G.redistribute_toroidal(0.05);
+		for (int i = 0; i < 10; i++)GS.MM.G.smoothGraph(90);
+
+		MM.G.redistribute_toroidal(0.5);
+		
+	}
 	if (k == '-')GS.reducePointsOnContourGraph(2);
-	if (k == 'b')GS.addCurrentContourGraphToPrintStack(-0.04, 0.0);
+	if (k == 'b')
+	{
+		GS.addCurrentContourGraphToPrintStack(0.2, 0.0);
+		//
+	}
 	if (k == 'B')
 	{
 		for (int i = 0; i < 10; i++)
 		{
-			GS.addCurrentContourGraphToPrintStack(-0.04, 0.0);
+			keyPress('b', 0, 0);
 			
 			for (int j = 0; j < 1; j++)GS.inflateCurrentGraph();
-			for (int j = 0; j < 120; j++)GS.smoothCurrentGraph();
+			for (int j = 0; j < 30; j++)keyPress(' ', 0, 0);
 			for (int j = 0; j < 1; j++)GS.MM.G.inflateVertices();
 		}
+		GS.LM.updateColorArray(lightscale, flipNormals, camPt);
 	}
 	if (k == '<')GS.currentStackLayer--;
 	if (k == 'O')
 	{
+		showGraphStackMesh = false; 
+		GS.convertedToToroidal = false;
 		GS.currentStackLayer = 0;
 		GS.LM.n_v = GS.LM.n_e = GS.LM.n_f = 0;
 	}
@@ -318,20 +360,25 @@ void keyPress(unsigned char k, int xm, int ym)
 		GS.LM.writeOBJ("data/largeMesh.obj");
 	}
 
+	if (k == 'e')
+	{
+		GS.readGraphAndCreateDataMesh("data/tree_pts.txt", 1.0);//circular_pts
+
+	}
 	if (k == 'U')run = !run;
 
 	///// ROBOT PROGRAM / PATH CHECKING 
 
-	if (k == 'n')path.goToNextPoint();
+	if (k == '.')path.goToNextPoint();
 	if (k == 'b')
 	{
 		path.currentPointId -= 2;;
 		path.goToNextPoint();
 	}
 	if (k == 'N')path.currentPointId = 0;
-	if (k == 'q')path.checkPathForReachability();
+
 	if (k == 'w')path.exportGCode_3dp();// path.exportGCode();
-	if (k == 'r')setup();
+
 
 	if (k == 'h')
 	{
@@ -340,9 +387,15 @@ void keyPress(unsigned char k, int xm, int ym)
 		path.Nachi_tester.ForwardKineMatics(path.Nachi_tester.rot);
 	}
 
+	if (k == 'a')
+	{
+		MM.G.smoothGraph(10);
+		MM.G.renumber(MM.G.positions[4]);
+	}
 
 	if (k == 'm')
 	{
+		
 			cout << "path read " << inFile.c_str() << endl;
 			vector<string>filePath = path.splitString(inFile, "\\");
 			vector<string>fileNameParts = path.splitString(filePath[filePath.size()-1], ".");
@@ -355,8 +408,7 @@ void keyPress(unsigned char k, int xm, int ym)
 			path.readOBJ(inFile);
 			path.exportGCode_3dp(exportFileName);
 
-	//	MM.G.smoothGraph(10);
-		//MM.G.renumber(MM.G.positions[4]);
+
 
 	}
 
@@ -367,36 +419,61 @@ void mousePress(int b, int state, int x, int y)
 
 	if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == state)
 	{
-		S.performSelection(x, y, HUDSelectOn);
+		
 		B.performSelection(x, y);
-		if (HUDSelectOn)
+
+		S.performSelection(x, y, HUDSelectOn);
+
+		if (HUDSelectOn & !GS.convertedToToroidal)
 		{
 			//GS.threshold = 1.5;
 			GS.createIsoContourGraph(GS.threshold);
-			/*{
+
+			{
 				
 				MM.createIsoContourGraph(GS.threshold);
 				MM.G.computeIslandsAsEdgeAndVertexList();
 				MM.convertContourToToroidalGraph();
-			}*/
+			}
 			cout << GS.MM.G.n_v << endl;
+
 		}
+	}
+
+	if((GLUT_LEFT_BUTTON == b && GLUT_UP == state) || (GLUT_RIGHT_BUTTON == b && GLUT_UP == state))
+	{
+		int cur_msx = winW * 0.5;
+		int cur_msy = winH * 0.5;
+		camPt = screenToCamera(cur_msx, cur_msy, 0.2);
+
+		GS.LM.updateColorArray(lightscale, flipNormals, camPt);
 	}
 }
 
 void mouseMotion(int x, int y)
 {
 	S.performSelection(x, y, HUDSelectOn);
-	if (HUDSelectOn)
+	if (HUDSelectOn & !GS.convertedToToroidal)
 	{
-		GS.createIsoContourGraph(GS.threshold);
-		/*{
+		//GS.createIsoContourGraph(GS.threshold);
+	
+		{
 
 			MM.createIsoContourGraph(GS.threshold);
 			MM.G.computeIslandsAsEdgeAndVertexList();
 			MM.convertContourToToroidalGraph();
-		}*/
+		}
+
+		//GS.LM.updateColorArray(lightscale, flipNormals, camPt);
 	}
+
+	bool dragging = (glutGetModifiers() == GLUT_ACTIVE_ALT) ? true : false;
+	int cur_msx = winW * 0.5;
+	int cur_msy = winH * 0.5;
+	camPt = screenToCamera(cur_msx, cur_msy, 0.2);
+
+	//if( dragging)GS.LM.updateColorArray(lightscale, flipNormals, camPt);
+
 }
 
 

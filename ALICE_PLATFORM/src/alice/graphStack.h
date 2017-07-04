@@ -33,9 +33,10 @@ public:
 	void readGraphAndCreateDataMesh(string fileToImport, float scale = 1.0)
 	{
 		//---------
+		cout << "--imp" << endl;
 		importer imp = *new importer(fileToImport, 10000, 1.0);
 		imp.readEdges();
-		
+		cout << "--impF" << endl;
 
 		//---------
 		G.reset();
@@ -60,8 +61,8 @@ public:
 		maxV = maxV * trans;
 
 		G.boundingbox(minV, maxV);
-		minV -= (maxV - minV).normalise() * 1.5;
-		maxV += (maxV - minV).normalise() * 1.5;
+		minV -= (maxV - minV).normalise() * 8.5;
+		maxV += (maxV - minV).normalise() * 8.5;
 	
 		//--------- dateGrid
 		cout << " dataGrid create " << endl;
@@ -82,7 +83,7 @@ public:
 		//MM.assignScalars("z");
 		MM = MM.createFromPlane(minV, maxV, 100);
 		cout << "create from plane" << endl;
-		MM.assignScalarsAsLineDistanceField(G,0.0,1500.0,true);
+		MM.assignScalarsAsLineDistanceField(G,0.0,350,true);
 		MM.getMinMaxOfScalarField(dMin, dMax);
 	
 	}
@@ -106,7 +107,12 @@ public:
 	void inflateCurrentGraph()
 	{
 		//MM.G.inflateVertices();
+		double prevZ = G.positions[0].z;
+		for (int i = 0; i < G.n_v; i++)G.positions[i].z = MM.G.positions[0].z;
+		
 		MM.G.inflateWRTMedialAxis(G);
+
+		for (int i = 0; i < G.n_v; i++) G.positions[i].z = prevZ;
 	}
 
 
@@ -126,7 +132,7 @@ public:
 	{
 		//---------
 		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i].z = currentStackLayer * layersize + baseOffset;
+			MM.G.positions[i].z -= layersize;// currentStackLayer * layersize + baseOffset;
 
 		//---------
 		activeGraph AG;
@@ -136,7 +142,7 @@ public:
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
 		/*AG.populateRigidBodies(1.0,layersize);*/
-		AG.populateRigidBodies(LM, layersize , layersize);
+		AG.populateRigidBodies(LM, layersize  , layersize);
 		
 		PrintStack[currentStackLayer] = AG;
 
@@ -309,10 +315,25 @@ public:
 
 	////---------------------------------------------------- DISPLAY  --------------------------------------
 
-	void draw( bool showMesh = false,bool showData = false )
+	void draw( bool showMesh = false, bool showMeshWire = false,bool showData = false )
 	{
 		
-		if(showMesh)LM.draw();
+
+		//else
+	/*	{
+			double l = 0.1;
+			glColor3f(l,l,l);
+			if (currentStackLayer > 0)
+			{
+				for (int j = 0; j < PrintStack[0].n_v; j++)
+				{
+					for (int i = 1; i < currentStackLayer; i++)
+					{
+						drawLine(PrintStack[i].positions[j], PrintStack[i - 1].positions[j]);
+					}
+				}
+			}
+		}*/
 		
 		wireFrameOn();
 
@@ -354,24 +375,15 @@ public:
 		}
 
 		//----------------- drawDataGridMesh
+		if (showMesh)LM.draw(showMeshWire);
 
 		glColor3f(0, 0, 0);
+		glLineWidth(1);
+			for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();//draw RC
+			for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw(false);// draw();
+		glLineWidth(1);
 		
-		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();//draw RC
-		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw(false);// draw();
 
-		{
-			if(currentStackLayer > 0)
-			{
-				for (int j = 0; j < PrintStack[0].n_v; j++)
-				{
-					for (int i = 1; i < currentStackLayer; i++)
-					{
-						drawLine(PrintStack[i].positions[j], PrintStack[i - 1].positions[j]);
-					}
-				}
-			}
-		}
 
 		//draw stats
 		char s[200];
@@ -385,8 +397,15 @@ public:
 		
 		sprintf_s(s, " numlayers : %i total height : %1.2f", currentStackLayer, currentStackLayer * 0.1);
 		AL_drawString(s, winW * 0.5, 100);
+
+		{
+			sprintf_s(s, " numBricks : %i ", LM.numBricks);
+			AL_drawString(s, winW * 0.5, 125);
+		}
 		
 		restore3d();
+
+
 	}
 
 };

@@ -102,6 +102,8 @@ public:
 			Scale[0] = S.distanceTo(E)* 1.0;
 			Scale[1] = depth; Scale[2] = ht;
 
+	
+			cen = cen - XA* Scale[0] * 0.25;;
 			///
 			Matrix4 T;
 			T.setColumn(0, XA * Scale[0] * 0.5);

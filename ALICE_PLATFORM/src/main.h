@@ -219,7 +219,7 @@ int main(int argc,char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGBA|GLUT_DEPTH);
 	glutInitWindowSize(winW,winH);
 	glutInitWindowPosition(200,100);
-	glutCreateWindow("Maya Camera");
+	glutCreateWindow("Soft-Rigid-Block Equilibrium");
 
 	// register event methods ;
 	glutDisplayFunc(drawCallBack); // register a drawing code 

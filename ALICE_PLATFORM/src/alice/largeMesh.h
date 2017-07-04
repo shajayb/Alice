@@ -23,7 +23,7 @@ public:
 
 
 	//int polyCounts[_LM_FACECOUNTS_];
-	int n_v, n_f, n_e;
+	int n_v, n_f, n_e, numBricks;
 	largeMesh()
 	{
 		n_v = n_f = n_e = 0;
@@ -101,16 +101,6 @@ public:
 			lm_normals[nv + 2] = normals[i+2] * 1;
 
 			// normals
-			vec light(10, 10, 10);
-			double ambO = (P - light).angle(vec(normals[i], normals[i + 1], normals[i + 2]));
-
-			ambO = ofMap(ambO, -180, 180, 0, 1);
-				
-			lm_colors[nv + 0] = ambO;
-			lm_colors[nv + 1] = ambO;
-			lm_colors[nv + 2] = ambO;
-
-
 			lm_positions[nv + 0] = P.x;
 			lm_positions[nv + 1] = P.y;
 			lm_positions[nv + 2] = P.z;
@@ -124,6 +114,44 @@ public:
 		//for (int i = 0; i < 24; i++) lm_indices[n_e++] = offset + indices[i];
 		n_f += 6;
 		offset += 24;
+		numBricks++;
+	}
+
+	void updateColorArray( double scale = 10.0 ,  bool flipNormal = false, vec light = vec(0, 0, 10))
+	{
+		n_v = 0;
+		numBricks = n_f / 6;
+		for (int n = 0; n < numBricks; n++)
+		for (int i = 0; i < 72; i += 3)
+		{
+			int nv = n_v;
+			vec P;
+			P.x = lm_positions[nv + 0]; 
+			P.y = lm_positions[nv + 1]; 
+			P.z = lm_positions[nv + 2]; 
+
+
+			// normals
+			//vec light(-20, -20, 0);// = screenToWorld(vec(winW, winH, 0)*0.5);
+			double ambO = (light - P).angle(vec(normals[i], normals[i + 1], normals[i + 2]) * ( flipNormal ?-1:1 ));
+			double dSq =  ((light - P)*(light - P));
+			double maxD = ((light )*(light ));
+			dSq = ofMap(dSq, 0,  maxD, 0, 1);
+			//ambO = ofMap(ambO, 0, 180, -1, 1);
+
+			double ao = /*(ambO > 90) ? 0.1 :*/ 1.0 - (ambO * ofMap(dSq, 0, maxD, 0, 1)  * scale );
+		
+			vec clr(ao, ao, ao);
+
+			lm_colors[nv + 0] = clr.x;
+			lm_colors[nv + 1] = clr.y;
+			lm_colors[nv + 2] = clr.z;// clr.z;
+			
+			lm_positions[nv + 0] = P.x;
+			lm_positions[nv + 1] = P.y;
+			lm_positions[nv + 2] = P.z;
+			n_v += 3;
+		}
 	}
 
 	void writeOBJ(string outFileName)
@@ -190,7 +218,7 @@ public:
 		return;
 	}
 
-	void draw()
+	void draw( bool drawWire = false )
 	{
 		//
 		//wireFrameOn();
@@ -243,6 +271,28 @@ public:
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
 			glDisableClientState(GL_COLOR_ARRAY);
+		}
+
+		if(drawWire)
+		{
+			wireFrameOn();
+			glColor3f(0, 0, 0);
+			{
+
+				glEnableClientState(GL_VERTEX_ARRAY);
+				glEnableClientState(GL_NORMAL_ARRAY);
+
+				glVertexPointer(3, GL_FLOAT, 0, lm_positions);
+				glNormalPointer(GL_FLOAT, 0, lm_normals);
+				glColorPointer(3, GL_FLOAT, 0, lm_colors);
+				//glDrawElements(GL_QUADS, n_f * 6, GL_UNSIGNED_BYTE, lm_indices);// index hopping isnt workign currently - 140617
+				glDrawArrays(GL_QUADS, 0, n_f * 6);
+
+
+				glDisableClientState(GL_VERTEX_ARRAY);
+				glDisableClientState(GL_NORMAL_ARRAY);
+			}
+			wireFrameOff();
 		}
 
 		glPopMatrix();

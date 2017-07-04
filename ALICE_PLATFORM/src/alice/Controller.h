@@ -74,7 +74,7 @@ public:
 		if ( k == 13 /*enter*/)keySeq.clear();
 
 		//vector<string> content = splitString(keySeq, ",");
-		cout << keySeq << endl;
+		//cout << keySeq << endl;
 	}
 	void draw()
 	{

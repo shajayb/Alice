@@ -294,8 +294,6 @@ public:
 		if (!connected_vertices.size() > 0)return;
 		
 		int n = connected_vertices.size();
-
-
 		
 		for (int i = 0; i < n; i += 1)
 		{
@@ -303,10 +301,7 @@ public:
 			int Vi_minus = connected_vertices[Mod(i - 1, n)];
 			int Vi_plus = connected_vertices[Mod(i + 1, n)];
 
-			{
-				positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
-				
-			}
+			positions[Vi] = positions[Vi_minus] * 0.3 + positions[Vi] * 0.4 + positions[Vi_plus] * 0.3;
 		}
 	}
 
@@ -356,9 +351,10 @@ public:
 		for (int i = 0; i < n_v; i++)
 		{
 			vec np = G.nearestPointOnGraph(positions[i]);
+
 			vec n = positions[i] - np;
 			n.normalise();
-			positions[i] += n * 0.02;
+			positions[i] += n * 0.07;
 		}
 	}
 
