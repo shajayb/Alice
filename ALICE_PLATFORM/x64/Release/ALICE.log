@@ -1,7 +1,5 @@
 ﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (x64\Release\) contains files shared from another project (ALICE_PLATFORM_withalgLib.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  alglibinternal.cpp
   sketch_printStackGenerator.cpp
-C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(1189,5): warning MSB8012: TargetPath(C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-  Generating code
-  Finished generating code
-  ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
-  ALICE.vcxproj -> C:\Users\bshajay\Source\Repos\Alice_experiments\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)
+C:\Users\shajay.b\Source\Repos\Alice\ALICE_PLATFORM\src\alice\graphStack.h(145): error C2664: 'void activeGraph::populateRigidBodies(largeMesh &,plane,float,float)': cannot convert argument 2 from 'float' to 'plane'
+  C:\Users\shajay.b\Source\Repos\Alice\ALICE_PLATFORM\src\alice\graphStack.h(145): note: No constructor could take the source type, or constructor overload resolution was ambiguous

@@ -118,7 +118,7 @@ public:
 			/*plane prevPl;
 			prevPl.cen = cen - vec(0, 0, 1) * ht;
 			prevPl.normal = vec(0, 0, 1);*/
-			LM.addCube( prevPl,T);
+			LM.addCube(T);
 
 		}
 
