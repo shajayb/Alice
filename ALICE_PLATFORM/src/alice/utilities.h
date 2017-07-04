@@ -165,6 +165,25 @@ quaternion rotMatrixToQuaternion(Matrix3 rotMatrix)
 	return quaternion(q0, vec(q1, q2, q3));
 }
 
+struct plane
+{
+	vec cen;
+	vec normal;
+	plane()
+	{
+		cen = vec(0, 0, 0);
+		normal = vec(0, 0, 1);
+	}
+
+	void print()
+	{
+		cout << "cen : ";
+		cen.print();
+		cout << "n : ";
+		normal.print();
+	}
+};
+
 void drawSphere(vec &a, vec rotate, vec scale = vec(1, 1, 1), float r = 1.0, float alpha = 1.0)
 {
 	GLfloat light_pos[] = { 20, 20, 100, 1.0 };

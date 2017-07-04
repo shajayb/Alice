@@ -112,12 +112,87 @@ public:
 
 	}
 
-	void addCurrentContourGraphToPrintStack( float layersize = 0.1 , float baseOffset = 1.0 )
+	plane getCurrentPlane()
+	{
+		vec tangent = MM.G.positions[1] - MM.G.positions[0];
+		vec tangent1 = MM.G.positions[2] - MM.G.positions[0];
+		vec norm = tangent.cross(tangent1);
+		//vec binorm = norm.cross(tangent);
+		norm.normalise(); //binorm.normalise();
+
+		vec cen;
+		for (int i = 0; i < MM.G.n_v; i++) cen += MM.G.positions[i];
+		cen /= MM.G.n_v;
+
+
+		plane Pl;
+		Pl.cen = cen;
+		Pl.normal = norm;
+
+		return Pl;
+	}
+
+	Matrix4 getCurrentFrame()
+	{
+		vec tangent = MM.G.positions[1] - MM.G.positions[0];
+		vec norm = tangent.cross(vec(1, 0, 0));
+		vec bitangent = norm.cross(tangent);
+		norm.normalise();
+		bitangent.normalise();
+		tangent.normalise();
+		
+		vec cen;
+		for (int i = 0; i < MM.G.n_v; i++) cen += MM.G.positions[i] ;
+		cen /= MM.G.n_v;
+
+		Matrix4 T;
+		T.setColumn(0, tangent);
+		T.setColumn(1, bitangent);
+		T.setColumn(2, norm);
+		T.setColumn(3, cen);
+
+		return T;
+	}
+	void rotatePlaneBy( double ang = 10)
+	{
+		Matrix4 T = getCurrentFrame();
+		Matrix4 TInv = T;
+		TInv.invert();
+
+		for (int i = 0; i < MM.G.n_v; i++)
+			MM.G.positions[i] = TInv * MM.G.positions[i];
+
+		T.rotate(ang, vec(0,1,0));
+
+		for (int i = 0; i < MM.G.n_v; i++)
+			MM.G.positions[i] = T * MM.G.positions[i];
+	}
+	
+	void transformCurrentGraphToPlane( plane Pl )
+	{
+		Matrix4 T;
+		vec x, y;
+		x = Pl.normal.cross(vec(1, 0, 0));
+		y = x.cross(Pl.normal);
+		T.setColumn(0, x.normalise());
+		T.setColumn(1, y.normalise());
+		T.setColumn(2, Pl.normal.normalise());
+		T.setColumn(3, Pl.cen);
+		for (int i = 0; i < MM.G.n_v; i++)
+			MM.G.positions[i] = T * MM.G.positions[i];
+
+	}
+
+	void translateUpBy(float layersize = 0.1)
+	{
+		for (int i = 0; i < MM.G.n_v; i++)
+			MM.G.positions[i].z += layersize ;
+
+	}
+	void addCurrentContourGraphToPrintStack( plane prevPl  )
 	{
 		//---------
-		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i].z = currentStackLayer * layersize + baseOffset;
-
+	
 		//---------
 		activeGraph AG;
 		AG = /** new */activeGraph();
@@ -126,7 +201,7 @@ public:
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
 		/*AG.populateRigidBodies(1.0,layersize);*/
-		AG.populateRigidBodies(LM, layersize * 3, layersize);
+		AG.populateRigidBodies(LM, prevPl,0.1, 0.1);
 		
 		PrintStack[currentStackLayer] = AG;
 
@@ -198,6 +273,7 @@ public:
 			myfile << layer << endl;
 			myfile << "/*" << endl;
 
+
 			PrintStack[i].writeVerticeToFile(myfile);
 
 			myfile << "*/" << endl;
@@ -228,10 +304,11 @@ public:
 	{
 		
 		LM.draw();
-		
+
 		wireFrameOn();
 
-			
+		
+
 			/// ------------------------- TODO : clean this section -> encapsulate
 
 		glColor3f(1, 0, 0);

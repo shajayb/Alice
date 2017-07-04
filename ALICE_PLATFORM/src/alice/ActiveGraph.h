@@ -80,7 +80,7 @@ public:
 
 	}
 
-	void populateRigidBodies(largeMesh &LM ,float depth = 0.25, float ht = 0.25)
+	void populateRigidBodies(largeMesh &LM , plane prevPl,float depth = 0.25, float ht = 0.25  )
 	{
 
 		vec S, E, cen, XA, YA, ZA;
@@ -113,7 +113,10 @@ public:
 			//T.setColumn(2, ZA );
 			//T.setColumn(3, cen);
 			//T.scale(Scale[0], Scale[1], Scale[2]);
-			LM.addCube(T);
+			/*plane prevPl;
+			prevPl.cen = cen - vec(0, 0, 1) * ht;
+			prevPl.normal = vec(0, 0, 1);*/
+			LM.addCube( prevPl,T);
 
 		}
 

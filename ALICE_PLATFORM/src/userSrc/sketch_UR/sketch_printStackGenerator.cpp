@@ -46,7 +46,7 @@ char s[200],text[200], text1[200], jts[400];
 ////////////////////////////////////////////////////////////////////////// MAIN PROGRAM : MVC DESIGN PATTERN  ----------------------------------------------------
 
 largeMesh LM;
-
+plane basePlane;
 ////// ---------------------------------------------------- MODEL  ----------------------------------------------------
 
 void setup()
@@ -203,15 +203,38 @@ void keyPress(unsigned char k, int xm, int ym)
 	if (k == ' ')GS.smoothCurrentGraph();
 	if (k == 'c')GS.convertContourToToroidalGraph();
 	if (k == '-')GS.reducePointsOnContourGraph(2);
-	if (k == 'p')GS.addCurrentContourGraphToPrintStack(0.2, 1.75);
-	if (k == 'P')
+	if (k == 'p')
+	{
+		plane prevPlane = GS.getCurrentPlane();
+		GS.translateUpBy(0.4);
+		GS.addCurrentContourGraphToPrintStack(prevPlane);
+	}
+	if (k == 'G')
 	{
 		for (int i = 0; i < 10; i++)
 		{
 			keyPress('p', 0, 0);
-			for (int j = 0; j < 1; j++)keyPress(' ', 0, 0);
+			for (int j = 0; j < 5; j++)GS.smoothCurrentGraph();
 		}
 	}
+
+	if (k == 'b')
+	{
+		plane prevPlane = GS.getCurrentPlane();
+		GS.rotatePlaneBy(-0.8);
+		GS.addCurrentContourGraphToPrintStack(prevPlane);
+		
+	}
+
+	if (k == 'B')
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			keyPress('b', 0, 0);
+			for (int j = 0; j < 10; j++)keyPress(' ', 0, 0);
+		}
+	}
+
 	if (k == 'P')GS.currentStackLayer--;
 	if (k == 'O')GS.currentStackLayer = 0;
 	if (k == 'L')GS.ConvertContourStackToPrintPath(path);
@@ -221,6 +244,7 @@ void keyPress(unsigned char k, int xm, int ym)
 	{
 		GS.writeStackToFile("data/PRINT.txt");
 	//	GS.writeStackToObj("data/PRINT.obj");
+		GS.LM.writeOBJ("data/PRINT_largeMesh.obj","");
 	}
 
 	if (k == 'U')run = !run;

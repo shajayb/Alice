@@ -395,15 +395,37 @@ public:
 
 	}
 
+	plane getCurrentPlane()
+	{
+		vec tangent = positions[1] - positions[0];
+		vec tangent1 = positions[2] - positions[0];
+		vec norm = tangent.cross(tangent1);
+		//vec binorm = norm.cross(tangent);
+		norm.normalise(); //binorm.normalise();
+
+		vec cen;
+		for (int i = 0; i < n_v; i++) cen += positions[i];
+		cen /= n_v;
+
+
+		plane Pl;
+		Pl.cen = cen;
+		Pl.normal = norm;
+
+		return Pl;
+	}
+
 	void writeVerticeToFile( ofstream &myfile)
 	{
 
+		plane PL = getCurrentPlane();
 		// vertices
 		for (int i = 0; i < n_v; i++)
 		{
 
 			char s[200];
-			sprintf(s, "%1.4f,%1.4f,%1.4f", positions[i].x * 1, positions[i].y * 1, positions[i].z * 1);//(vertices[i].n_e == 1) ? 1 : 0
+			sprintf(s, "%1.4f,%1.4f,%1.4f,%1.4f,%1.4f,%1.4f", positions[i].x * 1, positions[i].y * 1, positions[i].z * 1,
+															PL.normal.x * 1, PL.normal.y * 1, PL.normal.z * 1);//(vertices[i].n_e == 1) ? 1 : 0
 
 			myfile << s << endl;
 		}
