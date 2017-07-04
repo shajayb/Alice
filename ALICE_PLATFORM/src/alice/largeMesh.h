@@ -12,19 +12,18 @@ using namespace ROBOTICS;
 
 #define MAX_CUBES 1000000
 
-
-
 class largeMesh
 {
 public:
 
 	GLfloat lm_positions[MAX_CUBES * 72];
 	GLfloat lm_normals[MAX_CUBES * 72];
+	GLfloat lm_colors[MAX_CUBES * 72];
 	GLubyte lm_indices[_LM_FACECONNECTS_];
 
 
 	//int polyCounts[_LM_FACECOUNTS_];
-	int n_v, n_f, n_e;
+	int n_v, n_f, n_e, numBricks;
 	largeMesh()
 	{
 		n_v = n_f = n_e = 0;
@@ -89,23 +88,19 @@ public:
 	*/
 	int offset = 0;
 
-	void addCube( plane &prevPlane , Matrix4 &T = Matrix4())
+	void addCube(Matrix4 &T = Matrix4())
 	{
 		
 
 		for (int i = 0; i < 72; i+= 3)
 		{
 			vec P = T * vec(vertices[i], vertices[i + 1], vertices[i + 2]);
-			
-			// project points of bottom face to previous plane i.e if P.z == -1
-			if (vertices[i + 2] == -1)
-				P = P - prevPlane.normal * ((P - prevPlane.cen) * prevPlane.normal);
-			
 			int nv = n_v;
 			lm_normals[nv + 0] = normals[i] * 1 ;
 			lm_normals[nv + 1] = normals[i+1] * 1;
 			lm_normals[nv + 2] = normals[i+2] * 1;
 
+			// normals
 			lm_positions[nv + 0] = P.x;
 			lm_positions[nv + 1] = P.y;
 			lm_positions[nv + 2] = P.z;
@@ -119,11 +114,49 @@ public:
 		//for (int i = 0; i < 24; i++) lm_indices[n_e++] = offset + indices[i];
 		n_f += 6;
 		offset += 24;
+		numBricks++;
 	}
 
-	void writeOBJ(string outFileName, string header)
+	void updateColorArray( double scale = 10.0 ,  bool flipNormal = false, vec light = vec(0, 0, 10))
 	{
-		printf(" ----------- writing \n ");
+		n_v = 0;
+		numBricks = n_f / 6;
+		for (int n = 0; n < numBricks; n++)
+		for (int i = 0; i < 72; i += 3)
+		{
+			int nv = n_v;
+			vec P;
+			P.x = lm_positions[nv + 0]; 
+			P.y = lm_positions[nv + 1]; 
+			P.z = lm_positions[nv + 2]; 
+
+
+			// normals
+			//vec light(-20, -20, 0);// = screenToWorld(vec(winW, winH, 0)*0.5);
+			double ambO = (light - P).angle(vec(normals[i], normals[i + 1], normals[i + 2]) * ( flipNormal ?-1:1 ));
+			double dSq =  ((light - P)*(light - P));
+			double maxD = ((light )*(light ));
+			dSq = ofMap(dSq, 0,  maxD, 0, 1);
+			//ambO = ofMap(ambO, 0, 180, -1, 1);
+
+			double ao = /*(ambO > 90) ? 0.1 :*/ 1.0 - (ambO * ofMap(dSq, 0, maxD, 0, 1)  * scale );
+		
+			vec clr(ao, ao, ao);
+
+			lm_colors[nv + 0] = clr.x;
+			lm_colors[nv + 1] = clr.y;
+			lm_colors[nv + 2] = clr.z;// clr.z;
+			
+			lm_positions[nv + 0] = P.x;
+			lm_positions[nv + 1] = P.y;
+			lm_positions[nv + 2] = P.z;
+			n_v += 3;
+		}
+	}
+
+	void writeOBJ(string outFileName)
+	{
+		printf(" ----------- writing largemesh \n ");
 
 		float scaleBack = 1.0;
 
@@ -137,38 +170,43 @@ public:
 			return;
 		}
 
-		// header
-		myfile << "# " << header.c_str() << endl;
+
 		// vertices
 		for (int i = 0; i < n_v; i+=3)
 		{
 
 			char s[200];
-			sprintf(s, "v %1.4f %1.4f %1.4f ", lm_positions[i] * scaleBack, lm_positions[i+1] * scaleBack, lm_positions[i+2] * scaleBack);
+			sprintf(s, "v %1.4f %1.4f %1.4f ", lm_positions[i], lm_positions[i+1] , lm_positions[i+2] );
 
 			myfile << s << endl;
 
 		}
 
 		// faces
-		int strt = 0;
-		for (int i = 0; i < n_f * 4; i+=4)
+		int numCubes = n_f / 6;
+		for (int i = 0; i < numCubes  ; i++)
 		{
 
 
 			string str;
 			str = "f ";
-			for (int j = i; j < i+4; j++)
+			for (int j = 0; j < 24; j++)
 			{
 				char s[200];
-				itoa( (j) + 1, s, 10);
+				itoa(indices[j] + i * 24 + 1, s, 10);
 				str += s;
 				str += "//";
 				str += s;
 				str += " ";
+				if ((j+1) % 4 == 0 /*&& j > 0*/ )
+				{
+					
+					myfile << str.c_str() << endl;
+					str = "f ";
+				}
 			}
 
-			myfile << str.c_str() << endl;
+			
 
 		}
 
@@ -180,7 +218,7 @@ public:
 		return;
 	}
 
-	void draw()
+	void draw( bool drawWire = false )
 	{
 		//
 		//wireFrameOn();
@@ -193,27 +231,27 @@ public:
 		//////////////////////////////////////////////////////////////////////////
 		glPushAttrib(GL_CURRENT_BIT);
 
-		vec lightPos = vec(50, 0, 200);
-		GLfloat light_pos[] = { lightPos.x, lightPos.y, lightPos.z, 1.0 };
+		//vec lightPos = vec(50, 0, 200);
+		//GLfloat light_pos[] = { lightPos.x, lightPos.y, lightPos.z, 1.0 };
 
-		GLfloat qaAmbient[] = { 0.0, 0.0, 0.0, 1.0 }; //Black Color
-		GLfloat qaDiffuse[] = { 0.5, 0.5, 0.5, 1.0 }; //Green Color
-		GLfloat qaWhite[] = { 1.0, 1.0, 1.0, 1.0 }; //White Color
-		GLfloat qaRed[] = { 1.0, 0.0, 0.0, 1.0 }; //White Color
+		//GLfloat qaAmbient[] = { 0.0, 0.0, 0.0, 1.0 }; //Black Color
+		//GLfloat qaDiffuse[] = { 0.5, 0.5, 0.5, 1.0 }; //Green Color
+		//GLfloat qaWhite[] = { 1.0, 1.0, 1.0, 1.0 }; //White Color
+		//GLfloat qaRed[] = { 1.0, 0.0, 0.0, 1.0 }; //White Color
 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, qaAmbient);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, qaDiffuse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, qaWhite);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 1);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, qaAmbient);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, qaDiffuse);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, qaWhite);
+		//glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 1);
 
-		glPushAttrib(GL_CURRENT_BIT);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glPushAttrib(GL_CURRENT_BIT);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		//resetProjection();
-			glColor4f(1.0, 1.0, 1.0, 1.0);
-			lightsOn(light_pos);
-		//restore3d();
+		////resetProjection();
+		//	glColor4f(1.0, 1.0, 1.0, 1.0);
+		//	lightsOn(light_pos);
+		////restore3d();
 
 
 			//drawCube(vec(30, 0, 0), vec(60, 30, 1));
@@ -221,16 +259,40 @@ public:
 		{
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_NORMAL_ARRAY);
-
+			glEnableClientState(GL_COLOR_ARRAY);
 
 			glVertexPointer(3, GL_FLOAT, 0, lm_positions);
 			glNormalPointer(GL_FLOAT, 0, lm_normals);
+			glColorPointer(3, GL_FLOAT, 0, lm_colors);
 			//glDrawElements(GL_QUADS, n_f * 6, GL_UNSIGNED_BYTE, lm_indices);// index hopping isnt workign currently - 140617
 			glDrawArrays(GL_QUADS, 0, n_f * 6);
 
 
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
+			glDisableClientState(GL_COLOR_ARRAY);
+		}
+
+		if(drawWire)
+		{
+			wireFrameOn();
+			glColor3f(0, 0, 0);
+			{
+
+				glEnableClientState(GL_VERTEX_ARRAY);
+				glEnableClientState(GL_NORMAL_ARRAY);
+
+				glVertexPointer(3, GL_FLOAT, 0, lm_positions);
+				glNormalPointer(GL_FLOAT, 0, lm_normals);
+				glColorPointer(3, GL_FLOAT, 0, lm_colors);
+				//glDrawElements(GL_QUADS, n_f * 6, GL_UNSIGNED_BYTE, lm_indices);// index hopping isnt workign currently - 140617
+				glDrawArrays(GL_QUADS, 0, n_f * 6);
+
+
+				glDisableClientState(GL_VERTEX_ARRAY);
+				glDisableClientState(GL_NORMAL_ARRAY);
+			}
+			wireFrameOff();
 		}
 
 		glPopMatrix();

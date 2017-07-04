@@ -33,9 +33,10 @@ public:
 	void readGraphAndCreateDataMesh(string fileToImport, float scale = 1.0)
 	{
 		//---------
+		cout << "--imp" << endl;
 		importer imp = *new importer(fileToImport, 10000, 1.0);
 		imp.readEdges();
-		
+		cout << "--impF" << endl;
 
 		//---------
 		G.reset();
@@ -46,31 +47,32 @@ public:
 		G.boundingbox(minV, maxV);
 
 		Matrix4 trans;
-		double preferedDiag = (minV.distanceTo(maxV));
-		trans.scale(preferedDiag / (minV.distanceTo(maxV)));
-		trans.translate((minV + maxV) * 0.5);
-		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
-		cout << " ACUTAL DIAG " << minV.distanceTo(maxV) << endl;
+		//double preferedDiag = (minV.distanceTo(maxV));
+		//trans.scale(preferedDiag / (minV.distanceTo(maxV)));
+		//trans.translate((minV + maxV) * 0.5);
+		//for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
+		//cout << " ACUTAL DIAG " << minV.distanceTo(maxV) << endl;
 		G.boundingbox(minV, maxV);
 
 		trans.identity();
-		trans.translate(vec(45, 0, 0) - (minV + maxV) * 0.5);
+		//trans.translate(vec(45, 0, 0) - (minV + maxV) * 0.5);
 		for (int i = 0; i < G.n_v; i++) G.positions[i] = trans * G.positions[i];
 		minV = minV * trans;
 		maxV = maxV * trans;
 
 		G.boundingbox(minV, maxV);
-		minV -= (maxV - minV).normalise() * 2.5;
-		maxV += (maxV - minV).normalise() * 2.5;
-
+		minV -= (maxV - minV).normalise() * 8.5;
+		maxV += (maxV - minV).normalise() * 8.5;
+	
 		//--------- dateGrid
-
+		cout << " dataGrid create " << endl;
 		createDataMeshGrid(G);
 		//createIsoContourGraph(0.1);
-
+		cout << " dataGrid created " << endl;
 		//
 		currentStackLayer = 0;
 		convertedToToroidal = false; 
+
 	}
 
 
@@ -80,8 +82,10 @@ public:
 		//MM = metaMesh(fac.createFromOBJ("data/in.obj", 1.0, false, false));
 		//MM.assignScalars("z");
 		MM = MM.createFromPlane(minV, maxV, 100);
-		MM.assignScalarsAsLineDistanceField(G,0.0,5.0,true);
+		cout << "create from plane" << endl;
+		MM.assignScalarsAsLineDistanceField(G,0.0,350,true);
 		MM.getMinMaxOfScalarField(dMin, dMax);
+	
 	}
 
 	void createIsoContourGraph( double threshold )
@@ -100,6 +104,18 @@ public:
 		MM.G.smooth_connectedVertices();
 	}
 
+	void inflateCurrentGraph()
+	{
+		//MM.G.inflateVertices();
+		double prevZ = G.positions[0].z;
+		for (int i = 0; i < G.n_v; i++)G.positions[i].z = MM.G.positions[0].z;
+		
+		MM.G.inflateWRTMedialAxis(G);
+
+		for (int i = 0; i < G.n_v; i++) G.positions[i].z = prevZ;
+	}
+
+
 	////---------------------------------------------------- UTILITIES  --------------------------------------
 
 	void reducePointsOnContourGraph( int inc = 3)
@@ -112,87 +128,12 @@ public:
 
 	}
 
-	plane getCurrentPlane()
-	{
-		vec tangent = MM.G.positions[1] - MM.G.positions[0];
-		vec tangent1 = MM.G.positions[2] - MM.G.positions[0];
-		vec norm = tangent.cross(tangent1);
-		//vec binorm = norm.cross(tangent);
-		norm.normalise(); //binorm.normalise();
-
-		vec cen;
-		for (int i = 0; i < MM.G.n_v; i++) cen += MM.G.positions[i];
-		cen /= MM.G.n_v;
-
-
-		plane Pl;
-		Pl.cen = cen;
-		Pl.normal = norm;
-
-		return Pl;
-	}
-
-	Matrix4 getCurrentFrame()
-	{
-		vec tangent = MM.G.positions[1] - MM.G.positions[0];
-		vec norm = tangent.cross(vec(1, 0, 0));
-		vec bitangent = norm.cross(tangent);
-		norm.normalise();
-		bitangent.normalise();
-		tangent.normalise();
-		
-		vec cen;
-		for (int i = 0; i < MM.G.n_v; i++) cen += MM.G.positions[i] ;
-		cen /= MM.G.n_v;
-
-		Matrix4 T;
-		T.setColumn(0, tangent);
-		T.setColumn(1, bitangent);
-		T.setColumn(2, norm);
-		T.setColumn(3, cen);
-
-		return T;
-	}
-	void rotatePlaneBy( double ang = 10)
-	{
-		Matrix4 T = getCurrentFrame();
-		Matrix4 TInv = T;
-		TInv.invert();
-
-		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i] = TInv * MM.G.positions[i];
-
-		T.rotate(ang, vec(0,1,0));
-
-		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i] = T * MM.G.positions[i];
-	}
-	
-	void transformCurrentGraphToPlane( plane Pl )
-	{
-		Matrix4 T;
-		vec x, y;
-		x = Pl.normal.cross(vec(1, 0, 0));
-		y = x.cross(Pl.normal);
-		T.setColumn(0, x.normalise());
-		T.setColumn(1, y.normalise());
-		T.setColumn(2, Pl.normal.normalise());
-		T.setColumn(3, Pl.cen);
-		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i] = T * MM.G.positions[i];
-
-	}
-
-	void translateUpBy(float layersize = 0.1)
-	{
-		for (int i = 0; i < MM.G.n_v; i++)
-			MM.G.positions[i].z += layersize ;
-
-	}
-	void addCurrentContourGraphToPrintStack( plane prevPl  )
+	void addCurrentContourGraphToPrintStack( float layersize = 0.1 , float baseOffset = 1.0 )
 	{
 		//---------
-	
+		for (int i = 0; i < MM.G.n_v; i++)
+			MM.G.positions[i].z -= layersize;// currentStackLayer * layersize + baseOffset;
+
 		//---------
 		activeGraph AG;
 		AG = /** new */activeGraph();
@@ -201,7 +142,7 @@ public:
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
 		/*AG.populateRigidBodies(1.0,layersize);*/
-		AG.populateRigidBodies(LM, prevPl,0.1, 0.1);
+		AG.populateRigidBodies(LM, layersize  , layersize);
 		
 		PrintStack[currentStackLayer] = AG;
 
@@ -219,31 +160,106 @@ public:
 		
 	}
 
+	//void writeStackToObj(string outFileName = "data/stack.txt")
+	//{
+	//	Mesh M;
+	//	for (int i = 0; i < currentStackLayer; i++)
+	//		for (int j = 0; j < PrintStack[i].n_v; j+= 1)
+	//		{
+	//			M.createVertex(PrintStack[i].positions[j]);
+	//		}
+
+	//	Vertex *fv[4];
+
+	//	for (int i = 0; i < currentStackLayer -1; i++)
+	//		for (int j = 0; j < PrintStack[i].n_v-1; j+= 1)
+	//		{
+
+	//			fv[0] = &M.vertices[PrintStack[i].n_v * i + j];
+	//			fv[1] = &M.vertices[PrintStack[i].n_v * i + j+1];
+	//			fv[2] = &M.vertices[PrintStack[i].n_v * (i+1) + j+1];
+	//			fv[3] = &M.vertices[PrintStack[i].n_v * (i+1) + j];
+	//			M.createFace(fv, 4);
+	//		}
+
+	//	for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+
+	//	M.writeOBJ( outFileName, "", M.positions, false);
+	//}
+
 	void writeStackToObj(string outFileName = "data/stack.txt")
 	{
-		Mesh M;
+		ofstream myfile;
+		myfile.open(outFileName.c_str(), ios::out);
+
+		if (myfile.fail())
+		{
+			myfile << " error in opening file  " << outFileName.c_str() << endl;
+			return;
+		}
+
+
 		for (int i = 0; i < currentStackLayer; i++)
-			for (int j = 0; j < PrintStack[i].n_v; j+= 1)
+			for (int j = 0; j < PrintStack[i].n_v; j += 1)
 			{
-				M.createVertex(PrintStack[i].positions[j]);
+				char s[200];
+				sprintf(s, "v %1.4f %1.4f %1.4f ", PrintStack[i].positions[j].x, PrintStack[i].positions[j].y, PrintStack[i].positions[j].z);
+
+				myfile << s << endl;
 			}
 
 		Vertex *fv[4];
 
-		for (int i = 0; i < currentStackLayer -1; i++)
-			for (int j = 0; j < PrintStack[i].n_v-1; j+= 1)
+		for (int i = 0; i < currentStackLayer - 1; i++)
+			for (int j = 0; j < PrintStack[i].n_v - 1; j += 1)
 			{
 
-				fv[0] = &M.vertices[PrintStack[i].n_v * i + j];
-				fv[1] = &M.vertices[PrintStack[i].n_v * i + j+1];
-				fv[2] = &M.vertices[PrintStack[i].n_v * (i+1) + j+1];
-				fv[3] = &M.vertices[PrintStack[i].n_v * (i+1) + j];
-				M.createFace(fv, 4);
+
+				string str;
+				str = "f ";
+				char s[200];
+				{
+					
+					itoa(PrintStack[i].n_v * i + j + 1, s, 10);
+					str += s;
+					str += "//";
+					str += s;
+					str += " ";
+				}
+				//
+				{
+
+					itoa(PrintStack[i].n_v * i + j + 1 + 1, s, 10);
+					str += s;
+					str += "//";
+					str += s;
+					str += " ";
+				}
+				//
+				{
+
+					itoa(PrintStack[i].n_v * (i + 1) + j + 1 + 1, s, 10);
+					str += s;
+					str += "//";
+					str += s;
+					str += " ";
+				}
+				//
+				{
+
+					itoa(PrintStack[i].n_v * (i + 1) + j + 1, s, 10);
+					str += s;
+					str += "//";
+					str += s;
+					str += " ";
+				}
+
+
+				myfile << str.c_str() << endl;
 			}
 
-		for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+		myfile.close();
 
-		M.writeOBJ( outFileName, "", M.positions, false);
 	}
 
 	void writeStackToFile(string outFileName = "data/stack.txt")
@@ -273,7 +289,6 @@ public:
 			myfile << layer << endl;
 			myfile << "/*" << endl;
 
-
 			PrintStack[i].writeVerticeToFile(myfile);
 
 			myfile << "*/" << endl;
@@ -300,15 +315,29 @@ public:
 
 	////---------------------------------------------------- DISPLAY  --------------------------------------
 
-	void draw( bool showData = false )
+	void draw( bool showMesh = false, bool showMeshWire = false,bool showData = false )
 	{
 		
-		LM.draw();
 
+		//else
+	/*	{
+			double l = 0.1;
+			glColor3f(l,l,l);
+			if (currentStackLayer > 0)
+			{
+				for (int j = 0; j < PrintStack[0].n_v; j++)
+				{
+					for (int i = 1; i < currentStackLayer; i++)
+					{
+						drawLine(PrintStack[i].positions[j], PrintStack[i - 1].positions[j]);
+					}
+				}
+			}
+		}*/
+		
 		wireFrameOn();
 
-		
-
+			
 			/// ------------------------- TODO : clean this section -> encapsulate
 
 		glColor3f(1, 0, 0);
@@ -321,6 +350,7 @@ public:
 			
 			convertedToToroidal ? glColor3f(1, 0, 0) : glColor3f(0, 0, 0);
 			MM.G.draw();
+			//MM.drawIsoContoursInRange(threshold, 1.0);
 
 			glColor3f(0, 0, 0);
 			/// ------------------------- TODO : clean this section
@@ -331,22 +361,29 @@ public:
 		if(showData)
 		{
 			glPointSize(5);
+			glLineWidth(3);
 			for (int i = 0; i < MM.n_v; i++)
 			{
 
 				vec4 clr = getColour(MM.scalars[i], dMin, dMax);
 				glColor3f(clr.r, clr.g, clr.b);
-				drawPoint(MM.positions[i]);
+				//drawPoint(MM.positions[i]);
+				drawLine(MM.positions[i], MM.positions[i]+vec(.01,0.01,0.01));
 			}
 			glPointSize(1);
+			glLineWidth(1);
 		}
 
 		//----------------- drawDataGridMesh
+		if (showMesh)LM.draw(showMeshWire);
 
 		glColor3f(0, 0, 0);
+		glLineWidth(1);
+			for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();//draw RC
+			for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw(false);// draw();
+		glLineWidth(1);
 		
-		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].display();// draw();//draw RC
-		for (int i = 0; i < currentStackLayer; i++)PrintStack[i].draw(false);// draw();
+
 
 		//draw stats
 		char s[200];
@@ -360,8 +397,15 @@ public:
 		
 		sprintf_s(s, " numlayers : %i total height : %1.2f", currentStackLayer, currentStackLayer * 0.1);
 		AL_drawString(s, winW * 0.5, 100);
+
+		{
+			sprintf_s(s, " numBricks : %i ", LM.numBricks);
+			AL_drawString(s, winW * 0.5, 125);
+		}
 		
 		restore3d();
+
+
 	}
 
 };

@@ -922,6 +922,26 @@ bool areClose(double &a, double &b, double tol)
 	return(fabs(a-b) < tol );
 }
 
+double distanceSquaredAndNearestPointOnEdge(vec &a, vec&b, vec &p, vec&pt)
+{
+	vec n = (b - a).cross(vec(0, 0, 1));
+	n.normalise();
+	pt = n * ((a - p)*n);
+	pt += p;
+
+
+	float len = (a - b).mag();
+
+	vec ed = (a - b) / len;
+	double param = (pt - b) * ed;
+
+	param = ofClamp(param, 0, len);
+	pt = b + ed * param;
+
+	return (p - pt) * (p - pt);// p.distanceTo(pt);
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 
 long start_time;

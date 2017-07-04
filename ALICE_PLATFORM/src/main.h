@@ -125,7 +125,6 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 		
 		saveF = !saveF ;
 		setSaveFrame(saveF);
-		
 
 		if( saveF ) cout << " printing screen " << endl ;
 		else cout << " NOT printing screen " << endl ;
@@ -207,17 +206,20 @@ void motionCallBack( int x, int y )
 }
 
 //------------------------------------------------------------------------------- ENTRY POINT 
+
 int main(int argc,char** argv)
 {
 	
 
 	if (argc > 1)inFile = argv[1];
 
+	
+
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGBA|GLUT_DEPTH);
 	glutInitWindowSize(winW,winH);
 	glutInitWindowPosition(200,100);
-	glutCreateWindow("Maya Camera");
+	glutCreateWindow("Soft-Rigid-Block Equilibrium");
 
 	// register event methods ;
 	glutDisplayFunc(drawCallBack); // register a drawing code 

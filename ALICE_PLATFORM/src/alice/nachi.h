@@ -8,6 +8,7 @@
 using namespace ROBOTICS;
 
 #include "graph.h"
+#include "Matrix.h"
 
 class EndEffector
 {
@@ -159,7 +160,7 @@ public:
 class pathImporter :public importer
 {
 
-#define maxPts 9999 // max nachi controller limit
+#define maxPts 59999 // max nachi controller limit
 public:
 
 	////////////////////////////////////////////////////////////////////////// CLASS VARIABLES 
@@ -180,7 +181,9 @@ public:
 	EndEffector E;
 	EndEffector E_disp;
 	Graph taskGraph;
-
+	Matrix4 fTrans;
+	Mesh M;
+	metaMesh MM;
 	////////////////////////////////////////////////////////////////////////// CLASS METHODS 
 
 	pathImporter()
@@ -197,6 +200,8 @@ public:
 		actualPathLength = 0;
 		taskGraph = *new Graph();
 		taskGraph.reset();
+
+		reachable = new bool[maxPts];
 	}
 	void readPath(string fileToRead = "data/path.txt", string delimiter = ",", float inc = 0)
 	{
@@ -242,6 +247,122 @@ public:
 		//	checkReach();
 		copyPathToGraph();
 
+	}
+
+	void readOBJ(string fileToRead = "data/path.txt" , float zHt = 0.2 , double spacing = 1.0, double distTol = 0.05)
+	{
+		
+		MeshFactory fac;
+		M = fac.createFromOBJ(fileToRead, 100.0, false);
+
+		cout << " nachi" << fileToRead << endl;
+		{
+			vec minV, maxV;
+			Matrix3x3 PCA_mat;
+			vec mean, eigenValues, eigenvecs[3];
+			PCA_mat.PCA(M.positions, M.n_v, mean, eigenValues, eigenvecs);
+			M.boundingBox(minV, maxV);
+
+			for (int i = 0; i < M.n_v; i++)
+				M.positions[i] -= (minV + maxV)*0.5;
+			
+			vec x = eigenvecs[0].normalise();
+			if( fabs(x.x) > 0.1 && x.y > 0.1)
+			{
+				
+				x.z = 0;
+				vec z = vec(0, 0, 1);
+				vec y = x.cross(z).normalise();
+
+				Matrix3 trans;
+				trans.setColumn(0, x);
+				trans.setColumn(1, y);
+				trans.setColumn(2, z);
+				trans.transpose();
+
+				for (int i = 0; i < M.n_v; i++)
+					M.positions[i] = trans * M.positions[i];
+
+			}
+
+		}
+
+		cout << "invert done" << endl;
+		////////////////////////////////////////////////////////////////////////// transform to base plate
+		{
+			vec x, y, z, cen;
+			cen = vec(53.9327, -2.2114, -17.4015);
+			x = vec(1, 0, 0).normalise();
+			z = vec(0, 0, -1);
+			y = x.cross(z);
+
+			Matrix4 fTrans;
+			fTrans.identity();
+			fTrans.setColumn(0, x.normalise());
+			fTrans.setColumn(1, y.normalise());
+			fTrans.setColumn(2, z.normalise());
+			fTrans.setColumn(3, cen);
+
+
+			for (int i = 0; i < M.n_v; i++)
+				M.positions[i] = fTrans * M.positions[i];
+
+			vec minV, maxV;
+			M.boundingBox(minV, maxV);
+			double diff = cen.z - minV.z;
+
+
+			for (int i = 0; i < M.n_v; i++)
+				M.positions[i].z += diff;
+		}
+		cout << "trans done" << endl;
+		//////////////////////////////////////////////////////////////////////////
+		metaMesh MM(M);;
+
+		MM.assignScalars("z");
+		double minZ, maxZ;
+		//MM.getMinMaxOfScalarField(minZ, maxZ);
+
+		minZ = -17.4015; maxZ = 0;
+		///////////
+		double z = 0; 
+		actualPathLength = 0;
+		vec refPt_renumber;
+		vector<vec> startPts;
+		for (double  z = minZ ; z < maxZ; z+= zHt )
+		{
+			MM.createIsoContourGraph(z);
+			
+			cout << z << endl;
+				if (!MM.G.n_v > 0)continue;
+			cout << MM.G.n_v << endl;
+
+			MM.G.computeIslandsAsEdgeAndVertexList();
+			MM.convertContourToToroidalGraph();
+			MM.G.redistribute_toroidal(spacing * 0.5);
+
+			int iterations = 0;
+			//while (fabs(MM.G.averageEdgeLenght() - spacing) < distTol && iterations < 1000)
+			{
+				for (int i = 0; i < 10; i++)MM.G.smoothGraph(10);
+					
+				//iterations++;
+			}
+
+			// renumber
+			if (z == minZ)refPt_renumber = MM.G.positions[0];
+			refPt_renumber.z = z;
+			MM.G.renumber(refPt_renumber);
+			
+			for (int i = 0; i < MM.G.n_v; i++)addPoint(MM.G.positions[i]);
+			startPts.push_back(MM.G.positions[0]);
+		}
+
+		for (int i = 0; i < startPts.size(); i++)
+			printf("%1.2f,%1.2f,%1.2f \n", startPts[i].x, startPts[i].y, startPts[i].z);
+
+		//////////////////////////////////////////////////////////////////////////
+		for (int i = 0; i < actualPathLength; i++)reachable[i] = true;
 	}
 	////////////////////////////////////////////////////////////////////////// UTILITY METHODS
 
@@ -374,22 +495,22 @@ public:
 
 		vec pt = Nachi_tester.ForwardKineMatics(Nachi_tester.rot);
 
-		cout << rot_prev[3] - Nachi_tester.rot[3] << " J3 diff " << endl;
-		cout << rot_prev[3] << " J3_prev " << endl;
+		//cout << rot_prev[3] - Nachi_tester.rot[3] << " J3 diff " << endl;
+		//cout << rot_prev[3] << " J3_prev " << endl;
 
 
-		cout << " -- current point -- " << currentPointId << endl;
+		//cout << " -- current point -- " << currentPointId << endl;
 		vec ax, ay, az;
 		ax = Nachi_tester.Bars_to_world_matrices[5].getColumn(0);
 		ay = Nachi_tester.Bars_to_world_matrices[5].getColumn(1);
 		az = Nachi_tester.Bars_to_world_matrices[5].getColumn(2);
-		cout << pt.mag() << " lenghth " << endl;
+		//cout << pt.mag() << " lenghth " << endl;
 
-		cout << ax.angle(TOOL.getColumn(0)) << endl;
-		cout << ay.angle(TOOL.getColumn(1)) << endl;
-		cout << az.angle(TOOL.getColumn(2)) << endl;
+		//cout << ax.angle(TOOL.getColumn(0)) << endl;
+		//cout << ay.angle(TOOL.getColumn(1)) << endl;
+		//cout << az.angle(TOOL.getColumn(2)) << endl;
 		vec tcp_ret = Nachi_tester.Bars_to_world_matrices[5].getColumn(3);
-		cout << Nachi_tester.joints[5].distanceTo(TOOL.getColumn(3)) << " in-out - tcp diff " << endl;
+	//	cout << Nachi_tester.joints[5].distanceTo(TOOL.getColumn(3)) << " in-out - tcp diff " << endl;
 
 
 		currentPointId++;
@@ -459,7 +580,7 @@ public:
 			reachable[i] = true;
 			if (pt.distanceTo(TOOL.getColumn(3)) > 1e-04)
 			{
-				printf(" point id %i is unreachable \n", i);
+				//printf(" point id %i is unreachable \n", i);
 				reachable[i] = false;
 			}
 
@@ -470,15 +591,15 @@ public:
 			ay = Nachi_tester.Bars_to_world_matrices[5].getColumn(1);
 			az = Nachi_tester.Bars_to_world_matrices[5].getColumn(2);
 
-			cout << " -- current point -- " << i << endl;
-			if (fabs(ax.angle(TOOL.getColumn(0))) > 1e-04) printf(" point id %i axis ax & tcp_x do not match within tolernace \n", i);
-			if (fabs(ay.angle(TOOL.getColumn(1))) > 1e-04) printf(" point id %i axis ay & tcp_y do not match within tolernace \n", i);
-			if (fabs(az.angle(TOOL.getColumn(2))) > 1e-04) printf(" point id %i axis az & tcp_z do not match within tolernace \n", i);
+		//	cout << " -- current point -- " << i << endl;
+			//if (fabs(ax.angle(TOOL.getColumn(0))) > 1e-04) printf(" point id %i axis ax & tcp_x do not match within tolernace \n", i);
+			//if (fabs(ay.angle(TOOL.getColumn(1))) > 1e-04) printf(" point id %i axis ay & tcp_y do not match within tolernace \n", i);
+			//if (fabs(az.angle(TOOL.getColumn(2))) > 1e-04) printf(" point id %i axis az & tcp_z do not match within tolernace \n", i);
 
-			// test if current TOOL orientation axes are ortho-normal / perpendicular to each other
-			if (TOOL.getColumn(0)*TOOL.getColumn(1) > 1e-04)printf(" point id %i axis x & y are not ortho-normal \n", i);
-			if (TOOL.getColumn(1)*TOOL.getColumn(2) > 1e-04)printf(" point id %i axis y & z are not ortho-normal \n", i);
-			if (TOOL.getColumn(2)*TOOL.getColumn(0) > 1e-04)printf(" point id %i axis z & x are not ortho-normal \n", i);
+			//// test if current TOOL orientation axes are ortho-normal / perpendicular to each other
+			//if (TOOL.getColumn(0)*TOOL.getColumn(1) > 1e-04)printf(" point id %i axis x & y are not ortho-normal \n", i);
+			//if (TOOL.getColumn(1)*TOOL.getColumn(2) > 1e-04)printf(" point id %i axis y & z are not ortho-normal \n", i);
+			//if (TOOL.getColumn(2)*TOOL.getColumn(0) > 1e-04)printf(" point id %i axis z & x are not ortho-normal \n", i);
 
 			// store corresponding rotations at each point along path
 			// for later use such as gcode export & graph-generation etc.
@@ -491,27 +612,27 @@ public:
 	{
 		if (fabs(rot_prev[3] - Nachi_tester.rot[3]) > 180)
 		{
-			cout << Nachi_tester.rot[3] << " J3_fk " << endl;
+		//	cout << Nachi_tester.rot[3] << " J3_fk " << endl;
 
 			if (rot_prev[3] < 0 && Nachi_tester.rot[3] > 0) Nachi_tester.rot[3] -= 360;
 			if (rot_prev[3] > 0 && Nachi_tester.rot[3] < 0) Nachi_tester.rot[3] += 360;
 
-			cout << Nachi_tester.rot[3] << " J3_new " << endl;
+		//	cout << Nachi_tester.rot[3] << " J3_new " << endl;
 		}
 
-		cout << Nachi_tester.rot[3] << " J4_new_after " << endl;
+	//	cout << Nachi_tester.rot[3] << " J4_new_after " << endl;
 
 
 		if (fabs(rot_prev[5] - Nachi_tester.rot[5]) > 180)
 		{
 
-			cout << rot_prev[5] << " J5_prev " << endl;
-			cout << Nachi_tester.rot[5] << " J5_fk " << endl;
+			//cout << rot_prev[5] << " J5_prev " << endl;
+			//cout << Nachi_tester.rot[5] << " J5_fk " << endl;
 
 			if (rot_prev[5] < 0 && Nachi_tester.rot[5] > 0) Nachi_tester.rot[5] -= 360;
 			if (rot_prev[5] > 0 && Nachi_tester.rot[5] < 0) Nachi_tester.rot[5] += 360;
 
-			cout << Nachi_tester.rot[5] << " J5_new " << endl;
+			//cout << Nachi_tester.rot[5] << " J5_new " << endl;
 		}
 
 		/*Nachi_tester.rot[0] = ofClamp(Nachi_tester.rot[0], -170, 170);
@@ -523,6 +644,7 @@ public:
 	}
 	void exportGCode(string fileToWrite = "data/MZ07-01-A.080")
 	{
+		
 		int counter = 0;
 		//----- check & compute all necessary values
 		checkReach();
@@ -581,6 +703,64 @@ public:
 		myfile_write.close();
 		cout << "--------------------------- EXPORT GCODE COMPLETE ----------------- " << endl;
 	}
+	void exportGCode_3dp(string fileToWrite = "data/bl_1.src")
+	{
+
+		checkReach();
+		int counter = 0;
+	
+		//----- instance ofstream for file IO
+		ofstream myfile_write;
+		char gcode[600];
+
+		//- open file
+		myfile_write.open(fileToWrite.c_str(), ios::out);
+		if (myfile_write.fail())cout << " error in opening file  " << fileToWrite << endl;
+
+		// --------------------------- copy header from base file
+		std::fstream fs("data/3DP_header.txt", ios::in);
+
+			if (fs.fail())cout << " error in file reading " << fileToRead << endl;
+
+		int lcnt = 0;
+		while (!fs.eof() && lcnt < 1000)
+		{
+			char str[2000];
+			fs.getline(str, 2000);
+
+			myfile_write << str << endl;
+			lcnt++;
+		}
+		fs.close();
+		
+		// --------------------------- 
+		//- iterate through path
+		
+		vec tcp;
+		double scale = 10;
+		tcp = path[0][0]; tcp *= scale;
+		sprintf_s(gcode, "PTP{ E6POS: X %1.4f, Y %1.4f, Z %1.4f, A 0, B 90, C 0, E1 0, E2 0, E3 0, E4 0, S 'B 110' } C_PTP", tcp.x,tcp.y,tcp.z);
+		myfile_write << gcode << endl;
+		
+		tcp = path[1][0]; tcp *= scale;
+		sprintf_s(gcode, "LIN{ E6POS: X %1.4f, Y %1.4f, Z %1.4f, A 0, B 90, C 0, E1 0, E2 0, E3 0, E4 0 }", tcp.x, tcp.y, tcp.z);
+		myfile_write << gcode << endl;
+
+		for (int i = 2; i < actualPathLength - 1; i++)
+		{
+		
+			tcp = path[i][0]; tcp *= scale;
+			sprintf_s(gcode, "LIN{ E6POS: X %1.4f, Y %1.4f, Z %1.4f, A 0, B 90, C 0, E1 0, E2 0, E3 0, E4 0 } C_DIS", tcp.x, tcp.y, tcp.z);
+			myfile_write << gcode << endl; 
+		}
+
+		//------close file
+		myfile_write << "HALT" << endl;
+		myfile_write << "END" << endl;
+		myfile_write.close();
+		cout << "--------------------------- EXPORT GCODE COMPLETE ----------------- " << endl;
+	}
+
 
 	////////////////////////////////////////////////////////////////////////// DISPLAY METHODS
 	void drawHistograms( int j ,vec cen = vec (50, winH - 50,0), float r = 5.0)
@@ -638,6 +818,11 @@ public:
 		{
 			reachable[i] ? glColor3f(0, 0, 1) : glColor3f(1, 0, 0);
 			drawPoint(path[i][0]);
+			/*char c[200];
+			sprintf(c, "%i ", i);
+			string s = "";
+			s += c;
+			drawString(s, path[i][0]+ vec(0,0,0.2));*/
 		}
 		glPointSize(1);
 
@@ -657,7 +842,7 @@ public:
 		// ------------------- draw bounding box ;
 
 		wireFrameOn();
-		drawCube(min, max);
+			drawCube(min, max);
 		wireFrameOff();
 		// ------------------- draw Robot ;
 

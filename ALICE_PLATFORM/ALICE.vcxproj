@@ -123,16 +123,15 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\alice\Controller.h" />
     <ClInclude Include="src\alice\largeMesh.h" />
+    <ClInclude Include="src\alice\MODEL.h" />
+    <ClInclude Include="src\alice\object.h" />
+    <ClInclude Include="src\alice\utilities.h" />
     <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h" />
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\Controller.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\interpolate.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\MODEL.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\object.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\utilities.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{523591A1-85D6-4C6F-9283-4989B0011977}</ProjectGuid>

@@ -123,23 +123,20 @@
     <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h">
       <Filter>PhD_R02</Filter>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\interpolate.h">
-      <Filter>MVP</Filter>
-    </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\MODEL.h">
-      <Filter>MVP</Filter>
-    </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\object.h">
-      <Filter>MVP</Filter>
-    </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\Controller.h">
-      <Filter>MVP</Filter>
-    </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\utilities.h">
-      <Filter>MVP</Filter>
-    </ClInclude>
     <ClInclude Include="src\alice\largeMesh.h">
       <Filter>PhD_R02</Filter>
+    </ClInclude>
+    <ClInclude Include="src\alice\MODEL.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\alice\Controller.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\alice\utilities.h">
+      <Filter>MVP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\alice\object.h">
+      <Filter>MVP</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
