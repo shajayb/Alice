@@ -123,13 +123,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\alice\ActiveGraph.h" />
     <ClInclude Include="src\alice\Controller.h" />
     <ClInclude Include="src\alice\graphStack.h" />
     <ClInclude Include="src\alice\largeMesh.h" />
     <ClInclude Include="src\alice\MODEL.h" />
     <ClInclude Include="src\alice\object.h" />
     <ClInclude Include="src\alice\utilities.h" />
-    <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h" />
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>

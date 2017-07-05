@@ -120,9 +120,6 @@
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
       <Filter>ImGui_freeglut</Filter>
     </ClInclude>
-    <ClInclude Include="src\userSrc\sketch_UR\ActiveGraph.h">
-      <Filter>PhD_R02</Filter>
-    </ClInclude>
     <ClInclude Include="src\alice\largeMesh.h">
       <Filter>PhD_R02</Filter>
     </ClInclude>
@@ -139,6 +136,9 @@
       <Filter>MVP</Filter>
     </ClInclude>
     <ClInclude Include="src\alice\graphStack.h">
+      <Filter>PhD_R02</Filter>
+    </ClInclude>
+    <ClInclude Include="src\alice\ActiveGraph.h">
       <Filter>PhD_R02</Filter>
     </ClInclude>
   </ItemGroup>
