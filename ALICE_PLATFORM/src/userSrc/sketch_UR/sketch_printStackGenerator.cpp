@@ -1,8 +1,5 @@
 
 
-#define _MAIN_
-#define _ALG_LIB_
-
 
 
 
@@ -108,10 +105,10 @@ void setup()
 
 	GS.threshold = 0;
 	S.addSlider(&GS.threshold, "threshold");
-	//S.sliders[6].minVal = 0;
-	//S.sliders[6].maxVal = 35;
-	S.sliders[6].minVal = -20;
-	S.sliders[6].maxVal = 0;
+	S.sliders[6].minVal = 0;
+	S.sliders[6].maxVal = 1590;
+	//S.sliders[6].minVal = -20;
+	//S.sliders[6].maxVal = 0;
 	S.addSlider(&lightscale, "lightscale");	
 	S.sliders[7].maxVal = 20;
 	S.addSlider(&background, "background");
@@ -348,7 +345,7 @@ void keyPress(unsigned char k, int xm, int ym)
 		showGraphStackMesh = false; 
 		GS.convertedToToroidal = false;
 		GS.currentStackLayer = 0;
-		GS.LM.n_v = GS.LM.n_e = GS.LM.n_f = 0;
+		GS.LM.n_v = GS.LM.n_e_cubes = GS.LM.n_f = 0;
 	}
 	if (k == 'L')GS.ConvertContourStackToPrintPath(path);
 

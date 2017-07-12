@@ -11,7 +11,7 @@ class graphStack
 {
 public:
 
-	largeMesh LM;
+	RenderMesh LM;
 	activeGraph PrintStack[500];
 	Graph G;
 	vec minV, maxV;
@@ -61,8 +61,9 @@ public:
 		maxV = maxV * trans;
 
 		G.boundingbox(minV, maxV);
-		minV -= (maxV - minV).normalise() * 8.5;
-		maxV += (maxV - minV).normalise() * 8.5;
+		minV -= (maxV - minV).normalise() * 12.5;
+		maxV += (maxV - minV).normalise() * 12.5;
+		
 	
 		//--------- dateGrid
 		cout << " dataGrid create " << endl;
@@ -83,7 +84,7 @@ public:
 		//MM.assignScalars("z");
 		MM = MM.createFromPlane(minV, maxV, 100);
 		cout << "create from plane" << endl;
-		MM.assignScalarsAsLineDistanceField(G,0.0,350,true);
+		MM.assignScalarsAsLineDistanceField(G,0.0,1500,true);
 		MM.getMinMaxOfScalarField(dMin, dMax);
 	
 	}
@@ -142,7 +143,11 @@ public:
 		AG.constructFromGraph(MM.G);
 		//AG.fixEnds();
 		/*AG.populateRigidBodies(1.0,layersize);*/
-		AG.populateRigidBodies(LM, layersize  , layersize);
+		plane prevPl;
+		prevPl.cen = AG.centroid();
+		prevPl.cen.z += layersize;
+		prevPl.normal = vec(0, 0, 1);
+		AG.populateRigidBodies(LM, prevPl, layersize, layersize);
 		
 		PrintStack[currentStackLayer] = AG;
 
@@ -399,7 +404,7 @@ public:
 		AL_drawString(s, winW * 0.5, 100);
 
 		{
-			sprintf_s(s, " numBricks : %i ", LM.numBricks);
+			sprintf_s(s, " numBricks : %i ", LM.numCubes);
 			AL_drawString(s, winW * 0.5, 125);
 		}
 		

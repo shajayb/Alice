@@ -211,6 +211,74 @@ public:
 	//	//}
 	//}
 
+	void smoothData_laplace()
+	{
+		
+		double *data;
+		data = new double[n_v];
+		double minv, maxv;
+
+		for ( int n = 0 ; n < n_v ; n++)
+		{
+			Edge *v_e[MAX_VALENCE];
+			int v_n_e = vertices[n].getEdges(v_e);
+
+			float *wts = new float[v_n_e];
+			vec pt = positions[n];
+
+			double value = 0;
+			vec pt_cur, pt_next, pt_prev;
+			float area = 0.0;
+
+			for (int i = 0, next = 0, prev = 0; i < v_n_e; i++)
+			{
+				next = (i + 1) % v_n_e;
+				prev = (i + v_n_e - 1) % v_n_e;
+				pt_cur = (v_e[i]->vStr == &vertices[n]) ? positions[v_e[i]->vEnd->id] : positions[ v_e[i]->vStr->id];
+				pt_next = (v_e[next]->vStr == &vertices[n]) ? positions[v_e[next]->vEnd->id] : positions[v_e[next]->vStr->id];
+				pt_prev = (v_e[prev]->vStr == &vertices[n]) ? positions[v_e[prev]->vEnd->id] : positions[v_e[prev]->vStr->id];
+
+
+				double lenSq = (pt - pt_cur)*(pt - pt_cur);
+				float ct0 = cotangent(pt, pt_cur, pt_prev);
+				float ct1 = cotangent(pt, pt_cur, pt_next);
+
+				if ((ct0 != NULL) && (ct1 != NULL))
+				{
+					value += ((v_e[i]->vStr == &vertices[n]) ? scalars[v_e[i]->vEnd->id] : scalars[v_e[i]->vStr->id]);// *(ct0 + ct1) / lenSq;
+				}
+
+			}
+
+			data[n] = (value);// *0.2 + scalars[n] * 0.8;
+			minv = MIN(minv, value);
+			maxv = MAX(maxv, value);
+		}
+
+		for (int i = 0; i < n_v; i++)scalars[i] =  ofMap(data[i], minv, maxv, 0, 1);
+	}
+
+	void smoothData()
+	{
+		double *data;
+		data = new double[n_v];
+
+		for (int i = 0; i < n_v; i++)
+		{
+			Vertex *vts[10];
+			int nv = vertices[i].getVertices(vts);
+			double v = scalars[i] * (1.0 / nv);
+			for (int n = 0; n < nv; n++)
+				v += scalars[vts[n]->id] * (1.0 / nv);
+
+			data[i] = v;
+		}
+
+		for (int i = 0; i < n_v; i++)scalars[i] = data[i];
+
+		delete data;
+	}
+
 	void assignScalarsAsLineDistanceField(Graph &G, double clampMin = 0, double clampMax = 5.0, bool blend = true)
 	{
 
@@ -424,6 +492,7 @@ public:
 			glLineWidth(5);
 			glColor3f(clr.r, clr.g, clr.b);
 			//drawLine(positions[i], positions[i]*1.001);;// 
+			
 			drawPoint(positions[i]);
 		}
 		glPointSize(1.0);

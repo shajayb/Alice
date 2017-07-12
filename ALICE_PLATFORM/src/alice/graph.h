@@ -331,6 +331,15 @@ public:
 		}
 	}
 
+	vec  centroid()
+	{
+		vec cen;
+		for (int i = 0; i < n_v; i++)cen += positions[i];
+
+		cen /= n_v;
+		return cen;
+	}
+
 	void inflateVertices()
 	{
 		vec cen;

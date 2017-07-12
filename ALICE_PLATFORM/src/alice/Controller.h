@@ -4,7 +4,7 @@
 
 #include "ALICE_DLL.h"
 #include "utilities.h"
-
+#include "MODEL.h"
 
 class CONTROLLER
 {
@@ -39,6 +39,9 @@ public:
 		
 		return false;
 	}
+	
+	////////////////////////////////////////////////////////////////////////// event - callback functions
+
 	void mousePress(int b, int state, int x, int y)
 	{
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
@@ -62,7 +65,7 @@ public:
 		curPt = screenToWorld(vec(cur_msx, cur_msy, 0));
 		
 	}
-	void keyPress(unsigned char k, int xm, int ym)
+	void keyPress(unsigned char k, int xm, int ym, MODEL &_model)
 	{
 		//printf("ASCII value of %c = %d \n", k, k);
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)keySeq += "ALT_";
@@ -73,10 +76,21 @@ public:
 		
 		if ( k == 13 /*enter*/)keySeq.clear();
 
-		//vector<string> content = splitString(keySeq, ",");
-		//cout << keySeq << endl;
+		//////////////////////////////////////////////////////////////////////////
+		if (glutGetModifiers() == GLUT_ACTIVE_CTRL && k == 26 /* z when CTRL is pressed*/ )
+		{
+			printf("ASCII value of %c = %d \n", k, k);
+			//executeOnModel_commandUndo(_model);
+			_model.popCommandFromStack();
+		}
 	}
-	void draw()
+
+	void update( MODEL &_model )
+	{
+		executeOnModel_windowSelection(_model);
+	}
+
+	void draw( MODEL &model )
 	{
 		if (!dragging)return;
 
@@ -114,6 +128,20 @@ public:
 		glColor4f(c[0],c[1],c[2],c[3]);
 		
 	}
+
+	////////////////////////////////////////////////////////////////////////// actions on MODEL
+
+	void executeOnModel_windowSelection(MODEL &_model)
+	{
+		vec mx = vec(msx, msy, 0);
+		vec mn = vec(cur_msx, cur_msy, 0);
+		_model.performWindowSelection(mn, mx);
+	}
+	void executeOnModel_commandUndo(MODEL &_model)
+	{
+		_model.popCommandFromStack();
+	}
+
 };
 
 

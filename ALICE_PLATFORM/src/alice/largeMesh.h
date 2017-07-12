@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"
+#include "metaMesh.h"
 using namespace ROBOTICS;
 
 
@@ -10,25 +11,33 @@ using namespace ROBOTICS;
 #define _LM_FACECOUNTS_ 100000
 #define _LM_FACECONNECTS_ 100000
 
-#define MAX_CUBES 1000000
+#define MAX_CUBES 100000
 
-class largeMesh
+class RenderMesh
 {
 public:
 
 	GLfloat lm_positions[MAX_CUBES * 72];
 	GLfloat lm_normals[MAX_CUBES * 72];
 	GLfloat lm_colors[MAX_CUBES * 72];
-	GLubyte lm_indices[_LM_FACECONNECTS_];
 
+	GLfloat lm_positions_tris[MAX_CUBES * 72];
+	GLfloat lm_normals_tris[MAX_CUBES * 72];
+	GLfloat lm_colors_tris[MAX_CUBES * 72];
 
 	//int polyCounts[_LM_FACECOUNTS_];
-	int n_v, n_f, n_e, numBricks;
-	largeMesh()
+	int n_v, n_f;
+	int n_v_tris, n_f_tris;
+	int offset = 0;
+	int numCubes;
+	metaMesh ground;
+
+	RenderMesh()
 	{
-		n_v = n_f = n_e = 0;
+		n_v = n_f = 0;
 	}
 
+	//////////////////////////////////////////////// utilities
 	void lightsOn(GLfloat light_pos[4])
 	{
 		// set position and enable light0
@@ -54,109 +63,267 @@ public:
 		glEnable(GL_COLOR_MATERIAL);
 		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
 	}
-	/*void addFace(vec *p, int nv)
+
+	void addtriVertex(  vec &normal, vec &P)
 	{
-		for (int i = 0; i < nv ; i++)
-		{
-			positions[n_v++] = p[i].x;
-			positions[n_v++] = p[i].y;
-			positions[n_v++] = p[i].z;
+		lm_normals_tris[n_v_tris + 0] = normal.x * -1;
+		lm_normals_tris[n_v_tris + 1] = normal.y * -1;
+		lm_normals_tris[n_v_tris + 2] = normal.z * -1;
+		// positions
+		lm_positions_tris[n_v_tris + 0] = P.x;
+		lm_positions_tris[n_v_tris + 1] = P.y;
+		lm_positions_tris[n_v_tris + 2] = P.z;
 
-			polyConnects[n_e++] = n_e;
-		}
+		n_v_tris += 3;
+		if (n_v_tris > MAX_CUBES * 72)n_v_tris = 0;
+	}
 
-		polyCounts[n_f++] = nv;
+	void addQuadVertex( vec &normal, vec &P)
+	{
+		lm_normals[n_v + 0] = normal.x * -1;
+		lm_normals[n_v + 1] = normal.y * -1;
+		lm_normals[n_v + 2] = normal.z * -1;
+		// positions
+		lm_positions[n_v + 0] = P.x;
+		lm_positions[n_v + 1] = P.y;
+		lm_positions[n_v + 2] = P.z;
 
-	}*/
+		n_v += 3;
+		if (n_v > MAX_CUBES * 72)n_v = 0;
+	}
 
-	/*  - 0.500000 - 0.500000 0.500000
-		0.500000 - 0.500000 0.500000
-		- 0.500000 0.500000 0.500000
-		0.500000 0.500000 0.500000
-		- 0.500000 0.500000 - 0.500000
-		0.500000 0.500000 - 0.500000
-		- 0.500000 - 0.500000 - 0.500000
-		0.500000 - 0.500000 - 0.500000
-	*/
+	void getVectorFromArray(int nv, vec &P, bool triArray = false)
+	{
 
-	/*  f 0 1 3 2
-		f 2 3 5 4
-		f 4 5 7 6
-		f 6 7 1 0
-		f 1 7 5 3
-		f 6 0 2 4
-	*/
-	int offset = 0;
+		P = triArray ? vec(lm_positions_tris[nv + 0], lm_positions_tris[nv + 1], lm_positions_tris[nv + 2])
+			         : vec(lm_positions[nv + 0], lm_positions[nv + 1], lm_positions[nv + 2]);
+	}
+
+	void getNormalFromArray(int nv, vec &normal, bool triArray = false)
+	{
+		normal = triArray ? vec(lm_normals_tris[nv + 0], lm_normals_tris[nv + 1], lm_normals_tris[nv + 2])
+			: vec(lm_normals[nv + 0], lm_normals[nv + 1], lm_normals[nv + 2]);
+	}
 
 	void addCube(Matrix4 &T = Matrix4())
 	{
-		
-
 		for (int i = 0; i < 72; i+= 3)
 		{
 			vec P = T * vec(vertices[i], vertices[i + 1], vertices[i + 2]);
+			vec normal = vec(normals[i], normals[i + 1], normals[i + 2]);
 			int nv = n_v;
-			lm_normals[nv + 0] = normals[i] * 1 ;
-			lm_normals[nv + 1] = normals[i+1] * 1;
-			lm_normals[nv + 2] = normals[i+2] * 1;
-
-			// normals
-			lm_positions[nv + 0] = P.x;
-			lm_positions[nv + 1] = P.y;
-			lm_positions[nv + 2] = P.z;
-
-			n_v += 3;
-			if (n_v > MAX_CUBES * 72)n_v = 0;
+			addQuadVertex(normal, P);
 		}
 
-		//for(int i = 0; i < 72; i++)
-		//		lm_positions[n_v++] = GLfloat( vertices[i]);
-		//for (int i = 0; i < 24; i++) lm_indices[n_e++] = offset + indices[i];
 		n_f += 6;
-		offset += 24;
-		numBricks++;
+		numCubes++;
 	}
 
-	void updateColorArray( double scale = 10.0 ,  bool flipNormal = false, vec light = vec(0, 0, 10))
+	void addMesh( Mesh &M /*quad only mesh presumed8*/)
 	{
-		n_v = 0;
-		numBricks = n_f / 6;
-		for (int n = 0; n < numBricks; n++)
-		for (int i = 0; i < 72; i += 3)
-		{
-			int nv = n_v;
-			vec P;
-			P.x = lm_positions[nv + 0]; 
-			P.y = lm_positions[nv + 1]; 
-			P.z = lm_positions[nv + 2]; 
-
-
-			// normals
-			//vec light(-20, -20, 0);// = screenToWorld(vec(winW, winH, 0)*0.5);
-			double ambO = (light - P).angle(vec(normals[i], normals[i + 1], normals[i + 2]) * ( flipNormal ?-1:1 ));
-			double dSq =  ((light - P)*(light - P));
-			double maxD = ((light )*(light ));
-			dSq = ofMap(dSq, 0,  maxD, 0, 1);
-			//ambO = ofMap(ambO, 0, 180, -1, 1);
-
-			double ao = /*(ambO > 90) ? 0.1 :*/ 1.0 - (ambO * ofMap(dSq, 0, maxD, 0, 1)  * scale );
 		
-			vec clr(ao, ao, ao);
-
-			lm_colors[nv + 0] = clr.x;
-			lm_colors[nv + 1] = clr.y;
-			lm_colors[nv + 2] = clr.z;// clr.z;
+		for (int i = 0; i < M.n_f; i++)
+		{
 			
-			lm_positions[nv + 0] = P.x;
-			lm_positions[nv + 1] = P.y;
-			lm_positions[nv + 2] = P.z;
-			n_v += 3;
+			int f_nv = M.faces[i].n_e;
+			int *face_vertices = M.faces[i].faceVertices();
+
+			if( f_nv == 4 )
+			{
+				for (int n = 0; n < 4; n++)
+				{
+
+					vec P = M.positions[face_vertices[n]];
+					vec normal = M.vertices[face_vertices[n]].vertexNormal(M.positions).normalise();
+					addQuadVertex( normal, P);
+				}
+
+				n_f++;
+			}
+
+			if (f_nv == 3)
+			{
+				for (int n = 0; n < 3; n++)
+				{
+
+					vec P = M.positions[face_vertices[n]];
+					vec normal = M.vertices[face_vertices[n]].vertexNormal(M.positions).normalise();
+					addtriVertex( normal, P);
+
+				}
+
+				n_f_tris++;
+			}
 		}
+
 	}
+
+	//////////////////////////////////////////////// compute
+
+	void updateColorArray(double scale = 10.0, bool flipNormal = false, vec light = vec(0, 0, 10))
+	{
+		//n_v = 0;
+		numCubes = n_f / 6;
+		//for (int n = 0; n < numCubes; n++)
+			for (int i = 0; i < n_v; i += 3)
+			{
+				int nv = i;// n_v;
+				vec P,normal;
+				getVectorFromArray( nv,P);
+				getNormalFromArray(nv, normal);
+			
+				vec4 clr = computeColorOfVertex(light, P, normal, nv, scale, flipNormal);
+				lm_colors[nv + 0] = clr.r;
+				lm_colors[nv + 1] = clr.g;
+				lm_colors[nv + 2] = clr.b;// clr.z;
+
+			}
+
+			for (int i = 0; i < n_v_tris; i += 3)
+			{
+				int nv = i;// n_v;
+				vec P,normal;
+				getVectorFromArray(nv, P,true);
+				getNormalFromArray(nv, normal,true);
+
+				vec4 clr = computeColorOfVertex(light, P, normal, nv, scale, flipNormal);
+
+				lm_colors_tris[nv + 0] = clr.r;
+				lm_colors_tris[nv + 1] = clr.g;
+				lm_colors_tris[nv + 2] = clr.b;// clr.z;
+			}
+	}
+
+	vec4 computeColorOfVertex( vec &light, vec &P, vec &normal, int &nv, double scale = 5.0250, bool flipNormal = false)
+	{
+		double ambO = (light - P).angle(normal * (flipNormal ? -1 : 1));
+		double dSq = ((light - P)*(light - P));
+		double maxD = ((light)*(light));
+		dSq = ofMap(dSq, 0, maxD, 0, 1);
+		//ambO = ofMap(ambO, 0, 180, -1, 1);
+
+		double ao = 1.0 - (ambO * ofMap(dSq, 0, maxD, 0, 1)  * scale);
+		//if (ambO < 90) ao = (ambO * ofMap(dSq, 0, maxD, 0, 1)  * scale);
+
+		vec4 clr(ao, ao, ao,1.0);
+	
+		return clr;
+	}
+
+	int getNearestVertexOnGroundPlane( vec P, int divs , vec &minBB, vec &maxBB )
+	{
+		double delX, delY;
+		delX = maxBB.x - minBB.x;
+		delY = maxBB.y - minBB.y;
+		delX /= divs;
+		delY /= divs;
+		
+		P -= minBB;
+		int u = floor(P.x / delX);
+		int v = floor(P.y / delY);
+		int vertexID = u * divs + v;
+		return vertexID;
+	}
+
+	void createGroundPlane()
+	{
+
+		vec minBB(1, 1, 1);
+		minBB *= 1e10;
+		vec maxBB = minBB * -1;
+		for (int i = 0; i < n_v; i += 3)
+		{
+			vec P; getVectorFromArray(i, P, false);
+			vec projectedP = rayPlaneIntersection(P, vec(1, 1, 5) * -1, vec(0, 0, 1), 0);
+
+			minBB.x = MIN(minBB.x, projectedP.x);
+			minBB.y = MIN(minBB.y, projectedP.y);
+			minBB.z = MIN(minBB.z, projectedP.z);
+
+			maxBB.x = MAX(maxBB.x, projectedP.x);
+			maxBB.y = MAX(maxBB.y, projectedP.y);
+			maxBB.z = MAX(maxBB.z, projectedP.z);
+		}
+
+		minBB -= (maxBB - minBB).normalise() * 2.0;
+		maxBB += (maxBB - minBB).normalise() * 2.0;
+		ground = ground.createFromPlane(minBB, maxBB, 100);
+		
+		//////////////////////////////////////////////////////////////////////////
+		for (int i = 0; i < ground.n_v; i += 1)ground.scalars[i] = 0.0;
+
+		for (int i = 0; i < n_v; i += 3)
+		{
+			vec P; getVectorFromArray(i, P, false);
+			vec projectedP = rayPlaneIntersection(P, vec(1, 1, 5) * -1, vec(0, 0, 1), 0);
+
+			int vid = getNearestVertexOnGroundPlane(projectedP, 100, minBB, maxBB);
+			if(vid < ground.n_v)ground.scalars[vid] += 1.0 / P.distanceTo(projectedP);
+		}
+
+		double dmn, dmx;
+		ground.getMinMaxOfScalarField(dmn, dmx);
+		printf(" %1.2f,%1.2f min-max ", dmn, dmx);
+		for (int i = 0; i < ground.n_v; i++)
+		{
+			if(!(ground.scalars[i] > 0))continue;
+			//printf("-------------------------\n");
+			//printf(" %1.2f, before \n ", ground.scalars[i]);
+				ground.scalars[i] = ofMap(ground.scalars[i], dmn, dmx, 0, 1);
+			//printf(" %1.2f, after \n", ground.scalars[i]);
+		}
+
+		ground.getMinMaxOfScalarField(dmn, dmx);
+	}
+	
+	void projectUntoGroundPlane()
+	{
+		//{
+			vec minBB(1, 1, 1);
+			minBB *= 1e10;
+			vec maxBB = minBB * -1;
+		
+			ground.boundingBox(minBB, maxBB);
+		//}
+		
+		for (int i = 0; i < n_v; i+=3)
+		{
+			vec P; getVectorFromArray(i, P,false);
+			
+			vec projectedP = rayPlaneIntersection(P, vec(1, 1, 5) * -1, vec(0, 0, 1), 0);
+
+			//drawPoint(P);
+			glColor3f(0, 0, 0);
+			//drawLine(projectedP, P);
+
+
+		//	for (int i = 0; i < n_v; i += 3)
+			{
+				int vid = getNearestVertexOnGroundPlane(projectedP, 100, minBB, maxBB);
+				
+				glColor3f(1,1,1);
+				//drawLine(projectedP, ground.positions[vid]);
+			}
+
+		}
+
+		ground.glPtSize = 10;
+		glPointSize(10);
+		//ground.display(true,false,false);
+		for (int i = 0; i < ground.n_v; i++)
+		{
+			if (!(ground.scalars[i] > 0))continue;
+			double l = ground.scalars[i];
+			glColor3f(l, l, l);
+			drawPoint(ground.positions[i]);
+		}
+		glPointSize(1);
+	}
+	//////////////////////////////////////////////// output
 
 	void writeOBJ(string outFileName)
 	{
-		printf(" ----------- writing largemesh \n ");
+		printf(" ----------- writing large-mesh \n ");
 
 		float scaleBack = 1.0;
 
@@ -211,99 +378,75 @@ public:
 		}
 
 
-
-
 		myfile.close();
 
 		return;
 	}
 
-	void draw( bool drawWire = false )
+	//////////////////////////////////////////////// display
+
+	void drawFaces( bool color = true )
 	{
-		//
-		//wireFrameOn();
-		//glColor3f(1, 0, 0);
-		//glPointSize(1);
-
-
-		//wireFrameOff();
-
-		//////////////////////////////////////////////////////////////////////////
-		glPushAttrib(GL_CURRENT_BIT);
-
-		//vec lightPos = vec(50, 0, 200);
-		//GLfloat light_pos[] = { lightPos.x, lightPos.y, lightPos.z, 1.0 };
-
-		//GLfloat qaAmbient[] = { 0.0, 0.0, 0.0, 1.0 }; //Black Color
-		//GLfloat qaDiffuse[] = { 0.5, 0.5, 0.5, 1.0 }; //Green Color
-		//GLfloat qaWhite[] = { 1.0, 1.0, 1.0, 1.0 }; //White Color
-		//GLfloat qaRed[] = { 1.0, 0.0, 0.0, 1.0 }; //White Color
-
-		//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, qaAmbient);
-		//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, qaDiffuse);
-		//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, qaWhite);
-		//glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 1);
-
-		//glPushAttrib(GL_CURRENT_BIT);
-		//glEnable(GL_BLEND);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		////resetProjection();
-		//	glColor4f(1.0, 1.0, 1.0, 1.0);
-		//	lightsOn(light_pos);
-		////restore3d();
-
-
-			//drawCube(vec(30, 0, 0), vec(60, 30, 1));
-
 		{
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_NORMAL_ARRAY);
-			glEnableClientState(GL_COLOR_ARRAY);
+			if (color)glEnableClientState(GL_COLOR_ARRAY);
 
 			glVertexPointer(3, GL_FLOAT, 0, lm_positions);
 			glNormalPointer(GL_FLOAT, 0, lm_normals);
-			glColorPointer(3, GL_FLOAT, 0, lm_colors);
+			if (color)glColorPointer(3, GL_FLOAT, 0, lm_colors);
 			//glDrawElements(GL_QUADS, n_f * 6, GL_UNSIGNED_BYTE, lm_indices);// index hopping isnt workign currently - 140617
-			glDrawArrays(GL_QUADS, 0, n_f * 6);
+			glDrawArrays(GL_QUADS, 0, n_f * 4);
 
 
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
-			glDisableClientState(GL_COLOR_ARRAY);
+			if (color)glDisableClientState(GL_COLOR_ARRAY);
 		}
 
-		if(drawWire)
 		{
-			wireFrameOn();
-			glColor3f(0, 0, 0);
-			{
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glEnableClientState(GL_NORMAL_ARRAY);
+			if(color)glEnableClientState(GL_COLOR_ARRAY);
 
-				glEnableClientState(GL_VERTEX_ARRAY);
-				glEnableClientState(GL_NORMAL_ARRAY);
-
-				glVertexPointer(3, GL_FLOAT, 0, lm_positions);
-				glNormalPointer(GL_FLOAT, 0, lm_normals);
-				glColorPointer(3, GL_FLOAT, 0, lm_colors);
+				glVertexPointer(3, GL_FLOAT, 0, lm_positions_tris);
+				glNormalPointer(GL_FLOAT, 0, lm_normals_tris);
+				if (color)glColorPointer(3, GL_FLOAT, 0, lm_colors_tris);
 				//glDrawElements(GL_QUADS, n_f * 6, GL_UNSIGNED_BYTE, lm_indices);// index hopping isnt workign currently - 140617
-				glDrawArrays(GL_QUADS, 0, n_f * 6);
+				glDrawArrays(GL_TRIANGLES, 0, n_f_tris * 3);
 
 
-				glDisableClientState(GL_VERTEX_ARRAY);
-				glDisableClientState(GL_NORMAL_ARRAY);
-			}
+			glDisableClientState(GL_VERTEX_ARRAY);
+			glDisableClientState(GL_NORMAL_ARRAY);
+			if (color)glDisableClientState(GL_COLOR_ARRAY);
+		}
+
+	}
+
+	void draw( bool drawWire = false )
+	{
+
+		glPushAttrib(GL_CURRENT_BIT);
+
+
+		if (drawWire)
+		{
+			glLineWidth(2);
+			glColor3f(0, 0, 0);
+
+			wireFrameOn();
+				drawFaces(false);
 			wireFrameOff();
 		}
+
+		drawFaces();
 
 		glPopMatrix();
 		glDisable(GL_LIGHTING);
 		glDisable(GL_BLEND);
 
-				
-
-
-
 	}
+
 };
 
 

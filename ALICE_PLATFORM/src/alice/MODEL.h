@@ -5,7 +5,7 @@
 #include "ALICE_DLL.h"
 #include "utilities.h"
 #include "object.h"
-#include "Controller.h"
+//#include "Controller.h"
 
 class OBJECT
 {
@@ -37,6 +37,19 @@ public:
 	}
 };
 
+class COMMAND
+{
+public:
+	OBJECT *obj = NULL;
+	virtual ~COMMAND() {};
+	virtual void doIt() {};
+	virtual void undoIt() 
+	{
+		cout << " default undoIt" << endl;
+	};
+};
+
+
 
 class MODEL
 {
@@ -47,11 +60,34 @@ public:
 	vector<OBJECT *> objectsInScene; 
 	/*It is necessary to store object pointers to force compiler to
 	force late binding of over-ridden(virtual) functions of derived classes.*/
+	vector<COMMAND *> commandStack;
+
 
 	void addObject(OBJECT &obj)
 	{
 		objectsInScene.push_back(&obj);
 	}
+
+	void addCommandToStack(COMMAND &cmd)
+	{
+		
+		commandStack.push_back(&cmd);
+		commandStack.back()->doIt();
+
+		cout << commandStack.back() << " -- " << &cmd << endl;
+	}
+	void popCommandFromStack()
+	{
+		if (!commandStack.size() > 0)return;
+		
+		cout << "popping" << endl;
+		//cout << << endl;
+		for ( auto A : commandStack)cout << A << endl;
+		//commandStack.pop_back();
+	}
+
+
+	////////////////////////////////////////////////////////////////////////// UTILITIES
 
 	void correctScreenCoordinates( vec &mn, vec &mx , float w,float h )
 	{
@@ -74,7 +110,10 @@ public:
 		glGetFloatv(GL_PROJECTION_MATRIX, P.m);
 		glGetIntegerv(GL_VIEWPORT, viewport);
 	}
-	void performWindowSelection(CONTROLLER &ctrl)
+
+	////////////////////////////////////////////////////////////////////////// COMPUTE
+
+	/*void performWindowSelection(CONTROLLER &ctrl)
 	{
 		vec mn, mx;
 		mx = vec(ctrl.msx, ctrl.msy, 0);
@@ -82,6 +121,7 @@ public:
 		performWindowSelection(mn, mx);
 
 	}
+*/
 	void performWindowSelection( vec mn,vec mx )
 	{
 		Matrix4 MV, P;
@@ -121,6 +161,8 @@ public:
 		
 		restore3d();
 	}
+
+	////////////////////////////////////////////////////////////////////////// DISPLAY
 
 	void draw()
 	{

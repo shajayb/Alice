@@ -115,6 +115,12 @@
     <ClCompile Include="src\userSrc\sketch_R06\sketch_corep_v1.cpp">
       <Filter>PhD_R06</Filter>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_renderMeshTest.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_commandstackTest.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">

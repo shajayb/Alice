@@ -41,6 +41,7 @@ void updateCallBack( int value )
 	long start = GetTickCount();
 
 		update( value ) ;
+		CONTROLLERS.update(SCENE);
 
 		frame ++ ;
 		winW = glutGet(GLUT_WINDOW_WIDTH);
@@ -83,9 +84,10 @@ void drawCallBack()
 
 
 
-			SCENE.performWindowSelection(CONTROLLERS);
+//			SCENE.performWindowSelection(CONTROLLERS);
 			SCENE.draw();
-			CONTROLLERS.draw();
+			CONTROLLERS.update(SCENE); // !!!! temp
+			CONTROLLERS.draw(SCENE);
 			S.draw();
 			B.draw();
 		//////////////////////////////////////////////////////////////////////////
@@ -109,7 +111,7 @@ void drawCallBack()
 void keyPressCallBack(unsigned char k, int xm, int ym)
 {
 
-	CONTROLLERS.keyPress(k, xm, ym);
+	CONTROLLERS.keyPress(k, xm, ym ,SCENE);
 
 	if (k == 'R')setup();
 	if( k == 'X' )exit(0) ;
@@ -159,9 +161,9 @@ void keyPressCallBack(unsigned char k, int xm, int ym)
 
 
 
-			SCENE.performWindowSelection(CONTROLLERS);
+//			SCENE.performWindowSelection(CONTROLLERS);
 			SCENE.draw();
-			CONTROLLERS.draw();
+			CONTROLLERS.draw(SCENE);
 
 			state = gl2psEndPage();
 		}

@@ -80,7 +80,7 @@ public:
 
 	}
 
-	void populateRigidBodies(largeMesh &LM , plane prevPl,float depth = 0.25, float ht = 0.25  )
+	void populateRigidBodies(RenderMesh &LM , plane prevPl,float depth = 0.25, float ht = 0.25  )
 	{
 
 		vec S, E, cen, XA, YA, ZA;
