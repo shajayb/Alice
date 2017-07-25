@@ -40,6 +40,10 @@ public:
 		obj = NULL;
 		scaleFactor = 1.1;
 	};
+	~scaleCommand()
+	{
+		cout << "scaleCommand destroyed" << this <<  endl;
+	}
 
 	scaleCommand( OBJECT *_obj , double _scaleFactor = 1.1) 
 	{
@@ -60,12 +64,58 @@ public:
 
 		cout << "scale cmd undo" << endl;
 
-		/*if (!undone)
+		if (!undone)
 		{
 			obj->transformationMatrix.scale(1.0 / scaleFactor);
 			undone = true;
 		}
-		*/
+		
+	}
+};
+
+
+class moveCommand : public COMMAND
+{
+public:
+
+	bool undone = false;
+	vec moveBy;
+
+	moveCommand()
+	{
+		obj = NULL;
+		moveBy = vec(1,1,1);
+	};
+	~moveCommand()
+	{
+		cout << "scaleCommand destroyed" << this << endl;
+	}
+
+	moveCommand(OBJECT *_obj, vec _moveBy = vec(1,1,1))
+	{
+		obj = _obj;
+		moveBy = _moveBy;
+	};
+
+	virtual void doIt()
+	{
+		if (!obj) return;
+		obj->transformationMatrix.translate(moveBy);
+		undone = false;
+	}
+
+	virtual void undoIt()
+	{
+		if (!obj) return;
+
+		cout << "scale cmd undo" << endl;
+
+		if (!undone)
+		{
+			obj->transformationMatrix.translate(moveBy*-1);
+			undone = true;
+		}
+
 	}
 };
 
@@ -100,6 +150,7 @@ public:
 
 derivedOBJECT MO;
 scaleCommand cmd_sc;
+vector<COMMAND> cmds;
 
 void setup()
 {
@@ -139,11 +190,18 @@ void keyPress(unsigned char k, int xm, int ym)
 {
 	if (k == 's')
 	{
-		scaleCommand s;
-		s = *new scaleCommand(&MO, 2.0);
-		SCENE.addCommandToStack(s);
+		//scaleCommand s(&MO, 2.0);
+		//cmds.push_back( * new scaleCommand(&MO, 2.0) );
+		SCENE.addCommandToStack(*new scaleCommand(&MO, 2.0));
 	}
 
+
+	if (k == 'm')
+	{
+		//scaleCommand s(&MO, 2.0);
+		//cmds.push_back( * new scaleCommand(&MO, 2.0) );
+		SCENE.addCommandToStack(*new moveCommand(&MO));
+	}
 }
 
 

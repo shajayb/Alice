@@ -42,7 +42,10 @@ class COMMAND
 public:
 	OBJECT *obj = NULL;
 	virtual ~COMMAND() {};
-	virtual void doIt() {};
+	virtual void doIt() 
+	{
+		cout << " default doIt" << endl;
+	};
 	virtual void undoIt() 
 	{
 		cout << " default undoIt" << endl;
@@ -71,19 +74,20 @@ public:
 	void addCommandToStack(COMMAND &cmd)
 	{
 		
-		commandStack.push_back(&cmd);
+		commandStack.push_back( &cmd );
+		//cmd.doIt();
 		commandStack.back()->doIt();
 
-		cout << commandStack.back() << " -- " << &cmd << endl;
+		//cout << commandStack.back() << endl;
 	}
 	void popCommandFromStack()
 	{
 		if (!commandStack.size() > 0)return;
 		
 		cout << "popping" << endl;
-		//cout << << endl;
-		for ( auto A : commandStack)cout << A << endl;
-		//commandStack.pop_back();
+
+		commandStack.back()->undoIt();
+		commandStack.pop_back();
 	}
 
 
