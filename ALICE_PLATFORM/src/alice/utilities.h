@@ -942,6 +942,7 @@ double distanceSquaredAndNearestPointOnEdge(vec &a, vec&b, vec &p, vec&pt)
 }
 
 
+
 //////////////////////////////////////////////////////////////////////////
 
 long start_time;

@@ -121,6 +121,9 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_commandstackTest.cpp">
       <Filter>TESTS</Filter>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_polyHedralIntersection.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">

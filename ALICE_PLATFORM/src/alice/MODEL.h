@@ -80,6 +80,7 @@ public:
 
 		//cout << commandStack.back() << endl;
 	}
+
 	void popCommandFromStack()
 	{
 		if (!commandStack.size() > 0)return;

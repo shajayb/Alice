@@ -1,5 +1,4 @@
-#define _MAIN_
-#define _ALG_LIB_
+
 
 #ifdef _MAIN_
 

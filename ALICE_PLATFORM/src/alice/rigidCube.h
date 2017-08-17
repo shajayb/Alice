@@ -130,9 +130,6 @@ public:
 	void resetForces()
 	{
 		F = T = vec(0, 0, 0);
-
-
-
 	}
 	void divideFaceIntoGrid( vec &fmn,vec axis1_diff, vec axis2_diff, int RES, vec *P)
 	{
