@@ -1,10 +1,3 @@
-#define _MAIN_
-#define _ALG_LIB_
-
-
-
-
-
 #ifdef _MAIN_
 #include "main.h"
 #include "ALICE_ROBOT_DLL.h"

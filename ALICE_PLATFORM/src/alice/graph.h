@@ -192,10 +192,10 @@ public:
 	{
 
 		for (int i = 0; i < e.vEnd->n_e; i++)
-			if (e.vEnd->edgePtrs[i] != &e)yield *(e.vEnd->edgePtrs[i]);
+			if (e.vEnd->edgePtrs[i] != &e)co_yield *(e.vEnd->edgePtrs[i]);
 
 		for (int i = 0; i < e.vStr->n_e; i++)
-			if (e.vStr->edgePtrs[i] != &e)yield *(e.vStr->edgePtrs[i]);
+			if (e.vStr->edgePtrs[i] != &e)co_yield *(e.vStr->edgePtrs[i]);
 
 	}
 

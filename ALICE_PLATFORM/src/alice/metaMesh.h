@@ -9,6 +9,7 @@ using namespace ROBOTICS;
 #include <array>
 #include <memory>
 #include<time.h>
+
 #include<experimental/generator> 
 using namespace std;
 using namespace std::experimental;
@@ -446,9 +447,9 @@ public:
 			}
 
 
-			if (e[0] && e[1])yield E(ePt[0], ePt[1]);
-			if (e[1] && e[2])yield E(ePt[1], ePt[2]);
-			if (e[2] && e[0])yield E(ePt[2], ePt[0]);
+			if (e[0] && e[1])co_yield E(ePt[0], ePt[1]);
+			if (e[1] && e[2])co_yield E(ePt[1], ePt[2]);
+			if (e[2] && e[0])co_yield E(ePt[2], ePt[0]);
 
 		}
 	}
