@@ -1,6 +1,7 @@
 
 
 
+
 #ifdef _MAIN_
 
 #include "main.h"
@@ -144,7 +145,7 @@ void mousePress(int b, int state, int x, int y)
 
 		//if (blend != blendPrev)
 		{
-			MM.assignScalarsAsLineDistanceField(G, 0, 0.5, blend,blend1);
+			MM.assignScalarsAsLineDistanceField(G, 0, 0.5, blend);
 			MM.getMinMaxOfScalarField(dMin, dMax);
 			MM.createIsoContourGraph(threshold);
 			blendPrev = blend;

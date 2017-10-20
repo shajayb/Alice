@@ -75,6 +75,7 @@
     <ClCompile Include="src\alglib\statistics.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\polyClipper\clipper.cpp" />
     <ClCompile Include="src\userSrc\sketch_R06\sketch_corep_v1.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_algLibtest.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_barySubDivide.cpp">
@@ -90,7 +91,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\userSrc\sketch_UR\sketch_crossSection0.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_polyClipperTest.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_polygonlIntersection_class.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_polyHedralIntersection.cpp" />
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_printStackGenerator_2.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_renderMeshTest.cpp" />
     <ClCompile Include="src\userSrc\sketch_UR\sketch_imGui_freeGlut.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -315,7 +319,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>src/algLib/;C:\Users\bshajay\Source\Repos\ImGuizmo;C:\Users\bshajay\Source\Repos\imgui;src/libGizmo/include;src/gl2ps;src/Eigen;src/freeglut;src/alice;src/glew/include;src/;src/userSrc;include;src/external/AntTweakBar/include;src/external/AntTweakBar/src;src/external/glew/include;src/externa/\glew/src;src/external/glfw/src;src/external/glfw/include;src\external\embree\include;src/libQtViewer;%(AdditionalIncludeDirectories);C:\Qt\5.7\msvc2013_64\include\QtCore;C:\Qt\5.7\msvc2013_64\include\QtGui;C:\Qt\5.7\msvc2013_64\include\QtOpenGL;C:\Qt\5.7\msvc2013_64\include\QtXml;C:\Qt\5.7\msvc2013_64\include;C:\Qt\5.7\msvc2013_64\include\ActiveQt;C:\Users\shajay.b\Downloads\libQGLViewer-2.6.3\libQGLViewer-2.6.3\;C:\Qt\5.7\msvc2013_64\include\QtWidgets</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src/algLib/;C:\Users\bshajay\Source\Repos\ImGuizmo;C:\Users\bshajay\Source\Repos\imgui;src/libGizmo/include;src/gl2ps;src/Eigen;src/polyClipper;src/freeglut;src/alice;src/glew/include;src/;src/userSrc;include;src/external/AntTweakBar/include;src/external/AntTweakBar/src;src/external/glew/include;src/externa/\glew/src;src/external/glfw/src;src/external/glfw/include;src\external\embree\include;src/libQtViewer;%(AdditionalIncludeDirectories);C:\Qt\5.7\msvc2013_64\include\QtCore;C:\Qt\5.7\msvc2013_64\include\QtGui;C:\Qt\5.7\msvc2013_64\include\QtOpenGL;C:\Qt\5.7\msvc2013_64\include\QtXml;C:\Qt\5.7\msvc2013_64\include;C:\Qt\5.7\msvc2013_64\include\ActiveQt;C:\Users\shajay.b\Downloads\libQGLViewer-2.6.3\libQGLViewer-2.6.3\;C:\Qt\5.7\msvc2013_64\include\QtWidgets</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FloatingPointModel>Fast</FloatingPointModel>

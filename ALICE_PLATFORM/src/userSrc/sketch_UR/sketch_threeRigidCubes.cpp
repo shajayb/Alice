@@ -1,7 +1,5 @@
 
 
-
-
 #ifdef _MAIN_
 
 #include "main.h"
@@ -118,8 +116,8 @@ void setup()
 	float yValues[SEG];
 	for (int i = 0; i < SEG; i++)yValues[i] = float(i) / float(SEG);
 
-	yValues[0] = 0.001;
-	yValues[1] = 0.0015;
+	yValues[0] = 0.1;
+	yValues[1] = 0.5;
 	yValues[2] = 1.0;
 	yValues[3] = 1.0;
 	matProp = *new Interpolator(SEG, vec(50, 750, 0), 350, 100, yValues);
@@ -134,11 +132,12 @@ void setup()
 
 void update(int value)
 {
-	
+	if (!run) return;
+
 	float parameter = matProp.getValueAt(simTime);
 	simTime += R2.dt * 30;
 	
-	if (run)keyPress('n', 0, 0);
+	//if (run)keyPress('n', 0, 0);
 		
 	//for (int i = 0; i < 25; i++)keyPress('x', 0, 0);
 
@@ -164,7 +163,7 @@ void draw()
 	//R2.computeGrid(PCur, RES);
 	//R2.addSelfWeightAndTorque(PCur);
 	//R2.drawGridAsPoints(PCur, RES*RES * 6);
-	R2.isFacetoFace(R1, 5, 4, 0.2);
+	R2.isFacetoFace(R1, 5, 4, 0.2 , matProp.getValueAt(simTime));
 
 
 
@@ -223,7 +222,6 @@ void mouseMotion(int x, int y)
 	{
 		S.performSelection(x, y, HUDSelectOn);
 		matProp.performselection( x,  y, HUDSelectOn);
-
 		
 	}
 }

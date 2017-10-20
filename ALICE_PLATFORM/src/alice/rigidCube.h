@@ -449,7 +449,7 @@ public:
 		cog = cen;
 	}
 
-	void computeRestingForces(real_1d_array &x , vec &n, rigidCube &r2)
+	void computeRestingForces(real_1d_array &x , vec &n, rigidCube &r2 , float currentmatStrength)
 	{
 		real_2d_array Amat;
 		real_1d_array b;
@@ -515,13 +515,13 @@ public:
 			netT += (n * (x[i])).cross(ptConvex[i] - r2.cog);
 			netF += (n * (x[i]));
 			vec fi = (n * ofClamp(x[i], -1, 1) );
-			glColor3f(1, 0.25, 0);  drawLine(ptConvex[i], ptConvex[i] + fi);
+			glColor3f(1, 0.65, 0);  drawLine(ptConvex[i], ptConvex[i] + fi);
 
 			char s[200];
 			sprintf(s, "f");
 			drawString(s, ptConvex[i] + (n * (ofClamp(x[i], -1, 1) - 0.1)));
 
-			glColor3f(0, 1, 0); drawLine(ptConvex[i], ptConvex[i] - fi * 0.5 );
+			glColor3f(0, 1, 0); drawLine(ptConvex[i], ptConvex[i] - fi * currentmatStrength * 1.1 );
 		}
 		glLineWidth(1);
 		glColor3f(0, 0, 0);
@@ -628,7 +628,7 @@ public:
 
 	vec pts_faceI[4], pts_faceJ[4];
 	bool computeRestingContacts = false;
-	bool isFacetoFace( rigidCube &r2, int i, int j, double distancetoPlaneTolerance = 0.2)
+	bool isFacetoFace( rigidCube &r2, int i, int j, double distancetoPlaneTolerance = 0.2 , float currentmatStrength = 0.2 )
 	{
 
 		// -----------------------------------------  get face i data;
@@ -675,7 +675,7 @@ public:
 		{
 			
 			real_1d_array x;
-			if(computeRestingContacts)computeRestingForces(x, n, r2);
+			if(computeRestingContacts)computeRestingForces(x, n, r2 , currentmatStrength);
 
 
 		}

@@ -69,8 +69,6 @@ void setup()
 
 	//////////////////////////////////////////////////////////
 
-
-
 	//for (int i = 0; i < 50; i++)
 	//int i = 0;
 	//{
@@ -124,68 +122,68 @@ void setup()
 
 	//////////////////////////////////////////////////////////////////////////
 
-	Mesh M;
-	MeshFactory fac;
-	if (inFile.length() > 0)printfile = inFile;
-	M = fac.createFromOBJ(printfile, 100.0, false);
+	//Mesh M;
+	//MeshFactory fac;
+	//if (inFile.length() > 0)printfile = inFile;
+	//M = fac.createFromOBJ(printfile, 100.0, false);
 
-	{
+	//{
 
-			Matrix3x3 PCA_mat;
-			vec mean, eigenValues, eigenvecs[3];
-			PCA_mat.PCA(M.positions, M.n_v, mean, eigenValues, eigenvecs);
-			M.boundingBox(minV, maxV);
+	//		Matrix3x3 PCA_mat;
+	//		vec mean, eigenValues, eigenvecs[3];
+	//		PCA_mat.PCA(M.positions, M.n_v, mean, eigenValues, eigenvecs);
+	//		M.boundingBox(minV, maxV);
 
-			vec x = eigenvecs[0].normalise();
-			x.z = 0;
-			vec z = vec(0, 0, 1);
-			vec y = x.cross(z).normalise();
-			
-			Matrix3 trans;
-			trans.setColumn(0, x);
-			trans.setColumn(1, y);
-			trans.setColumn(2, z);
-			trans.transpose();
-			for (int i = 0; i < M.n_v; i++)
-			{
-				M.positions[i] -= (minV+maxV)*0.5;
-				//M.positions[i] = trans * M.positions[i];
-			}
-	}
+	//		vec x = eigenvecs[0].normalise();
+	//		x.z = 0;
+	//		vec z = vec(0, 0, 1);
+	//		vec y = x.cross(z).normalise();
+	//		
+	//		Matrix3 trans;
+	//		trans.setColumn(0, x);
+	//		trans.setColumn(1, y);
+	//		trans.setColumn(2, z);
+	//		trans.transpose();
+	//		for (int i = 0; i < M.n_v; i++)
+	//		{
+	//			M.positions[i] -= (minV+maxV)*0.5;
+	//			//M.positions[i] = trans * M.positions[i];
+	//		}
+	//}
 
-	{
-		vec x, y, z, cen;
-		cen = vec(73.9327, -2.2114, -17.4015);
-		x = vec(1, 0, 0).normalise();
-		z = vec(0, 0, -1);
-		y = x.cross(z);
+	//{
+	//	vec x, y, z, cen;
+	//	cen = vec(73.9327, -2.2114, -17.4015);
+	//	x = vec(1, 0, 0).normalise();
+	//	z = vec(0, 0, -1);
+	//	y = x.cross(z);
 
-		Matrix4 fTrans;
-		fTrans.identity();
-		fTrans.setColumn(0, x.normalise());
-		fTrans.setColumn(1, y.normalise());
-		fTrans.setColumn(2, z.normalise());
-		fTrans.setColumn(3, cen);
-
-
-		for (int i = 0; i < M.n_v; i++)
-			M.positions[i] = fTrans * M.positions[i];
-
-		vec minV, maxV;
-		M.boundingBox(minV, maxV);
-		double diff = cen.z - minV.z;
+	//	Matrix4 fTrans;
+	//	fTrans.identity();
+	//	fTrans.setColumn(0, x.normalise());
+	//	fTrans.setColumn(1, y.normalise());
+	//	fTrans.setColumn(2, z.normalise());
+	//	fTrans.setColumn(3, cen);
 
 
-		for (int i = 0; i < M.n_v; i++)
-		M.positions[i].z += diff;
-	}
+	//	for (int i = 0; i < M.n_v; i++)
+	//		M.positions[i] = fTrans * M.positions[i];
+
+	//	vec minV, maxV;
+	//	M.boundingBox(minV, maxV);
+	//	double diff = cen.z - minV.z;
 
 
-	MM = *new metaMesh(M);;
-	MM.assignScalars("z");
-	MM.createIsoContourGraph(1.0);
-	MM.G.computeIslandsAsEdgeAndVertexList();
-	MM.convertContourToToroidalGraph();
+	//	for (int i = 0; i < M.n_v; i++)
+	//	M.positions[i].z += diff;
+	//}
+
+
+	//MM = *new metaMesh(M);;
+	//MM.assignScalars("z");
+	//MM.createIsoContourGraph(1.0);
+	//MM.G.computeIslandsAsEdgeAndVertexList();
+	//MM.convertContourToToroidalGraph();
 }
 
 void update(int value)
@@ -307,13 +305,13 @@ void keyPress(unsigned char k, int xm, int ym)
 
 		for (int i = 0; i < 10; i++)MM.G.smoothGraph(10);
 	}
+	
 	if (k == 'c')
 	{
 		GS.convertContourToToroidalGraph();
 		MM.convertContourToToroidalGraph();
-
-		
 	}
+
 	if (k == 'n')
 	{
 		GS.MM.G.redistribute_toroidal(0.05);
@@ -338,6 +336,7 @@ void keyPress(unsigned char k, int xm, int ym)
 			for (int j = 0; j < 30; j++)keyPress(' ', 0, 0);
 			for (int j = 0; j < 1; j++)GS.MM.G.inflateVertices();
 		}
+
 		GS.LM.updateColorArray(lightscale, flipNormals, camPt);
 	}
 	if (k == '<')GS.currentStackLayer--;

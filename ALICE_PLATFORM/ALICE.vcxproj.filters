@@ -124,6 +124,18 @@
     <ClCompile Include="src\userSrc\sketch_UR\sketch_polyHedralIntersection.cpp">
       <Filter>TESTS</Filter>
     </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_polyClipperTest.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="src\polyClipper\clipper.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_polygonlIntersection_class.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="src\userSrc\sketch_UR\sketch_printStackGenerator_2.cpp">
+      <Filter>TESTS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\userSrc\sketch_UR\imgui_freeglut.h">
