@@ -984,6 +984,11 @@ vector<string> splitString(const string& str, const string& delimiter)
 	return elements;
 }
 
+vec extractVecFromStringArray(int id, vector<string> &content)
+{
+	return vec(atof(content[id].c_str()), atof(content[id + 1].c_str()), atof(content[id + 2].c_str()));
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -1135,6 +1140,39 @@ Mesh quickHull( vec *pts, int num)
 	for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
 
 	return M;
+}
+
+
+void quickHull(vec *pts, int num , qh_vertex_t *vertices, Mesh &M)
+{
+	//qh_vertex_t *vertices = new qh_vertex_t[num];
+
+	for (int i = 0; i < num; ++i) {
+
+		vertices[i].z = pts[i].z;
+		vertices[i].x = pts[i].x;
+		vertices[i].y = pts[i].y;
+	}
+
+	qh_mesh_t mesh = qh_quickhull3d(vertices, num);
+
+	M.n_e = M.n_f = M.n_v = 0;
+
+	for (int i = 0; i < mesh.nvertices; i++) M.createVertex(vec(mesh.vertices[i].x, mesh.vertices[i].y, mesh.vertices[i].z));
+
+	Vertex *fv[3];
+	for (int i = 0, j = 0; i < mesh.nindices; i += 3, j++)
+	{
+		fv[0] = &M.vertices[mesh.indices[i + 0]];
+		fv[1] = &M.vertices[mesh.indices[i + 1]];
+		fv[2] = &M.vertices[mesh.indices[i + 2]];
+
+		M.createFace(fv, 3);
+	}
+
+	for (int i = 0; i < M.n_f; i++)M.faces[i].faceVertices();
+
+	//return M;
 }
 
 

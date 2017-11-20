@@ -185,8 +185,12 @@ void mousePressCallBack(int b,int s,int x,int y)
 	 CONTROLLERS.mousePress(b, s, x, y);
 
 
-	 S.performSelection(x, y, HUDSelectOn);
-	 B.performSelection(x, y);
+	 if (GLUT_LEFT_BUTTON == b && GLUT_DOWN == s)
+	 {
+
+		 B.performSelection(x, y);
+		 S.performSelection(x, y, HUDSelectOn);
+	 }
 
 	 mousePress( b, s, x, y) ;
 
@@ -201,7 +205,7 @@ void motionCallBack( int x, int y )
 	CONTROLLERS.mouseMotion(x, y);
 
 	S.performSelection(x, y, HUDSelectOn);
-	B.performSelection(x, y);
+	//B.performSelection(x, y);
 
 	mouseMotion(x,y);
 	if(!HUDSelectOn && updateCam)Motion( x, y) ;
@@ -247,8 +251,10 @@ int main(int argc,char** argv)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_POINT_SMOOTH);
 
-
-	setup();
+	{
+		B = *new ButtonGroup(vec(50, 450, 0));
+		setup();
+	}
 	glutMainLoop();
 
 	

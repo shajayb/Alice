@@ -1,5 +1,3 @@
-#define _MAIN_
-#define _ALG_LIB_
 
 
 

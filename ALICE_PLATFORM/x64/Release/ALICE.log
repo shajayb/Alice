@@ -1,46 +1,8 @@
-﻿  alglibinternal.cpp
-  alglibmisc.cpp
-  ap.cpp
-  dataanalysis.cpp
-  diffequations.cpp
-  fasttransforms.cpp
-  integration.cpp
-  interpolation.cpp
-  linalg.cpp
-  optimization.cpp
-  solvers.cpp
-  specialfunctions.cpp
-  statistics.cpp
-  sketch_barySubDivide.cpp
-  sketch_contours.cpp
-  sketch_convexHull_test.cpp
-  sketch_lineSegment_intersect.cpp
-  sketch_metaMeshTester_graphOffset.cpp
-  sketch_populateGraph.cpp
-  sketch_printStackGenerator.cpp
-  Compiling...
-  sketch_rbe_test.cpp
-  sketch_threeRigidCubes.cpp
-  sketch_two_rectangles.cpp
-  clipper.cpp
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (x64\Release\) contains files shared from another project (ALICE_PLATFORM_withalgLib.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   sketch_corep_v1.cpp
-  sketch_algLibtest.cpp
-  sketch_commandstackTest.cpp
-  sketch_contours_v2.cpp
-  sketch_convexHull_graham.cpp
-  sketch_crossSection0.cpp
-  sketch_polyClipperTest.cpp
-  sketch_polygonlIntersection_class.cpp
-  sketch_polyHedralIntersection.cpp
-  sketch_printStackGenerator_2.cpp
-  sketch_renderMeshTest.cpp
-  sketch_libGizmo_test.cpp
-  sketch_picking.cpp
-  sketch_populateGragh_v2.cpp
   sketch_quickHull.cpp
-  sketch_rigidCubeSim.cpp
-C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(1198,5): warning MSB8012: TargetPath(C:\Users\shajay.b\Source\Repos\Alice2017\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\shajay.b\Source\Repos\Alice2017\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(1198,5): warning MSB8012: TargetPath(C:\Users\shajay.b\Source\Repos\Alice2\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe) does not match the Linker's OutputFile property value (C:\Users\shajay.b\Source\Repos\Alice2\ALICE_PLATFORM\x64\Release\EXE\ALICE_PLATFORM.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
   Generating code
   Finished generating code
-  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice2017\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
-  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice2017\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)
+  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice2\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.exe
+  ALICE.vcxproj -> C:\Users\shajay.b\Source\Repos\Alice2\ALICE_PLATFORM\x64\Release\ALICE_PLATFORM.pdb (Full PDB)

@@ -1,5 +1,6 @@
-
-
+//#define _MAIN_
+//#define _ALG_LIB_
+//
 
 #ifdef _MAIN_
 
@@ -73,9 +74,10 @@ void draw()
 	//
 	M.draw(false);
 	M.draw(true);
+	//for (int i = 0; i < 1; i++) drawCircle(M.positions[i],0.1,32);
 
 	glPointSize(5);
-		for (int i = 0; i < num; i++) drawPoint(P[i]);
+		for (int i = 0; i < 1; i++) drawPoint(P[i]);
 	glPointSize(1);
 }
 
@@ -144,7 +146,7 @@ void keyPress(unsigned char k, int xm, int ym)
 	}
 
 	if (k == 'w')
-		M.writeOBJ("data/conv", "", M.positions, false);
+		M.writeOBJ("data/conv.obj", "", M.positions, false);
 }
 
 
